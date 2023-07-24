@@ -39,14 +39,14 @@ interface IRoles {
         @param account The target account.
         @return True if the target account is an admin, false otherwise.
     */
-    function isAdmin(address account) external returns(bool);
+    function isAdmin(address account) external view returns(bool);
 
     /*
         @notice Returns true if the input account is a manager, false otherwise
         @param account The target account.
         @return True if the target account is a manager, false otherwise.
     */
-    function isManager(address account) external returns(bool);
+    function isManager(address account) external view returns(bool);
 
     /*
         @notice Emitted when the role is assigned to or revoked from the target account or when the target is the new contract owner (in this case isRevoked is always false).

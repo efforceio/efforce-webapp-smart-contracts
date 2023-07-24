@@ -69,6 +69,7 @@ contract Roles is IRoles {
     )
         external
         override
+        view
         returns(bool)
     {
         return addressToAdmin[account];
@@ -79,6 +80,7 @@ contract Roles is IRoles {
     )
         external
         override
+        view
         returns(bool)
     {
         return addressToManager[account];

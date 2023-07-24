@@ -37,12 +37,14 @@ interface IRoles {
     /*
         @notice Returns true if the input account is an admin, false otherwise
         @param account The target account.
+        @return True if the target account is an admin, false otherwise.
     */
     function isAdmin(address account) external returns(bool);
 
     /*
         @notice Returns true if the input account is a manager, false otherwise
         @param account The target account.
+        @return True if the target account is a manager, false otherwise.
     */
     function isManager(address account) external returns(bool);
 

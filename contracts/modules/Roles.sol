@@ -19,6 +19,16 @@ contract Roles is IRoles {
         _;
     }
 
+    modifier adminOrOwner(address account) {
+        require(addressToAdmin[account] || account == owner, Errors.IS_NOT_ADMIN);
+        _;
+    }
+
+    modifier managerOrOwner(address account) {
+        require(addressToManager[account] || account == owner, Errors.IS_NOT_MANAGER);
+        _;
+    }
+
     function setAdmin(
         address account,
         bool admin

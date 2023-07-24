@@ -1,0 +1,13 @@
+{
+  "name": "hardhat-project",
+  "scripts": {
+    "build": "npx thirdweb@latest detect",
+    "deploy": "npx thirdweb@latest deploy",
+    "release": "npx thirdweb@latest release",
+    "test": "npx hardhat test"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "hardhat": "^2.17.0"
+  }
+}

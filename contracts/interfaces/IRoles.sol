@@ -6,7 +6,8 @@ interface IRoles {
     /*
         The roles defined in this interfaces are:
 
-        - Contract owner: can withdraw funds from the smart contract, assign/revoke admin roles to/from accounts, and has all the permissions assigned to admins and managers;
+        - Contract owner: can withdraw funds from the smart contract, assign/revoke admin roles to/from accounts,
+            and has all the permissions assigned to admins and managers;
         - Managers: can create projects and open funding rounds;
         - Admins: can allow addresses to own and transfer project credits.
     */
@@ -49,7 +50,8 @@ interface IRoles {
     function isManager(address account) external view returns(bool);
 
     /*
-        @notice Emitted when the role is assigned to or revoked from the target account or when the target is the new contract owner (in this case isRevoked is always false).
+        @notice Emitted when the role is assigned to or revoked from the target account or when the target
+            is the new contract owner (in this case isRevoked is always false).
         @dev When the contract owner is assigned to a new address, isRevoked is set to false.
         @dev The role is set to 0 if admin, 1 if manager, 2 if contract owner.
         @param account The target account.

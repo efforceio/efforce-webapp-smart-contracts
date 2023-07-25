@@ -4,7 +4,8 @@ pragma solidity ^0.8.0;
 interface IERC1155 {
 
     /*
-        @notice Transfers _value amount of an _id from the _from address to the _to address specified (with safety call).
+        @notice Transfers _value amount of an _id from the _from address to the _to address specified
+            (with safety call).
         @dev The transaction must be reverted if the receiver is not allowed.
         @param _from The account form which the tokens will be transferred.
         @param _to The account which will receive the tokens.
@@ -15,7 +16,8 @@ interface IERC1155 {
     function safeTransferFrom(address _from, address _to, uint256 _id, uint256 _value, bytes calldata data) external;
 
     /*
-        @notice Transfers _values amount(s) of _ids from the _from address to the _to address specified (with safety call).
+        @notice Transfers _values amount(s) of _ids from the _from address to the _to address specified
+            (with safety call).
         @dev The transaction must be reverted if the receiver is not allowed.
         @param _from The account form which the tokens will be transferred.
         @param _to The account which will receive the tokens.
@@ -23,7 +25,13 @@ interface IERC1155 {
         @param _values The amount of tokens that will be transferred.
         @param data Information that will be passed to the receiver if it is a smart contract.
     */
-    function safeBatchTransferFrom(address _from, address _to, uint256[] calldata _ids, uint256[] calldata _values, bytes calldata _data) external;
+    function safeBatchTransferFrom(
+        address _from,
+        address _to,
+        uint256[] calldata _ids,
+        uint256[] calldata _values,
+        bytes calldata _data
+    ) external;
 
     /*
         @notice Enable or disable approval for a third party ("operator") to manage all of the caller's tokens.
@@ -53,7 +61,10 @@ interface IERC1155 {
         @param _ids The target token ids.
         @return The amount of token owned by each target account having the corresponding target id.
     */
-    function balanceOfBatch(address[] calldata _owners, uint256[] calldata _ids) external view returns(uint256[] memory);
+    function balanceOfBatch(
+        address[] calldata _owners,
+        uint256[] calldata _ids
+    ) external view returns(uint256[] memory);
 
     /*
         @notice Queries the approval status of an operator for a given owner.
@@ -78,7 +89,13 @@ interface IERC1155 {
         @param _id The id of the tokens that are transferred.
         @param _value The number of tokens that are transferred.
     */
-    event TransferSingle(address indexed _operator, address indexed _from, address indexed _to, uint256 _id, uint256 _value);
+    event TransferSingle(
+        address indexed _operator,
+        address indexed _from,
+        address indexed _to,
+        uint256 _id,
+        uint256 _value
+    );
 
     /*
         @notice Emitted when tokens are transferred, including zero value transfers as well as minting or burning.
@@ -88,10 +105,17 @@ interface IERC1155 {
         @param _ids The id of the tokens that are transferred.
         @param _values The number of tokens that are transferred for each token id.
     */
-    event TransferBatch(address indexed _operator, address indexed _from, address indexed _to, uint256[] _ids, uint256[] _values);
+    event TransferBatch(
+        address indexed _operator,
+        address indexed _from,
+        address indexed _to,
+        uint256[] _ids,
+        uint256[] _values
+    );
 
     /*
-        @notice Emitted when approval for a second party/operator address to manage all tokens for an owner address is enabled or disabled (absence of an event assumes disabled)
+        @notice Emitted when approval for a second party/operator address to manage all tokens for an owner address
+            is enabled or disabled (absence of an event assumes disabled)
         @param _owner The owner of the NFTs.
         @param _operator The target address.
         @param _approved True if the target address is set as operator, false otherwise.

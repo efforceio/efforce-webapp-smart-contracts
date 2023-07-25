@@ -26,6 +26,14 @@ contract ERC1155 is IERC1155, Accounts {
         _;
     }
 
+    modifier hasValue(address account, uint256 value, uint256 tokenId) {
+        require(
+            balances[tokenid][account] - _getFrozen(account, tokenId) >= value,
+            Errors.INSUFFICIENT_BALANCE
+        );
+        _;
+    }
+
     function safeTransferFrom(
         address _from,
         address _to,
@@ -38,10 +46,7 @@ contract ERC1155 is IERC1155, Accounts {
         accountEnabled(_to)
         ownerOrOperator(_from)
     {
-        balances[_id][_from] = balances[_id][_from] - _value;
-        balances[_id][_to]   = _value + balances[_id][_to];
-
-        emit TransferSingle(msg.sender, _from, _to, _id, _value);
+        _doTransfer(_id, _from, _value, _to);
 
         if (Utils.isContract(_to)) {
             require(
@@ -55,6 +60,8 @@ contract ERC1155 is IERC1155, Accounts {
                 Errors.UNKNOWN_VALUE_FROM_SAFE_TRANSFER
             );
         }
+
+        emit TransferSingle(msg.sender, _from, _to, _id, _value);
     }
 
     function safeBatchTransferFrom(
@@ -70,12 +77,10 @@ contract ERC1155 is IERC1155, Accounts {
         ownerOrOperator(_from)
     {
         require(_ids.length == _values.length, Errors.NOT_MATCHING_LENGTHS);
-        for (uint256 i = 0; i < _ids.length; ++i) {
-            balances[_ids[i]][_from] = balances[_ids[i]][_from] - _values[i];
-            balances[_ids[i]][_to]   = _values[i] + balances[_ids[i]][_to];
-        }
 
-        emit TransferBatch(msg.sender, _from, _to, _ids, _values);
+        for (uint256 i = 0; i < _ids.length; ++i) {
+            _doTransfer(_ids[i], _from, _values[i], _to);
+        }
 
         if (Utils.isContract(_to)) {
             require(
@@ -89,6 +94,8 @@ contract ERC1155 is IERC1155, Accounts {
                 Errors.UNKNOWN_VALUE_FROM_SAFE_TRANSFER
             );
         }
+
+        emit TransferBatch(msg.sender, _from, _to, _ids, _values);
     }
 
     function setApprovalForAll(
@@ -97,6 +104,7 @@ contract ERC1155 is IERC1155, Accounts {
     )
         external
         override
+        accountEnabled(_operator)
     {
         operatorApproval[msg.sender][_operator] = _approved;
         emit ApprovalForAll(msg.sender, _operator, _approved);
@@ -167,5 +175,23 @@ contract ERC1155 is IERC1155, Accounts {
     {
         return uri;
     }
+
+    function _doTransfer(
+        uint256 _id,
+        address _from,
+        uint256 _value,
+        address _to
+    )
+        private
+        hasValue(_from, _value, _id)
+    {
+        balances[_id][_from] = balances[_id][_from] - _value;
+        balances[_id][_to]   = _value + balances[_id][_to];
+    }
+
+    function _getFrozen(address, uint256)
+        internal
+        virtual
+        returns(uint256);
 
 }

@@ -17,4 +17,8 @@ library Errors {
     string constant public NOT_OWNER_OR_OPERATOR = "300";
     string constant public UNKNOWN_VALUE_FROM_SAFE_TRANSFER = "301";
     string constant public NOT_MATCHING_LENGTHS = "302";
+    string constant public INSUFFICIENT_BALANCE = "303";
+
+    //ERC5006
+    string constant public NOT_EXPIRED = "400";
 }

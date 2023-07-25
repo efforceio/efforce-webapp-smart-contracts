@@ -4,7 +4,8 @@ pragma solidity ^0.8.0;
 interface IAccounts {
 
     /*
-        @notice If enabling is true, the input account is enabled to send and receive credits, otherwise their right is revoked.
+        @notice If enabling is true, the input account is enabled to send and receive credits,
+            otherwise their right is revoked.
         @dev Can be invoked only by admins and the contract owner.
         @param account The target account.
         @param enabling If true, the target account is enabled to receive the credits, otherwise it will be disabled.

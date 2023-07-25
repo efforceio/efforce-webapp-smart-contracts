@@ -10,15 +10,17 @@ import "../libraries/Utils.sol";
 
 contract ERC1155 is IERC1155, Accounts {
 
-    mapping (uint256 => mapping(address => uint256)) private balances;
+    mapping (uint256 => mapping(address => uint256)) internal balances;
     mapping (address => mapping(address => bool)) private operatorApproval;
     string private uri;
+    uint256 internal lastCreditsId;
 
     constructor(
         address owner,
         string memory metadataUri
     ) Accounts(owner) {
         uri = metadataUri;
+        lastCreditsId = 0;
     }
 
     modifier ownerOrOperator(address account) {

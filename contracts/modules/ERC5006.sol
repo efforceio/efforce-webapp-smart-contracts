@@ -12,7 +12,10 @@ contract ERC5006 is IERC5006, ERC1155 {
     mapping(address => mapping(uint256 => EnumerableSet.UintSet)) private usersToRecordsSet;
     uint256 private currentRecord;
 
-    constructor(address owner, string memory metadataUri) ERC1155(owner, metadataUri) {
+    constructor(
+        address owner,
+        string memory metadataUri
+    ) ERC1155(owner, metadataUri) {
         currentRecord = 0;
     }
 
@@ -47,7 +50,7 @@ contract ERC5006 is IERC5006, ERC1155 {
         frozen[owner][tokenId] += amount;
         accountsToRecordsSet[user][tokenId].add(currentRecord);
 
-        CreateUserRecord(recordId, tokenId, amount, owner, user, expiry);
+        emit CreateUserRecord(recordId, tokenId, amount, owner, user, expiry);
 
         return currentRecord;
     }
@@ -63,7 +66,7 @@ contract ERC5006 is IERC5006, ERC1155 {
         frozen[owner][tokenId] -= records[recordId].amount;
         accountsToRecordsSet[records[recordId].user][tokenId].remove(recordId);
 
-        DeleteUserRecord(recordId);
+        emit DeleteUserRecord(recordId);
     }
 
     function usableBalanceOf(

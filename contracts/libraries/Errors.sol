@@ -24,4 +24,9 @@ library Errors {
 
     //Projects
     string constant public PROJECT_NOT_EXISTS = "500";
+
+    //Fundings
+    string constant public PHASE_ALREADY_OPEN = "600";
+    string constant public CREDITS_NOT_AVAILABLE = "601";
+    string constant public PHASE_NOT_OPEN = "602";
 }

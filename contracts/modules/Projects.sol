@@ -2,18 +2,15 @@
 pragma solidity ^0.8.0;
 
 import "../interfaces/IProjects.sol";
-import "./ERC5006.sol";
+import "./ERC1155.sol";
 import "../libraries/Errors.sol";
 
-contract Projects is IProjects, ERC5006 {
+abstract contract Projects is IProjects, ERC1155 {
 
     uint256 private nProjects;
     mapping(uint256 => uint256) private creditIdToProjectId;
 
-    constructor(
-        address owner,
-        string memory metadataUri
-    ) ERC5006(owner, metadataUri) {
+    constructor() {
         nProjects = 0;
     }
 

@@ -6,9 +6,9 @@ interface IERC5006 {
     struct UserRecord {
         uint256 tokenId;
         address owner;
-        uint64 amount;
+        uint256 amount;
         address user;
-        uint64 expiry;
+        uint256 expiry;
     }
 
     /*
@@ -23,8 +23,8 @@ interface IERC5006 {
         address owner,
         address user,
         uint256 tokenId,
-        uint64 amount,
-        uint64 expiry
+        uint256 amount,
+        uint256 expiry
     ) external returns(uint256);
 
     /*
@@ -55,7 +55,7 @@ interface IERC5006 {
         @param recordId The given record id.
         @return The details of the record with given id.
     */
-    function userRecordOf(uint256 recordId) external view returns(UserRecord);
+    function userRecordOf(uint256 recordId) external view returns(UserRecord memory);
 
     /*
         @notice Emitted when permission for user to use amount of tokenId token owned by owner until expiry are given.
@@ -69,10 +69,10 @@ interface IERC5006 {
     event CreateUserRecord(
         uint256 recordId,
         uint256 tokenId,
-        uint64 amount,
+        uint256 amount,
         address indexed owner,
         address indexed user,
-        uint64 expiry
+        uint256 expiry
     );
 
     /*

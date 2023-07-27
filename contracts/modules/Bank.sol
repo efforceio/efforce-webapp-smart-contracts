@@ -5,9 +5,7 @@ import "../interfaces/IBank.sol";
 import "../helpers/IERC20.sol";
 import "./Roles.sol";
 
-contract Bank is IBank, Roles {
-
-    constructor(address owner) Roles(owner) {}
+abstract contract Bank is IBank, Roles {
 
     modifier availableBalance(address tokenAddress, uint256 amount) {
         require(

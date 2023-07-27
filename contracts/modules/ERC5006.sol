@@ -6,16 +6,14 @@ import "../interfaces/IERC5006.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../libraries/Errors.sol";
 
-contract ERC5006 is IERC5006, ERC1155 {
+abstract contract ERC5006 is IERC5006, ERC1155 {
+
     mapping(uint256 => UserRecord) private records;
     mapping(address => mapping(uint256 => uint256)) private frozen;
     mapping(address => mapping(uint256 => EnumerableSet.UintSet)) private usersToRecordsSet;
     uint256 private currentRecord;
 
-    constructor(
-        address owner,
-        string memory metadataUri
-    ) ERC1155(owner, metadataUri) {
+    constructor() {
         currentRecord = 0;
     }
 
@@ -28,8 +26,8 @@ contract ERC5006 is IERC5006, ERC1155 {
         address owner,
         address user,
         uint256 tokenId,
-        uint64 amount,
-        uint64 expiry
+        uint256 amount,
+        uint256 expiry
     )
         external
         override
@@ -48,9 +46,9 @@ contract ERC5006 is IERC5006, ERC1155 {
             expiry
         );
         frozen[owner][tokenId] += amount;
-        accountsToRecordsSet[user][tokenId].add(currentRecord);
+        EnumerableSet.add(usersToRecordsSet[user][tokenId], currentRecord);
 
-        emit CreateUserRecord(recordId, tokenId, amount, owner, user, expiry);
+        emit CreateUserRecord(currentRecord, tokenId, amount, owner, user, expiry);
 
         return currentRecord;
     }
@@ -63,8 +61,9 @@ contract ERC5006 is IERC5006, ERC1155 {
         ownerOrOperator(records[recordId].owner)
         expiredRecord(recordId)
     {
+        uint256 tokenId = records[recordId].tokenId;
         frozen[owner][tokenId] -= records[recordId].amount;
-        accountsToRecordsSet[records[recordId].user][tokenId].remove(recordId);
+        EnumerableSet.remove(usersToRecordsSet[records[recordId].user][tokenId], recordId);
 
         emit DeleteUserRecord(recordId);
     }
@@ -79,9 +78,10 @@ contract ERC5006 is IERC5006, ERC1155 {
         returns(uint256)
     {
         uint256 usable = 0;
-        for (uint256 i = 0; i < usersToRecordsSet[account][tokenId].length; i++) {
-            if (records[usersToRecordsSet[account][tokenId][i]].expiry >= block.timestamp) {
-                usable += records[usersToRecordsSet[account][tokenId][i]].amount;
+        for (uint256 i = 0; i < EnumerableSet.length(usersToRecordsSet[account][tokenId]); i++) {
+            uint256 recordId = EnumerableSet.at(usersToRecordsSet[account][tokenId], i);
+            if (records[recordId].expiry >= block.timestamp) {
+                usable += records[recordId].amount;
             }
         }
         return usable;
@@ -104,7 +104,7 @@ contract ERC5006 is IERC5006, ERC1155 {
     )
         external
         view
-        returns(UserRecord)
+        returns(UserRecord memory)
     {
         return records[recordId];
     }
@@ -113,6 +113,7 @@ contract ERC5006 is IERC5006, ERC1155 {
         internal
         virtual
         override
+        view
         returns(uint256)
     {
         return frozen[account][tokenId];

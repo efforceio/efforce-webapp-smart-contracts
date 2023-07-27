@@ -8,7 +8,7 @@ interface IFundings {
         uint256 availableCredits;
         uint256 price;
         bool open;
-        uint64 openedTimestamp;
+        uint256 openedTimestamp;
         address currencyAddress;
         uint256 tokenId;
     }
@@ -50,7 +50,7 @@ interface IFundings {
         @param projectId The id of the target project.
         @return The details of the funding phase for target project.
     */
-    function getPhaseForProject(uint256 projectId) external view returns(Phase);
+    function getPhaseForProject(uint256 projectId) external view returns(Phase memory);
 
     /*
         @notice Emitted when a funding phase is opened or closed.
@@ -67,7 +67,7 @@ interface IFundings {
         bool indexed opened,
         uint256 credits,
         uint256 price,
-        uint64 timestamp,
+        uint256 timestamp,
         address currencyAddress,
         bool refund
     );

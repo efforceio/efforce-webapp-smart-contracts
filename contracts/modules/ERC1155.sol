@@ -8,18 +8,17 @@ import "../libraries/Constants.sol";
 import "../libraries/Errors.sol";
 import "../libraries/Utils.sol";
 
-contract ERC1155 is IERC1155, Accounts {
+abstract contract ERC1155 is IERC1155, Accounts {
 
     mapping (uint256 => mapping(address => uint256)) internal balances;
     mapping (address => mapping(address => bool)) private operatorApproval;
-    string private uri;
+    string private baseUri;
     uint256 internal lastCreditsId;
 
     constructor(
-        address owner,
         string memory metadataUri
-    ) Accounts(owner) {
-        uri = metadataUri;
+    ) {
+        baseUri = metadataUri;
         lastCreditsId = 0;
     }
 
@@ -30,7 +29,7 @@ contract ERC1155 is IERC1155, Accounts {
 
     modifier hasValue(address account, uint256 value, uint256 tokenId) {
         require(
-            balances[tokenid][account] - _getFrozen(account, tokenId) >= value,
+            balances[tokenId][account] - _getFrozen(account, tokenId) >= value,
             Errors.INSUFFICIENT_BALANCE
         );
         _;
@@ -53,11 +52,11 @@ contract ERC1155 is IERC1155, Accounts {
         if (Utils.isContract(_to)) {
             require(
                 IERC1155TokenReceiver(_to).onERC1155Received(
-                    _operator,
+                    msg.sender,
                     _from,
                     _id,
                     _value,
-                    _data
+                    data
                 ) == Constants.ERC1155_ACCEPTED,
                 Errors.UNKNOWN_VALUE_FROM_SAFE_TRANSFER
             );
@@ -87,7 +86,7 @@ contract ERC1155 is IERC1155, Accounts {
         if (Utils.isContract(_to)) {
             require(
                 IERC1155TokenReceiver(_to).onERC1155BatchReceived(
-                    _operator,
+                    msg.sender,
                     _from,
                     _ids,
                     _values,
@@ -119,7 +118,7 @@ contract ERC1155 is IERC1155, Accounts {
         override
         contractOwner(msg.sender)
     {
-        uri = _uri;
+        baseUri = _uri;
         emit MetadataUriUpdated(_uri);
     }
 
@@ -175,7 +174,7 @@ contract ERC1155 is IERC1155, Accounts {
         override
         returns(string memory)
     {
-        return uri;
+        return baseUri;
     }
 
     function _doTransfer(
@@ -194,6 +193,7 @@ contract ERC1155 is IERC1155, Accounts {
     function _getFrozen(address, uint256)
         internal
         virtual
+        view
         returns(uint256);
 
 }

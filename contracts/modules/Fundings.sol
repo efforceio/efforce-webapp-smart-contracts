@@ -4,8 +4,10 @@ pragma solidity ^0.8.0;
 import "../interfaces/IFundings.sol";
 import "./Projects.sol";
 import "../libraries/Errors.sol";
+import "../helpers/IERC20.sol";
+import "./Bank.sol";
 
-contract Fundings is IFundings, Projects {
+abstract contract Fundings is IFundings, Projects, Bank {
 
     uint256 private nPhases;
     mapping(uint256 => Phase) private projectIdToPhase;
@@ -13,10 +15,7 @@ contract Fundings is IFundings, Projects {
     mapping(uint256 => address[]) private phaseIdToBuyers;
     mapping(address => uint256) private blockedAmountForToken;
 
-    constructor(
-        address owner,
-        string memory metadataUri
-    ) Projects(owner, metadataUri) {
+    constructor() {
         nPhases = 0;
     }
 
@@ -49,7 +48,7 @@ contract Fundings is IFundings, Projects {
         nPhases++;
         lastCreditsId++;
 
-        bytes timestamp = block.timestamp;
+        uint256 timestamp = block.timestamp;
 
         projectIdToPhase[projectId] = Phase(
             credits,
@@ -132,7 +131,7 @@ contract Fundings is IFundings, Projects {
         external
         view
         override
-        returns(Phase)
+        returns(Phase memory)
     {
         return projectIdToPhase[projectId];
     }

@@ -3,13 +3,11 @@ pragma solidity ^0.8.0;
 
 import "../interfaces/IAccounts.sol";
 import "../libraries/Errors.sol";
-import "./Bank.sol";
+import "./Roles.sol";
 
-contract Accounts is IAccounts, Bank {
+abstract contract Accounts is IAccounts, Roles {
 
     mapping(address => bool) private addressToEnabled;
-
-    constructor(address owner) Bank(owner) {}
 
     modifier accountEnabled(address account) {
         require(addressToEnabled[account], Errors.IS_NOT_ENABLED);

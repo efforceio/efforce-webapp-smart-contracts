@@ -14,7 +14,7 @@ interface IContractMetadata {
         @notice Returns the contract metadata URI.
         @return The URI for contract-level metadata.
     */
-    function contractURI() external view returns(string);
+    function contractURI() external view returns(string memory);
 
     /*
         @notice Emitted when contract metadata are updated.

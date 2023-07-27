@@ -15,17 +15,17 @@ contract Roles is IRoles {
     }
 
     modifier contractOwner(address account) {
-        require(account == owner, Errors.IS_NOT_OWNER);
+        require(account == owner, Errors.NOT_ALLOWED);
         _;
     }
 
     modifier adminOrOwner(address account) {
-        require(addressToAdmin[account] || account == owner, Errors.IS_NOT_ADMIN);
+        require(addressToAdmin[account] || account == owner, Errors.NOT_ALLOWED);
         _;
     }
 
     modifier managerOrOwner(address account) {
-        require(addressToManager[account] || account == owner, Errors.IS_NOT_MANAGER);
+        require(addressToManager[account] || account == owner, Errors.NOT_ALLOWED);
         _;
     }
 

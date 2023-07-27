@@ -2,18 +2,16 @@
 pragma solidity ^0.8.0;
 
 import "../interfaces/IContractMetadata.sol";
-import "./Fundings.sol";
+import "./Roles.sol";
 
-contract ContractMetadata is IContractMetadata, Fundings {
+abstract contract ContractMetadata is IContractMetadata, Roles {
 
-    string private contractMetadata;
+    string private contractMetadataURI;
 
     constructor(
-        address owner,
-        string memory metadataUri,
-        string _contractMetadata
-    ) Fundings(owner, metadataUri) {
-        contractMetadata = _contractMetadata;
+        string memory _contractMetadataURI
+    ) {
+        contractMetadataURI = _contractMetadataURI;
     }
 
     function setContractURI(
@@ -23,7 +21,7 @@ contract ContractMetadata is IContractMetadata, Fundings {
         contractOwner(msg.sender)
         override
     {
-        contractMetadata = _uri;
+        contractMetadataURI = _uri;
         emit ContractURIUpdated(_uri);
     }
 
@@ -31,9 +29,9 @@ contract ContractMetadata is IContractMetadata, Fundings {
         external
         override
         view
-        returns(string)
+        returns(string memory)
     {
-        return contractMetadata;
+        return contractMetadataURI;
     }
 
 }

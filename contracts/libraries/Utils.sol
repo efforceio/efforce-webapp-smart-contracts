@@ -3,7 +3,11 @@ pragma solidity ^0.8.0;
 
 library Utils {
 
-    function isContract(address addr) public returns (bool) {
+    function isContract(address addr)
+        public
+        view
+        returns (bool)
+    {
         uint size;
         assembly { size := extcodesize(addr) }
         return size > 0;

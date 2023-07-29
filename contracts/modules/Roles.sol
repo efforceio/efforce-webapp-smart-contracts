@@ -38,7 +38,7 @@ contract Roles is IRoles {
         contractOwner(msg.sender)
     {
         addressToAdmin[account] = admin;
-        emit RoleAssignment(account, 0, admin);
+        emit RoleAssignment(account, 0, !admin);
     }
 
     function setManager(
@@ -50,7 +50,7 @@ contract Roles is IRoles {
         contractOwner(msg.sender)
     {
         addressToManager[account] = manager;
-        emit RoleAssignment(account, 1, manager);
+        emit RoleAssignment(account, 1, !manager);
     }
 
     function setOwner(

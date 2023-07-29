@@ -1,6 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Main, Token } from "../typechain-types";
 import { ethers } from "hardhat";
+import { time } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from "chai";
 
 describe("Main", () => {
@@ -14,6 +15,7 @@ describe("Main", () => {
         projectIds: number[],
         creditIds: number[],
         recordIds: number[],
+        phaseIds: number[],
         lastDate: Date;
 
     const
@@ -21,6 +23,7 @@ describe("Main", () => {
         contractMetadataURI = "contract.metadata.uri",
         royaltyBps = 10_00,
         amount = 100,
+        price = 1,
         days = 1;
 
     before("Initialization", async function() {
@@ -47,6 +50,7 @@ describe("Main", () => {
         projectIds = [];
         creditIds = [];
         recordIds = [];
+        phaseIds = [];
         lastDate = new Date();
     });
 
@@ -532,4 +536,116 @@ describe("Main", () => {
         });
     });
 
+    describe("Fundings", () => {
+        it("Opens phase", async () => {
+            await expect(main.connect(account1).openPhase(
+                projectIds[0],
+                amount,
+                price,
+                token.address
+            )).reverted;
+
+            await expect(main.connect(account2).openPhase(
+                projectIds[0],
+                amount,
+                price,
+                token.address
+            ))
+                .emit(main, "PhaseAction")
+                .withArgs(
+                    phaseIds.length + 1,
+                    true,
+                    amount,
+                    price,
+                    token.address,
+                    false
+                );
+
+            await expect(main.connect(account2).openPhase(
+                projectIds[0],
+                amount,
+                price,
+                token.address
+            )).reverted;
+
+            await main.connect(account2).openPhase(
+                projectIds[1],
+                amount,
+                price,
+                token.address
+            );
+        });
+
+        it("Buys credits", async () => {
+            await token.mintTo(account1.address, price);
+            await token.mintTo(account2.address, price * 101);
+            await token.mintTo(owner.address, price);
+
+            await expect(main.buyCredits(projectIds[0], 1)).reverted;
+
+            await token.connect(account1).approve(main.address, price);
+            await expect(main.connect(account1).buyCredits(projectIds[0], 1))
+                .emit(main, "CreditsPurchased")
+                .withArgs(
+                    creditIds.length + 1,
+                    1,
+                    account1.address
+                );
+            creditIds.push(creditIds.length + 1);
+
+            await token.connect(account2).approve(main.address, price * 101);
+            await expect(main.connect(account2).buyCredits(projectIds[1], 1))
+                .emit(main, "CreditsPurchased")
+                .withArgs(
+                    creditIds.length + 1,
+                    1,
+                    account2.address
+                );
+            creditIds.push(creditIds.length + 1);
+
+            await expect(main.connect(account2).buyCredits(projectIds[1], 99)).not.reverted;
+            await expect(main.connect(account2).buyCredits(projectIds[1], 1)).reverted;
+
+            await expect(main.withdraw(token.address, owner.address, price)).reverted;
+
+            expect(await token.balanceOf(main.address)).equal(amount * price + price);
+            expect(await token.balanceOf(account2.address)).equal(1);
+        });
+
+        it("Closes phase", async () => {
+            await expect(main.connect(account1).closePhase(projectIds[0], false)).reverted;
+
+            await expect(main.connect(account2).closePhase(projectIds[0], true))
+                .emit(main, "PhaseAction")
+                .withArgs(
+                    creditIds.length - 1,
+                    false,
+                    amount,
+                    price,
+                    token.address,
+                    true
+                );
+
+            expect(await token.balanceOf(account1.address)).equal(price);
+            expect(await main.balanceOf(account1.address, creditIds.length - 1)).equal(0);
+
+            await expect(main.withdraw(token.address, owner.address, price)).reverted;
+
+            await expect(main.closePhase(projectIds[1], false))
+                .emit(main, "PhaseAction")
+                .withArgs(
+                    creditIds.length,
+                    false,
+                    amount,
+                    price,
+                    token.address,
+                    false
+                );
+
+            /*expect(await token.balanceOf(account2.address)).equal(0);
+            expect(await main.balanceOf(account2.address, creditIds.length)).equal(1);
+
+            await expect(main.withdraw(token.address, owner.address, price)).not.reverted;*/
+        });
+    });
 });

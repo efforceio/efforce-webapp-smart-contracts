@@ -67,7 +67,6 @@ interface IFundings {
         bool indexed opened,
         uint256 credits,
         uint256 price,
-        uint256 timestamp,
         address currencyAddress,
         bool refund
     );

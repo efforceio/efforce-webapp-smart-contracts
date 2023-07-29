@@ -6,13 +6,14 @@ import "./Projects.sol";
 import "../libraries/Errors.sol";
 import "../helpers/IERC20.sol";
 import "./Bank.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 abstract contract Fundings is IFundings, Projects, Bank {
 
     uint256 private nPhases;
     mapping(uint256 => Phase) private projectIdToPhase;
     mapping(uint256 => mapping(address => uint256)) private phaseIdToAmountPerBuyer;
-    mapping(uint256 => address[]) private phaseIdToBuyers;
+    mapping(uint256 => EnumerableSet.AddressSet) private phaseIdToBuyers;
     mapping(address => uint256) private blockedAmountForToken;
 
     constructor() {
@@ -60,7 +61,7 @@ abstract contract Fundings is IFundings, Projects, Bank {
             lastCreditsId
         );
 
-        emit PhaseAction(nPhases, true, credits, price, timestamp, tokenAddress, false);
+        emit PhaseAction(nPhases, true, credits, price, tokenAddress, false);
     }
 
     function buyCredits(
@@ -78,8 +79,9 @@ abstract contract Fundings is IFundings, Projects, Bank {
         address currency = projectIdToPhase[projectId].currencyAddress;
 
         IERC20(currency).transferFrom(msg.sender, address(this), price);
+
         phaseIdToAmountPerBuyer[phaseId][msg.sender] += amount;
-        phaseIdToBuyers[phaseId].push(msg.sender);
+        EnumerableSet.add(phaseIdToBuyers[phaseId], msg.sender);
         projectIdToPhase[projectId].availableCredits -= amount;
         blockedAmountForToken[currency] += price;
 
@@ -99,17 +101,18 @@ abstract contract Fundings is IFundings, Projects, Bank {
         address currency = projectIdToPhase[projectId].currencyAddress;
         uint256 pricePerCredit = projectIdToPhase[projectId].price;
 
-        for (uint256 i = 0; i < phaseIdToBuyers[phaseId].length; i++) {
-            uint256 amount = phaseIdToAmountPerBuyer[phaseId][phaseIdToBuyers[phaseId][i]];
-            address account = phaseIdToBuyers[phaseId][i];
+        for (uint256 i = 0; i < EnumerableSet.length(phaseIdToBuyers[phaseId]); i++) {
+            uint256 amount = phaseIdToAmountPerBuyer[phaseId][EnumerableSet.at(phaseIdToBuyers[phaseId], i)];
+            address account = EnumerableSet.at(phaseIdToBuyers[phaseId], i);
             uint256 price = amount * pricePerCredit;
 
             if (refund) {
                 IERC20(currency).transfer(account, price);
             } else {
                 balances[phaseId][account] = amount;
-                blockedAmountForToken[currency] -= price;
             }
+
+            blockedAmountForToken[currency] -= price;
         }
 
         projectIdToPhase[projectId].open = false;
@@ -119,7 +122,6 @@ abstract contract Fundings is IFundings, Projects, Bank {
             false,
             projectIdToPhase[projectId].totalCredits,
             pricePerCredit,
-            projectIdToPhase[projectId].openedTimestamp,
             currency,
             refund
         );

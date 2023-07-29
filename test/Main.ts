@@ -1,7 +1,6 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Main, Token } from "../typechain-types";
 import { ethers } from "hardhat";
-import { time } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from "chai";
 
 describe("Main", () => {

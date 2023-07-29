@@ -1,6 +1,5 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Main, Token } from "../typechain-types";
-import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
 import { expect } from "chai";
 
@@ -205,7 +204,22 @@ describe("Main", () => {
     });
 
     describe("Bank", () => {
+        it("Withdraws", async () => {
+            await token.mintTo(main.address, 1);
 
+            await expect(main.connect(account1).withdraw(token.address, account1.address, 1)).reverted;
+            await expect(main.connect(account2).withdraw(token.address, account2.address, 1)).reverted;
+
+            await expect(main.withdraw(token.address, owner.address, 1))
+                .emit(main, "Withdrawal")
+                .withArgs(
+                    token.address,
+                    owner.address,
+                    1
+                );
+
+            expect(await token.balanceOf(owner.address)).equal(1);
+        });
     });
 
 });

@@ -35,6 +35,11 @@ abstract contract ERC1155 is IERC1155, Accounts {
         _;
     }
 
+    modifier idExists(uint256 id) {
+        require(id > 0 && id <= lastCreditsId, Errors.NOT_EXISTS);
+        _;
+    }
+
     function safeTransferFrom(
         address _from,
         address _to,
@@ -167,11 +172,12 @@ abstract contract ERC1155 is IERC1155, Accounts {
     }
 
     function uri(
-        uint256
+        uint256 id
     )
         external
         view
         override
+        idExists(id)
         returns(string memory)
     {
         return baseUri;

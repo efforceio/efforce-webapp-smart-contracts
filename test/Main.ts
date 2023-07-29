@@ -2,7 +2,6 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Main, Token } from "../typechain-types";
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import * as assert from "assert";
 
 describe("Main", () => {
     let

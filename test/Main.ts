@@ -641,10 +641,10 @@ describe("Main", () => {
                     false
                 );
 
-            /*expect(await token.balanceOf(account2.address)).equal(0);
-            expect(await main.balanceOf(account2.address, creditIds.length)).equal(1);
+            expect(await token.balanceOf(account2.address)).equal(1);
+            expect(await main.balanceOf(account2.address, creditIds.length)).equal(100);
 
-            await expect(main.withdraw(token.address, owner.address, price)).not.reverted;*/
+            await expect(main.withdraw(token.address, owner.address, price)).not.reverted;
         });
     });
 });

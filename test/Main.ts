@@ -12,13 +12,16 @@ describe("Main", () => {
         token: Token,
         decimals: number,
         projectIds: number[],
-        creditIds: number[];
+        creditIds: number[],
+        recordIds: number[],
+        lastDate: Date;
 
     const
         metadataURI = "uri.metadata",
         contractMetadataURI = "contract.metadata.uri",
         royaltyBps = 10_00,
-        amount = 100;
+        amount = 100,
+        days = 1;
 
     before("Initialization", async function() {
         [owner, account1, account2] = (await ethers.getSigners());
@@ -43,6 +46,8 @@ describe("Main", () => {
 
         projectIds = [];
         creditIds = [];
+        recordIds = [];
+        lastDate = new Date();
     });
 
     describe("Roles", () => {
@@ -429,6 +434,101 @@ describe("Main", () => {
         it("Gets approved for all", async () => {
             expect(await main.isApprovedForAll(account1.address, account2.address)).is.true;
             expect(await main.isApprovedForAll(account2.address, account1.address)).is.false;
+        });
+    });
+
+    describe("ERC-5006", () => {
+        it("Creates user record", async () => {
+            lastDate = new Date();
+            lastDate.setDate(lastDate.getDate() + days);
+            let timestamp = Math.floor(lastDate.getTime() / 1000);
+
+            await expect(main.connect(account1).createUserRecord(
+                account2.address,
+                account1.address,
+                creditIds[1],
+                amount,
+                timestamp
+            )).reverted;
+
+            await expect(main.connect(account2).createUserRecord(
+                account2.address,
+                owner.address,
+                creditIds[1],
+                amount,
+                timestamp
+            )).reverted;
+
+            await expect(main.connect(account2).createUserRecord(
+                account2.address,
+                account1.address,
+                creditIds[0],
+                amount,
+                timestamp
+            )).reverted;
+
+            for (let i = 0; i < 2; i++) {
+                await expect(main.connect(account2).createUserRecord(
+                    account2.address,
+                    account1.address,
+                    creditIds[1],
+                    1,
+                    timestamp
+                ))
+                    .emit(main, "CreateUserRecord")
+                    .withArgs(
+                        recordIds.length + 1,
+                        creditIds[1],
+                        1,
+                        account2.address,
+                        account1.address,
+                        timestamp
+                    );
+                recordIds.push(recordIds.length + 1);
+            }
+
+            const record = await main.userRecordOf(recordIds[0]);
+            expect(record.tokenId).equal(creditIds[1]);
+            expect(record.owner).equal(account2.address);
+            expect(record.amount).equal(1);
+            expect(record.user).equal(account1.address);
+            expect(record.expiry).equal(timestamp);
+
+            expect(await main.usableBalanceOf(account1.address, creditIds[1])).equal(2);
+            expect(await main.frozenBalanceOf(account2.address, creditIds[1])).equal(2);
+
+            await expect(main.connect(account2).createUserRecord(
+                account1.address,
+                account2.address,
+                creditIds[0],
+                1,
+                timestamp
+            )).not.reverted;
+            recordIds.push(recordIds.length + 1);
+
+            expect(await main.usableBalanceOf(account2.address, creditIds[0])).equal(1);
+            expect(await main.frozenBalanceOf(account1.address, creditIds[0])).equal(1);
+        });
+
+        it("Remove user record", async () => {
+            await expect(main.connect(account2).deleteUserRecord(recordIds[0])).reverted;
+
+            lastDate.setDate(lastDate.getDate() + days);
+            const newDate = Math.floor(lastDate.getTime() / 1000);
+            await ethers.provider.send("evm_mine", [newDate]);
+
+            await expect(main.connect(account1).deleteUserRecord(recordIds[0])).reverted;
+
+            expect(await main.usableBalanceOf(account1.address, creditIds[1])).equal(0);
+            expect(await main.frozenBalanceOf(account2.address, creditIds[1])).equal(2);
+
+            await expect(main.connect(account2).deleteUserRecord(recordIds[0]))
+                .emit(main, "DeleteUserRecord")
+                .withArgs(recordIds[0]);
+
+            expect(await main.frozenBalanceOf(account2.address, creditIds[1])).equal(1);
+
+            await expect(main.connect(account2).deleteUserRecord(recordIds[0])).reverted;
         });
     });
 

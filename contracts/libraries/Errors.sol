@@ -22,7 +22,7 @@ library Errors {
     //ERC5006
     string constant public NOT_EXPIRED = "400";
 
-    //Projects
+    //General
     string constant public NOT_EXISTS = "500";
 
     //Fundings

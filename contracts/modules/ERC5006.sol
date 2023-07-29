@@ -22,6 +22,14 @@ abstract contract ERC5006 is IERC5006, ERC1155 {
         _;
     }
 
+    modifier recordExists(uint256 recordId) {
+        require(
+            EnumerableSet.contains(usersToRecordsSet[records[recordId].user][records[recordId].tokenId], recordId),
+            Errors.NOT_EXISTS
+        );
+        _;
+    }
+
     function createUserRecord(
         address owner,
         address user,
@@ -59,10 +67,12 @@ abstract contract ERC5006 is IERC5006, ERC1155 {
         external
         override
         ownerOrOperator(records[recordId].owner)
+        recordExists(recordId)
         expiredRecord(recordId)
     {
         uint256 tokenId = records[recordId].tokenId;
-        frozen[owner][tokenId] -= records[recordId].amount;
+
+        frozen[records[recordId].owner][tokenId] -= records[recordId].amount;
         EnumerableSet.remove(usersToRecordsSet[records[recordId].user][tokenId], recordId);
 
         emit DeleteUserRecord(recordId);

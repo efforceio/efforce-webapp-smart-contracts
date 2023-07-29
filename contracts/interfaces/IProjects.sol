@@ -25,7 +25,7 @@ interface IProjects {
         @param creditId The target credits id.
         @return The id of the project linked to target credit id.
     */
-    function projectIdForCredit(uint256 creditId) external returns(uint256);
+    function projectIdForCredit(uint256 creditId) external view returns(uint256);
 
     /*
         @note Emitted when a new project is created.

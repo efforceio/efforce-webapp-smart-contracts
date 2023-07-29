@@ -2,6 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Main, Token } from "../typechain-types";
 import { ethers } from "hardhat";
 import { expect } from "chai";
+import * as assert from "assert";
 
 describe("Main", () => {
     let
@@ -10,7 +11,9 @@ describe("Main", () => {
         account2: SignerWithAddress,
         main: Main,
         token: Token,
-        decimals: number;
+        decimals: number,
+        projectIds: number[],
+        creditIds: number[];
 
     const
         metadataURI = "uri.metadata",
@@ -37,6 +40,9 @@ describe("Main", () => {
         token = await Token.deploy("Token", "TKN");
 
         decimals = await token.decimals();
+
+        projectIds = [];
+        creditIds = [];
     });
 
     describe("Roles", () => {
@@ -219,6 +225,58 @@ describe("Main", () => {
                 );
 
             expect(await token.balanceOf(owner.address)).equal(1);
+        });
+    });
+
+    describe("Projects", () => {
+        it("Creates project", async () => {
+            await expect(main.connect(account1).createProject()).reverted;
+
+            await expect(main.connect(account2).createProject())
+                .emit(main, "ProjectCreation")
+                .withArgs(projectIds.length + 1);
+            projectIds.push(projectIds.length + 1);
+
+            await expect(main.createProject())
+                .emit(main, "ProjectCreation")
+                .withArgs(projectIds.length + 1);
+            projectIds.push(projectIds.length + 1);
+        });
+
+        it("Creates credits for project", async () => {
+            const projectId = projectIds[0];
+            const amount = 100;
+
+            await expect(main.connect(account1).newCreditsForProject(projectId, amount, account1.address)).reverted;
+            await expect(main.connect(account2).newCreditsForProject(0, amount, account1.address)).reverted;
+            await expect(main.connect(account2).newCreditsForProject(3, amount, account1.address)).reverted;
+            await expect(main.connect(account2).newCreditsForProject(3, amount, owner.address)).reverted;
+
+            expect(await main.newCreditsForProject(projectId, amount, account1.address))
+                .emit(main, "NewCreditsReleased")
+                .withArgs(
+                    creditIds.length + 1,
+                    projectId,
+                    amount,
+                    account1.address
+                );
+            expect(await main.projectIdForCredit(creditIds.length + 1)).equal(projectId);
+            creditIds.push(creditIds.length + 1);
+
+            expect(await main.connect(account2).newCreditsForProject(projectId, amount, account2.address))
+                .emit(main, "NewCreditsReleased")
+                .withArgs(
+                    creditIds.length + 1,
+                    projectId,
+                    amount,
+                    account2.address
+                );
+            expect(await main.projectIdForCredit(creditIds.length + 1)).equal(projectId);
+            creditIds.push(creditIds.length + 1);
+        });
+
+        it("projectIdForCredit", async () => {
+            await expect(main.projectIdForCredit(0)).reverted;
         });
     });
 

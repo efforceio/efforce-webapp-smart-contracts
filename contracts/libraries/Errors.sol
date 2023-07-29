@@ -23,7 +23,7 @@ library Errors {
     string constant public NOT_EXPIRED = "400";
 
     //Projects
-    string constant public PROJECT_NOT_EXISTS = "500";
+    string constant public NOT_EXISTS = "500";
 
     //Fundings
     string constant public PHASE_ALREADY_OPEN = "600";

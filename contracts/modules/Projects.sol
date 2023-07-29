@@ -15,7 +15,7 @@ abstract contract Projects is IProjects, ERC1155 {
     }
 
     modifier projectExists(uint256 projectId) {
-        require(projectId > 0 && projectId <= nProjects, Errors.PROJECT_NOT_EXISTS);
+        require(projectId > 0 && projectId <= nProjects, Errors.NOT_EXISTS);
         _;
     }
 
@@ -57,9 +57,12 @@ abstract contract Projects is IProjects, ERC1155 {
     )
         external
         override
+        view
         returns(uint256)
     {
-        return creditIdToProjectId[creditId];
+        uint256 projectId = creditIdToProjectId[creditId];
+        require(projectId > 0, Errors.NOT_EXISTS);
+        return projectId;
     }
 
 }

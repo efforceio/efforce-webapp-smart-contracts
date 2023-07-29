@@ -20,6 +20,7 @@ abstract contract Royalties is IRoyalties, Roles {
         contractOwner(msg.sender)
     {
         royaltyBps = _royaltyBps;
+        emit RoyaltiesUpdated(_royaltyBps);
     }
 
     function royaltyInfo(

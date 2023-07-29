@@ -17,4 +17,10 @@ interface IRoyalties {
     */
     function royaltyInfo(uint256 tokenId, uint256 salePrice) external view returns(address, uint256);
 
+    /*
+        @notice Emitted when the royalty bps is updated.
+        @param royaltyBps The new royalty bps.
+    */
+    event RoyaltiesUpdated(uint256 royaltyBps);
+
 }

@@ -143,8 +143,8 @@ abstract contract Fundings is IFundings, Projects, Bank {
         address token
     )
         internal
-        virtual
         override
+        view
         returns(uint256)
     {
         return blockedAmountForToken[token];

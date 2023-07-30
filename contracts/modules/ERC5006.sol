@@ -121,7 +121,6 @@ abstract contract ERC5006 is IERC5006, ERC1155 {
 
     function _getFrozen(address account, uint256 tokenId)
         internal
-        virtual
         override
         view
         returns(uint256)

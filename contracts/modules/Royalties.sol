@@ -24,7 +24,7 @@ abstract contract Royalties is IRoyalties, Roles {
     }
 
     function royaltyInfo(
-        uint256 tokenId,
+        uint256,
         uint256 salePrice
     )
         external

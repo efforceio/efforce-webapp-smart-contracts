@@ -35,5 +35,6 @@ abstract contract Bank is IBank, Roles {
     )
         internal
         virtual
+        view
         returns(uint256);
 }

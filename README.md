@@ -1,13 +1,9 @@
-# Sample Hardhat Project
+# Efforce marketplace blockchain
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
+This is the repository of the web3 backend for the Efforce project. The repository is divided into three smart contracts:
 
-Try running some of the following tasks:
+- Projects
+- Marketplace
+- Repo
 
-```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat run scripts/deploy.ts
-```
+To install necessary packages, run `npm install`.

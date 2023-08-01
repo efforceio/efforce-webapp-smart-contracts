@@ -42,6 +42,7 @@ interface IListings {
         @param endTimestamp The timestamp in which the listing will expire.
         @param currency The address of the ERC20 token used for payments.
         @param rentingTime The duration of the renting.
+        @return The id of the new listing.
     */
     function createListing(
         uint256 creditId,
@@ -51,13 +52,13 @@ interface IListings {
         uint256 endTimestamp,
         address currency,
         uint256 rentingPeriod
-    ) external;
+    ) external returns(uint256);
 
     /*
         @notice Returns the listing with given ID.
         @return The details of the given listing.
     */
-    function getListing(uint256 listingId) external view returns(Listing);
+    function getListing(uint256 listingId) external view returns(Listing memory);
 
     /*
         @notice Emitted when a listing is closed or canceled.
@@ -81,7 +82,8 @@ interface IListings {
         uint256 quantity,
         uint256 endTimestamp,
         uint256 rentingTime,
-        address currency
+        address currency,
+        uint256 listingId
     );
 
 }

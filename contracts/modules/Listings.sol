@@ -33,8 +33,13 @@ contract Listings is IListings, IPurchase {
         _;
     }
 
-    modifier hasEnoughTokens(uint256 creditsId, address creditsAddress, address owner) {
-        require(IERC1155(creditsAddress).balanceOf(owner, creditsId), Errors.CREDITS_NOT_AVAILABLE);
+    modifier hasEnoughTokens(
+        uint256 creditsId,
+        address creditsAddress,
+        address owner,
+        uint256 amount
+    ) {
+        require(IERC1155(creditsAddress).balanceOf(owner, creditsId) >= amount, Errors.CREDITS_NOT_AVAILABLE);
         _;
     }
 
@@ -51,16 +56,16 @@ contract Listings is IListings, IPurchase {
         uint256 royalties;
         uint price = idToListing[listingId].pricePerToken * quantity;
 
-        (royaltiesReceiver, royalties) = IRoyalties(idToListing[listingId]).royaltyInfo(
+        (royaltiesReceiver, royalties) = IRoyalties(idToListing[listingId].creditsAddress).royaltyInfo(
             idToListing[listingId].creditId,
-            idToListing[listingId].creditId.pricePerToken * quantity
+            idToListing[listingId].pricePerToken * quantity
         );
 
         IERC20(idToListing[listingId].currency).transferFrom(msg.sender, royaltiesReceiver, royalties);
         IERC20(idToListing[listingId].currency).transferFrom(
             msg.sender,
-            price - royaltiesReceiver,
-            royalties
+            idToListing[listingId].creatorAddress,
+            price - royalties
         );
 
         if (idToListing[listingId].rentingPeriod == 0) {
@@ -69,7 +74,7 @@ contract Listings is IListings, IPurchase {
                 msg.sender,
                 idToListing[listingId].creditId,
                 quantity,
-                0x00
+                "0x00"
             );
 
             emit PurchaseCompleted(
@@ -123,7 +128,7 @@ contract Listings is IListings, IPurchase {
         isOwner(listingId, msg.sender)
     {
         idToListing[listingId].status = 2;
-        ListingUpdated(listingId, 2);
+        emit ListingUpdated(listingId, 2);
     }
 
     function createListing(
@@ -137,11 +142,12 @@ contract Listings is IListings, IPurchase {
     )
         external
         override
-        hasEnoughTokens(creditId, creditsAddress, msg.sender)
+        hasEnoughTokens(creditId, creditsAddress, msg.sender, quantity)
+        returns(uint256)
     {
         nListings++;
 
-        idToListing[nListings] = Listings(
+        idToListing[nListings] = Listing(
             msg.sender,
             creditId,
             creditsAddress,
@@ -158,9 +164,12 @@ contract Listings is IListings, IPurchase {
             pricePerToken,
             quantity,
             endTimestamp,
-            rentingTime,
-            currency
+            rentingPeriod,
+            currency,
+            nListings
         );
+
+        return nListings;
     }
 
     function getListing(
@@ -169,7 +178,7 @@ contract Listings is IListings, IPurchase {
         external
         override
         view
-        returns(Listing)
+        returns(Listing memory)
     {
         return idToListing[listingId];
     }

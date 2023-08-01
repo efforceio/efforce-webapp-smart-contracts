@@ -8,7 +8,7 @@ import "./modules/ContractMetadata.sol";
 import "./modules/ERC165.sol";
 import "./modules/Royalties.sol";
 
-contract Main is
+contract Credits is
     ERC5006,
     Fundings,
     ContractMetadata,

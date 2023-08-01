@@ -2,8 +2,7 @@
   "name": "efforce-marketplace",
   "scripts": {
     "compile": "npx hardhat compile",
-    "deploy-projects-mumbai": "hardhat run scripts/deploy-projects.ts  --network polygon_mumbai",
-    "release": "npx thirdweb@latest release",
+    "deploy-credits-testnet": "hardhat run scripts/deploy-credits.ts  --network polygon_mumbai",
     "test": "npx hardhat test"
   },
   "devDependencies": {

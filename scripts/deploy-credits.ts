@@ -5,24 +5,24 @@ async function main() {
     const Utils = await ethers.getContractFactory("Utils");
     const utils = await Utils.deploy();
 
-    const Main = await ethers.getContractFactory(
-        "Main",
+    const Credits = await ethers.getContractFactory(
+        "Credits",
         {
             libraries: {
                 Utils: utils.address
             }
         }
     );
-    const main = await Main.deploy(
+    const credits = await Credits.deploy(
         "0xF40fE06c96Fb6be8cf1995dd039Bb59408656046",
         "metadataURI",
         "contractMetadataURI",
         10_00
     );
 
-    await main.deployed();
+    await credits.deployed();
 
-    console.log(`Projects deployed to ${main.address}`);
+    console.log(`Projects deployed to ${credits.address}`);
 }
 
 main().catch((error) => {

@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../interfaces/IBank.sol";
 import "../helpers/IERC20.sol";
-import "./Roles.sol";
+import "../Roles.sol";
 
 abstract contract Bank is IBank, Roles {
 

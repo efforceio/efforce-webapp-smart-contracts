@@ -21,14 +21,6 @@ interface IRoles {
     function setAdmin(address account, bool admin) external;
 
     /*
-        @notice Assigns the manager role to the input account.
-        @dev Can be invoked only by the contract owner.
-        @param account The target account.
-        @param admin If true, the target account will be assigned the manager role, otherwise it will be revoked.
-    */
-    function setManager(address account, bool manager) external;
-
-    /*
         @notice Sets the input account as the new contract owner, replacing the previous one.
         @dev Can be invoked only by the contract owner.
         @param account The address of the new contract owner.
@@ -42,22 +34,16 @@ interface IRoles {
     */
     function isAdmin(address account) external view returns(bool);
 
-    /*
-        @notice Returns true if the input account is a manager, false otherwise
-        @param account The target account.
-        @return True if the target account is a manager, false otherwise.
-    */
-    function isManager(address account) external view returns(bool);
+    function getOwner() external view returns(address);
 
     /*
         @notice Emitted when the role is assigned to or revoked from the target account or when the target
-            is the new contract owner (in this case isRevoked is always false).
-        @dev When the contract owner is assigned to a new address, isRevoked is set to false.
-        @dev The role is set to 0 if admin, 1 if manager, 2 if contract owner.
+            is the new contract owner (in this case isAdmin is always false).
+        @dev When the contract owner is assigned to a new address, isAdmin is set to false.
         @param account The target account.
-        @param role The role that is assigned or revoked.
-        @param isRevoked If the role is revoked, this field is set to true and false otherwise.
+        @param isOwner True if the target account is the new contract owner.
+        @param isAdmin True if the target account is admin.
     */
-    event RoleAssignment(address indexed account, uint8 role, bool isRevoked);
+    event RoleAssignment(address indexed account, bool isOwner, bool isAdmin);
 
 }

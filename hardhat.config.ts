@@ -15,10 +15,10 @@ const config: HardhatUserConfig = {
   },
   networks: {
     hardhat: {},
-    polygon_mumbai: {
+    /*polygon_mumbai: {
       url: "https://rpc-mumbai.maticvigil.com",
       accounts: [process.env.PRIVATE_KEY || ""]
-    }
+    }*/
   }
 };
 

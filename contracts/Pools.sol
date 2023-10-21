@@ -180,9 +180,9 @@ contract Pools {
         isStakingPeriod(id)
         isAdminOrOwner()
     {
-        addressToPoolStaking[msg.sender][id] = amount;
+        addressToPoolStaking[account][id] = amount;
         poolToStaked[id] += amount;
-        emit Locking(msg.sender, id, amount, true);
+        emit Locking(account, id, amount, true);
     }
 
     /*

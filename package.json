@@ -2,17 +2,19 @@
   "name": "efforce-marketplace",
   "scripts": {
     "compile": "npx hardhat compile",
-    "deploy-thirdweb": "npx thirdweb deploy",
     "deploy-credits-testnet": "hardhat run scripts/deploy-credits.ts  --network polygon_mumbai",
     "deploy-roles-testnet": "hardhat run scripts/deploy-roles.ts  --network polygon_mumbai",
+    "deploy-pools-testnet": "hardhat run scripts/deploy-pools.ts  --network polygon_mumbai",
     "test": "npx hardhat test"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
-    "hardhat": "^2.18.0"
+    "hardhat": "^2.18.0",
+    "typescript": "^5.2.2"
   },
   "dependencies": {
     "@openzeppelin/contracts": "4.9.3",
-    "@thirdweb-dev/contracts": "^3.8.0"
+    "@thirdweb-dev/contracts": "^3.8.0",
+    "dotenv": "^16.3.1"
   }
 }

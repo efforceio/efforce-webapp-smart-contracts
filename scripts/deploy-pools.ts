@@ -1,0 +1,73 @@
+import { ethers } from "hardhat";
+import hre from "hardhat";
+
+async function main() {
+
+    let rolesAddress = "";
+    let usdcAddress = "";
+    let stakingPeriod = 0;
+    let etherscanBaseURL = "";
+
+    console.log("Reading input…");
+
+    switch (process.env.HARDHAT_NETWORK) {
+        case 'polygon_mumbai':
+            if (!process.env.ROLES_MUMBAI || !process.env.USDC_MUMBAI || !process.env.LOCKING_PERIOD_MUMBAI) {
+                throw "Roles address, USDC address, or Licking period not set";
+            } else {
+                rolesAddress = process.env.ROLES_MUMBAI;
+                usdcAddress = process.env.USDC_MUMBAI;
+                stakingPeriod = Number(process.env.LOCKING_PERIOD_MUMBAI);
+                etherscanBaseURL = "https://mumbai.polygonscan.com/address/";
+            }
+            break;
+        default:
+            throw "Network not supported";
+    }
+
+    const Pools = await ethers.getContractFactory("Pools");
+
+    console.log("Start deployment…");
+
+    const pools = await Pools.deploy(
+        rolesAddress,
+        stakingPeriod,
+        usdcAddress
+    );
+
+    await pools.deployed();
+
+    console.log(`Pools deployed to ${pools.address}`);
+    console.log(`Awaiting 5 confirmations…`);
+
+    await pools.deployTransaction.wait(5);
+
+    console.log(`Done.`);
+    console.log("Verifying in etherscan…");
+    console.log("Waiting 1 min. for registration…");
+
+    setTimeout(async function () {
+        try {
+            console.log(`Done.`);
+            await hre.run("verify:verify", {
+                address: pools.address,
+                constructorArguments: [
+                    rolesAddress,
+                    stakingPeriod,
+                    usdcAddress
+                ],
+                network: process.env.HARDHAT_NETWORK
+            });
+
+            console.log(`Process terminated: ${etherscanBaseURL}${pools.address}.`);
+        } catch (e) {
+            console.error(e);
+        }
+    }, 60000);
+
+}
+
+main().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+});

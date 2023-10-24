@@ -1,9 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.21;
 
-contract Credits {
+import "./modules/ERC5006.sol";
 
-    constructor(address _rolesAddress) {
+contract Credits is ERC5006 {
 
-    }
+    constructor(
+        string memory metadataUri,
+        address _rolesAddress
+    )
+        ERC1155(metadataUri)
+        RolesModifier(_rolesAddress)
+    {}
 }

@@ -277,7 +277,13 @@ contract Pools {
         @param amount The amount that is staked or unstaked.
         @param isStaking If the target account is staking funds, it is set to true, otherwise false.
     */
-    event Staking(address account, address sender, uint256 id, uint256 amount, bool isStaking);
+    event Staking(
+        address indexed account,
+        address sender,
+        uint256 indexed id,
+        uint256 amount,
+        bool indexed isStaking
+    );
 
     /*
         @notice Emitted when a new pool is created.
@@ -294,5 +300,5 @@ contract Pools {
             2 –> Pool funded for refund.
         @param amount The funded amount if state is 2, 0 otherwise.
     */
-    event PoolChangedState(uint256 id, uint8 state, uint256 amount);
+    event PoolChangedState(uint256 indexed id, uint8 indexed state, uint256 amount);
 }

@@ -23,6 +23,11 @@ contract Pools {
     mapping(address=>mapping(uint256=>uint256)) private addressToPoolStaking;
     mapping(uint256=>uint256) private poolToStaked;
 
+    /*
+        @param _rolesContract The address of the roles smart contract.
+        @param _stakingPeriod The period in which assets are staked.
+        @param _tokenContract The erc20 token address to be staked and unstaked.
+    */
     constructor(address _rolesContract, uint256 _stakingPeriod, address _tokenContract) {
         rolesContract = _rolesContract;
         stakingPeriod = _stakingPeriod;
@@ -46,7 +51,7 @@ contract Pools {
         @param id The id of the target pool.
     */
     modifier canCancel(uint256 id) {
-        require(idToPool[id].stakingStartedAt == 0, Errors.NOT_ALLOWED);
+        require(idToPool[id].stakingStartedAt == 0, Errors.POOL_IS_OPEN);
         _;
     }
 
@@ -56,9 +61,7 @@ contract Pools {
     */
     modifier canStartStaking(uint256 id) {
         require(
-            idToPool[id].stakingStartedAt == 0 && !idToPool[id].canceled,
-            Errors.NOT_ALLOWED
-        );
+            idToPool[id].stakingStartedAt == 0 && !idToPool[id].canceled, Errors.POOL_IS_OPEN);
         _;
     }
 
@@ -67,9 +70,7 @@ contract Pools {
     */
     modifier isStakingPeriod(uint256 id) {
         require(
-            !idToPool[id].canceled &&
-            idToPool[id].stakingStartedAt == 0
-        );
+            !idToPool[id].canceled && idToPool[id].stakingStartedAt == 0, Errors.STAKING_NOT_ALLOWED);
         _;
     }
 
@@ -82,7 +83,8 @@ contract Pools {
     modifier isUnstakingPeriod(uint256 id) {
         require(
             idToPool[id].canceled ||
-            block.timestamp >= idToPool[id].stakingStartedAt + stakingPeriod && idToPool[id].allocated > 0
+            block.timestamp >= idToPool[id].stakingStartedAt + stakingPeriod && idToPool[id].allocated > 0,
+            Errors.FUNDS_LOCKED
         );
         _;
     }
@@ -91,7 +93,7 @@ contract Pools {
         @notice Will raise an error if the pool is already allocated.
     */
     modifier poolNotAllocated(uint256 id) {
-        require(idToPool[id].allocated == 0);
+        require(idToPool[id].allocated == 0, Errors.NOT_ALLOCATED);
         _;
     }
 

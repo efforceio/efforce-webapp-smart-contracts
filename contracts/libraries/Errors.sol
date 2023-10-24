@@ -29,4 +29,10 @@ library Errors {
     string constant public PHASE_ALREADY_OPEN = "600";
     string constant public CREDITS_NOT_AVAILABLE = "601";
     string constant public PHASE_NOT_OPEN = "602";
+
+    //Pools
+    string constant public POOL_IS_OPEN = "700";
+    string constant public STAKING_NOT_ALLOWED = "701";
+    string constant public FUNDS_LOCKED = "702";
+    string constant public NOT_ALLOCATED = "702";
 }

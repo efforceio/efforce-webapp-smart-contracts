@@ -14,7 +14,6 @@ describe("Pools test", () => {
         nPools = 0,
         token: Token;
     const
-        metadataURI = "uri.metadata",
         lockingPeriod = 1;
 
     before("Initialization", async function() {
@@ -34,21 +33,21 @@ describe("Pools test", () => {
 
     describe("Create pool", () => {
         it("Fails if sender is not admin or owner", async () => {
-            await expect(pools.connect(account2).createPool(metadataURI)).reverted;
+            await expect(pools.connect(account2).createPool()).reverted;
         });
         it("Executes if sender is admin or owner", async () => {
-            await expect(pools.connect(account1).createPool(metadataURI)).not.reverted;
+            await expect(pools.connect(account1).createPool()).not.reverted;
             nPools++;
-            await expect(pools.createPool(metadataURI)).not.reverted;
+            await expect(pools.createPool()).not.reverted;
             nPools++;
             expect(await pools.numberOfPools()).equal(nPools);
         });
         it("Checks pool details and event", async () => {
 
-            await expect(pools.createPool(metadataURI)).emit(
+            await expect(pools.createPool()).emit(
                 pools,
                 "PoolCreated"
-            ).withArgs(nPools, metadataURI);
+            ).withArgs(nPools);
             nPools++;
 
             const timestamp = await time.latest();
@@ -56,7 +55,6 @@ describe("Pools test", () => {
 
             expect(poolItem.createdAt).equal(timestamp);
             expect(poolItem.stakingStartedAt).equal(0);
-            expect(poolItem.uri).equal(metadataURI);
             expect(poolItem.allocated).equal(0);
             expect(poolItem.canceled).equal(false);
         });

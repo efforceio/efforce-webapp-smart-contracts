@@ -8,7 +8,6 @@ import "./libraries/Errors.sol";
 struct Pool {
     uint256 createdAt;
     uint256 stakingStartedAt;
-    string uri;
     uint256 allocated;
     bool canceled;
 }
@@ -99,14 +98,13 @@ contract Pools {
     /*
         @notice Create a new pool.
         @dev Can be called only by admins or contract owners.
-        @param uri URI to pool metadata.
     */
-    function createPool(string calldata uri)
+    function createPool()
         external
         isAdminOrOwner()
     {
-        idToPool[numberOfPools] = Pool(block.timestamp, 0, uri, 0, false);
-        emit PoolCreated(numberOfPools, uri);
+        idToPool[numberOfPools] = Pool(block.timestamp, 0, 0, false);
+        emit PoolCreated(numberOfPools);
         numberOfPools++;
     }
 
@@ -282,9 +280,8 @@ contract Pools {
     /*
         @notice Emitted when a new pool is created.
         @param id The id of the newly created pool.
-        @param uri The URI of the pool's metadata.
     */
-    event PoolCreated(uint256 id, string uri);
+    event PoolCreated(uint256 id);
 
     /*
         @notice Emitted when the status of the Pool is updated.

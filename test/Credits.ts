@@ -10,7 +10,6 @@ describe("Credits test", () => {
         account2: SignerWithAddress,
         credits: Credits,
         token: Token,
-        decimals: number,
         projectIds: number[],
         creditIds: number[],
         recordIds: number[],
@@ -33,8 +32,10 @@ describe("Credits test", () => {
 
         const Roles = await ethers.getContractFactory("Roles");
         const roles = await Roles.deploy(owner.address);
-
         await roles.setAdmin(account1.address, true);
+
+        const Token = await ethers.getContractFactory("Token");
+        token = await Token.deploy("Token", "TKN");
 
         const Credits = await ethers.getContractFactory(
             "Credits",
@@ -44,12 +45,7 @@ describe("Credits test", () => {
                 }
             }
         );
-        credits = await Credits.deploy(metadataURI, roles.address, contractMetadataURI, royaltyBps);
-
-        const Token = await ethers.getContractFactory("Token");
-        token = await Token.deploy("Token", "TKN");
-
-        decimals = await token.decimals();
+        credits = await Credits.deploy(metadataURI, roles.address, contractMetadataURI, royaltyBps, token.address);
 
         projectIds = [];
         creditIds = [];
@@ -149,12 +145,11 @@ describe("Credits test", () => {
         it("Withdraws", async () => {
             await token.mintTo(credits.address, 1);
 
-            await expect(credits.connect(account2).withdraw(token.address, account2.address, 1)).reverted;
+            await expect(credits.connect(account2).withdraw(account2.address, 1)).reverted;
 
-            await expect(credits.withdraw(token.address, owner.address, 1))
+            await expect(credits.withdraw(owner.address, 1))
                 .emit(credits, "Withdrawal")
                 .withArgs(
-                    token.address,
                     owner.address,
                     1
                 );
@@ -466,14 +461,12 @@ describe("Credits test", () => {
                 projectIds[0],
                 amount,
                 price,
-                token.address
             )).reverted;
 
             await expect(credits.connect(account1).openPhase(
                 projectIds[0],
                 amount,
                 price,
-                token.address
             ))
                 .emit(credits, "PhaseAction")
                 .withArgs(
@@ -481,7 +474,6 @@ describe("Credits test", () => {
                     true,
                     amount,
                     price,
-                    token.address,
                     false
                 );
 
@@ -489,14 +481,12 @@ describe("Credits test", () => {
                 projectIds[0],
                 amount,
                 price,
-                token.address
             )).reverted;
 
             await credits.connect(account1).openPhase(
                 projectIds[1],
                 amount,
                 price,
-                token.address
             );
         });
 
@@ -530,7 +520,7 @@ describe("Credits test", () => {
             await expect(credits.connect(account2).buyCredits(projectIds[1], 99)).not.reverted;
             await expect(credits.connect(account2).buyCredits(projectIds[1], 1)).reverted;
 
-            await expect(credits.withdraw(token.address, owner.address, price)).reverted;
+            await expect(credits.withdraw(owner.address, price)).reverted;
 
             expect(await token.balanceOf(credits.address)).equal(amount * price + price);
             expect(await token.balanceOf(account2.address)).equal(1);
@@ -546,14 +536,13 @@ describe("Credits test", () => {
                     false,
                     amount,
                     price,
-                    token.address,
                     true
                 );
 
             expect(await token.balanceOf(account1.address)).equal(price);
             expect(await credits.balanceOf(account1.address, creditIds.length - 1)).equal(0);
 
-            await expect(credits.withdraw(token.address, owner.address, price)).reverted;
+            await expect(credits.withdraw(owner.address, price)).reverted;
 
             await expect(credits.closePhase(projectIds[1], false))
                 .emit(credits, "PhaseAction")
@@ -562,14 +551,13 @@ describe("Credits test", () => {
                     false,
                     amount,
                     price,
-                    token.address,
                     false
                 );
 
             expect(await token.balanceOf(account2.address)).equal(1);
             expect(await credits.balanceOf(account2.address, creditIds.length)).equal(100);
 
-            await expect(credits.withdraw(token.address, owner.address, price)).not.reverted;
+            await expect(credits.withdraw(owner.address, price)).not.reverted;
         });
     });
 });

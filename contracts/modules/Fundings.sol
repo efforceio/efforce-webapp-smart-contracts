@@ -15,7 +15,6 @@ abstract contract Fundings is Projects, Bank {
         uint256 price;
         bool open;
         uint256 openedTimestamp;
-        address currencyAddress;
         uint256 tokenId;
     }
 
@@ -48,13 +47,11 @@ abstract contract Fundings is Projects, Bank {
         @param projectId The project id for which a new funding phase will be opened.
         @param credits The number of credits that will be minted if the funding phase is successful.
         @param price The price of each credit.
-        @param tokenAddress The ERC20 token used for payments.
     */
     function openPhase(
         uint256 projectId,
         uint256 credits,
-        uint256 price,
-        address tokenAddress
+        uint256 price
     )
         external
         adminOrOwner(msg.sender)
@@ -71,11 +68,10 @@ abstract contract Fundings is Projects, Bank {
             price,
             true,
             timestamp,
-            tokenAddress,
             lastCreditsId
         );
 
-        emit PhaseAction(nPhases, true, credits, price, tokenAddress, false);
+        emit PhaseAction(nPhases, true, credits, price, false);
     }
 
     /*
@@ -96,14 +92,13 @@ abstract contract Fundings is Projects, Bank {
     {
         uint256 phaseId = projectIdToPhase[projectId].tokenId;
         uint256 price = projectIdToPhase[projectId].price * amount;
-        address currency = projectIdToPhase[projectId].currencyAddress;
 
-        IERC20(currency).transferFrom(msg.sender, address(this), price);
+        IERC20(tokenAddress).transferFrom(msg.sender, address(this), price);
 
         phaseIdToAmountPerBuyer[phaseId][msg.sender] += amount;
         EnumerableSet.add(phaseIdToBuyers[phaseId], msg.sender);
         projectIdToPhase[projectId].availableCredits -= amount;
-        blockedAmountForToken[currency] += price;
+        blockedAmountForToken[tokenAddress] += price;
 
         emit CreditsPurchased(phaseId, amount, msg.sender);
     }
@@ -126,7 +121,6 @@ abstract contract Fundings is Projects, Bank {
         phaseOpen(projectId)
     {
         uint256 phaseId = projectIdToPhase[projectId].tokenId;
-        address currency = projectIdToPhase[projectId].currencyAddress;
         uint256 pricePerCredit = projectIdToPhase[projectId].price;
 
         for (uint256 i = 0; i < EnumerableSet.length(phaseIdToBuyers[phaseId]); i++) {
@@ -135,12 +129,12 @@ abstract contract Fundings is Projects, Bank {
             uint256 price = amount * pricePerCredit;
 
             if (refund) {
-                IERC20(currency).transfer(account, price);
+                IERC20(tokenAddress).transfer(account, price);
             } else {
                 balances[phaseId][account] = amount;
             }
 
-            blockedAmountForToken[currency] -= price;
+            blockedAmountForToken[tokenAddress] -= price;
         }
 
         projectIdToPhase[projectId].open = false;
@@ -150,7 +144,6 @@ abstract contract Fundings is Projects, Bank {
             false,
             projectIdToPhase[projectId].totalCredits,
             pricePerCredit,
-            currency,
             refund
         );
     }
@@ -171,15 +164,13 @@ abstract contract Fundings is Projects, Bank {
     }
 
 
-    function _blockedAmountForToken(
-        address token
-    )
+    function _blockedAmount()
         internal
         override
         view
         returns(uint256)
     {
-        return blockedAmountForToken[token];
+        return blockedAmountForToken[tokenAddress];
     }
 
     /*
@@ -189,7 +180,6 @@ abstract contract Fundings is Projects, Bank {
         @param credits The number of credits.
         @param price The price of credits.
         @param timestamp The opening timestamp.
-        @param currencyAddress The token address.
         @param refund Set to true if the funding phase was unsuccessful, false otherwise.
     */
     event PhaseAction(
@@ -197,7 +187,6 @@ abstract contract Fundings is Projects, Bank {
         bool indexed opened,
         uint256 credits,
         uint256 price,
-        address currencyAddress,
         bool refund
     );
 

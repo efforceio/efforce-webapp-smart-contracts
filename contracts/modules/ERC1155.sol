@@ -6,8 +6,9 @@ import "../helpers/IERC1155TokenReceiver.sol";
 import "../libraries/Constants.sol";
 import "../libraries/Errors.sol";
 import "../libraries/Utils.sol";
+import "../interfaces/IERC1155.sol";
 
-abstract contract ERC1155 is Accounts {
+abstract contract ERC1155 is Accounts, IERC1155 {
     mapping (uint256 => mapping(address => uint256)) internal balances;
     mapping (address => mapping(address => bool)) private operatorApproval;
     string private baseUri;
@@ -72,6 +73,7 @@ abstract contract ERC1155 is Accounts {
         bytes calldata data
     )
         external
+        override
         accountEnabled(_to)
         ownerOrOperator(_from)
     {
@@ -146,6 +148,7 @@ abstract contract ERC1155 is Accounts {
         bool _approved
     )
         external
+        override
         accountEnabled(_operator)
     {
         operatorApproval[msg.sender][_operator] = _approved;

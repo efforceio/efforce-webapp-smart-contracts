@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.21;
 
-
 contract ERC165 {
 
     mapping(bytes4 => bool) private interfaceToSupported;

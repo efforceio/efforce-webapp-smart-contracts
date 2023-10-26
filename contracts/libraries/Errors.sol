@@ -35,4 +35,8 @@ library Errors {
     string constant public STAKING_NOT_ALLOWED = "701";
     string constant public FUNDS_LOCKED = "702";
     string constant public NOT_ALLOCATED = "702";
+
+    //Marketplace
+    string constant public NOT_ENOUGHT_TOKENS = "800";
+    string constant public NOT_ACTIVE = "801";
 }

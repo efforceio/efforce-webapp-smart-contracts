@@ -43,7 +43,10 @@ abstract contract Bank is RolesModifier {
         internal
         virtual
         view
-        returns(uint256);
+        returns(uint256)
+    {
+        return 0;
+    }
 
     /*
         @notice Emitted when a withdrawal is approved.

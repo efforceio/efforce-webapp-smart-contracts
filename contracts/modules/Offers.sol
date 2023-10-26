@@ -31,6 +31,12 @@ abstract contract Offers is IPurchases, Bank {
         _;
     }
 
+    /*
+        @notice Accepts an offer made for a token. All the token specified in the are purchased and transferred
+            to the offerer. The offered price is transferred to the caller of the transaction deducted by royalties,
+            that will be sent to the royalties receiver. The offer is then closed.
+        @param offerId The id of the offer.
+    */
     function acceptOffer(uint256 offerId)
         external
         offerActive(offerId)
@@ -59,6 +65,11 @@ abstract contract Offers is IPurchases, Bank {
         );
     }
 
+    /*
+        @notice Closes an existing offer. The offered price is transferred back to the owner of the offer.
+        @dev Can be called only by the owner of the offer.
+        @param offerId The id of the offer.
+    */
     function cancelOffer(uint256 offerId)
         external
         isOfferOwner(offerId, msg.sender)
@@ -68,6 +79,12 @@ abstract contract Offers is IPurchases, Bank {
         emit OfferUpdated(offerId, 0, 0, true);
     }
 
+    /*
+        @notice Opens a new offer. Proposed price is transferred from the offerer to the smart contract.
+        @param tokenId The id of the tokens for which the offer is opened.
+        @param totalPrice The price offered for the credits.
+        @param quantity The amount of credits that will be purchased.
+    */
     function makeOffer(uint256 tokenId, uint256 totalPrice, uint256 quantity) external {
         idToOffer[nOffers] = Offer(
             msg.sender,
@@ -80,6 +97,14 @@ abstract contract Offers is IPurchases, Bank {
         emit OfferCreated(tokenId, totalPrice, quantity, msg.sender);
     }
 
+    /*
+        @notice Updates the offer with given id. If the new total price is higher than the current one, the difference
+            is transferred to the smart contract, otherwise the excess is transferred back to the caller.
+        @dev The caller must be the owner of the offer.
+        @param offerId The id of the target offer.
+        @param totalPrice The new total price.
+        @param quantity The new quantity.
+    */
     function updateOffer(uint256 offerId, uint256 totalPrice, uint256 quantity)
         external
         isOfferOwner(offerId, msg.sender)
@@ -98,12 +123,31 @@ abstract contract Offers is IPurchases, Bank {
         emit OfferUpdated(offerId, totalPrice, quantity, false);
     }
 
+    /*
+        @param offerId.
+        @return The offer for the given id.
+    */
     function getOffer(uint256 offerId) external view returns(Offer memory) {
         return idToOffer[offerId];
     }
 
     function _getCreditsContract() internal view virtual returns(address);
 
+    /*
+        @notice Emitted when an offer is updated, closed, or accepted.
+        @param offerId The id of the target offer.
+        @param price The new price.
+        @param quantity The new quantity.
+        @param canceled True if the offer is cancelled or accepted.
+    */
     event OfferUpdated(uint256 indexed offerId, uint256 price, uint256 quantity, bool canceled);
+
+    /*
+        @notice Emitted when a new offer is created.
+        @param creditId The id of the credits for which the offer is opened.
+        @param totalPrice The offered price.
+        @param quantity The required amount of credits.
+        @param offerer The account that opened the offer.
+    */
     event OfferCreated(uint256 indexed creditId, uint256 totalPrice, uint256 quantity, address offerer);
 }

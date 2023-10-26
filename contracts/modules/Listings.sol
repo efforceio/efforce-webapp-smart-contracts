@@ -40,6 +40,13 @@ abstract contract Listings is IPurchases, Bank {
         _;
     }
 
+    /*
+        @notice Purchase credits from an active listing. Credits are transferred to the buyers,
+            while price deducted by royalties are send to the owner of the listing,
+            and royalties to the royalties receiver specifiedn in the credits smart contract.
+        @param listingId The id of the target listing.
+        @param quantity The amount of token that will be purchased.
+    */
     function buyFromListing(uint256 listingId, uint256 quantity)
         listingHasEnoughTokens(listingId, quantity)
         listingIsActive(listingId)
@@ -72,6 +79,11 @@ abstract contract Listings is IPurchases, Bank {
         );
     }
 
+    /*
+        @notice Close a listing. The remaining credits are transferred back to the owner of the listing.
+        @dev The caller must be the owner of the listing.
+        @param listingId The id of the target listing.
+    */
     function closeListing(uint256 listingId)
         external
         isListingOwner(listingId, msg.sender)
@@ -87,6 +99,13 @@ abstract contract Listings is IPurchases, Bank {
         emit ListingUpdated(listingId, 0, 0, true);
     }
 
+    /*
+        @notice Opens a new listing. The tokens are transferred to the smart contract until they are purchased,
+            the listing is closed, or modified.
+        @param creditId The id of the credits that will be listed (tokenId).
+        @param pricePerToken The price for single tokens.
+        @param quantity The amount of tokens that will be listed.
+    */
     function createListing(uint256 creditId, uint256 pricePerToken, uint256 quantity)
         external
     {
@@ -108,6 +127,15 @@ abstract contract Listings is IPurchases, Bank {
         emit CreateListing(msg.sender, creditId, pricePerToken, quantity);
     }
 
+    /*
+        @notice Updates the tokens price and the quantity listed. If the new number of credits is higher,
+            credits are transferred to the smart contract, otherwise excess tokens are transferred back to the
+            listing owner.
+        @dev Can be called only by the owner of the listing.
+        @param listingId The id of the target listing.
+        @param pricePerToken The new price for tokens.
+        @param quantity The new quantity of token that is listed.
+    */
     function updateListing(uint256 listingId, uint256 pricePerToken, uint256 quantity)
         external
         isListingOwner(listingId, msg.sender)
@@ -137,13 +165,31 @@ abstract contract Listings is IPurchases, Bank {
         emit ListingUpdated(listingId, quantity, pricePerToken, false);
     }
 
+    /*
+        @param listingId The id of the target listing.
+        @return The listing with given id.
+    */
     function getListing(uint256 listingId) external view returns(Listing memory) {
         return idToListing[listingId];
     }
 
+    /*
+        @notice Emitted when a listing is updated: after a purchase, a listing closed, and listing update.
+        @param listingId The id of the target listing.
+        @param quantity The new amount of tokens listed.
+        @param pricePerToken The new price for tokens.
+        @param closed True of the listing is closed.
+    */
     event ListingUpdated(uint256 indexed listingId, uint256 quantity, uint256 pricePerToken, bool closed);
 
-    event CreateListing(address indexed caller, uint256 indexed creditId, uint256 pricePerToken, uint256 quantity);
+    /*
+        @notice Emitted when a new listing is created.
+        @param owner The owner of the new listing.
+        @param creditId The id of the credits that are listed.
+        @param pricePerToken The tokens price.
+        @param quantity The amount of tokens that are listed.
+    */
+    event CreateListing(address indexed owner, uint256 indexed creditId, uint256 pricePerToken, uint256 quantity);
 
     function _getCreditsContract() internal view virtual returns(address);
 

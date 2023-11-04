@@ -50,7 +50,6 @@ async function main() {
                 address: pools.address,
                 constructorArguments: [
                     rolesAddress,
-                    stakingPeriod,
                     usdcAddress
                 ],
                 network: process.env.HARDHAT_NETWORK

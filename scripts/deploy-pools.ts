@@ -5,7 +5,6 @@ async function main() {
 
     let rolesAddress = "";
     let usdcAddress = "";
-    let stakingPeriod = 0;
 
     console.log("Reading input…");
 
@@ -16,7 +15,6 @@ async function main() {
             } else {
                 rolesAddress = process.env.ROLES_MUMBAI;
                 usdcAddress = process.env.USDC_MUMBAI;
-                stakingPeriod = Number(process.env.LOCKING_PERIOD_MUMBAI);
             }
             break;
         default:

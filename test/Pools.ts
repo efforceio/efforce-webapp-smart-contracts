@@ -28,26 +28,26 @@ describe("Pools test", () => {
         token = await Token.deploy("Token", "TKN");
 
         const Pools = await ethers.getContractFactory("Pools");
-        pools = await Pools.deploy(roles.address, lockingPeriod, token.address);
+        pools = await Pools.deploy(roles.address, token.address);
     });
 
     describe("Create pool", () => {
         it("Fails if sender is not admin or owner", async () => {
-            await expect(pools.connect(account2).createPool()).reverted;
+            await expect(pools.connect(account2).createPool(lockingPeriod)).reverted;
         });
         it("Executes if sender is admin or owner", async () => {
-            await expect(pools.connect(account1).createPool()).not.reverted;
+            await expect(pools.connect(account1).createPool(lockingPeriod)).not.reverted;
             nPools++;
-            await expect(pools.createPool()).not.reverted;
+            await expect(pools.createPool(lockingPeriod)).not.reverted;
             nPools++;
             expect(await pools.numberOfPools()).equal(nPools);
         });
         it("Checks pool details and event", async () => {
 
-            await expect(pools.createPool()).emit(
+            await expect(pools.createPool(lockingPeriod)).emit(
                 pools,
                 "PoolCreated"
-            ).withArgs(nPools);
+            ).withArgs(nPools, lockingPeriod);
             nPools++;
 
             const timestamp = await time.latest();

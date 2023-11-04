@@ -10,12 +10,12 @@ struct Pool {
     uint256 stakingStartedAt;
     uint256 allocated;
     bool canceled;
+    uint256 stakingPeriod;
 }
 
 contract Pools {
     address immutable public rolesContract;
     address immutable public tokenContract;
-    uint256 immutable public stakingPeriod;
 
     uint256 public numberOfPools;
 
@@ -25,12 +25,10 @@ contract Pools {
 
     /*
         @param _rolesContract The address of the roles smart contract.
-        @param _stakingPeriod The period in which assets are staked.
         @param _tokenContract The erc20 token address to be staked and unstaked.
     */
-    constructor(address _rolesContract, uint256 _stakingPeriod, address _tokenContract) {
+    constructor(address _rolesContract, address _tokenContract) {
         rolesContract = _rolesContract;
-        stakingPeriod = _stakingPeriod;
         tokenContract = _tokenContract;
     }
 
@@ -83,7 +81,8 @@ contract Pools {
     modifier isUnstakingPeriod(uint256 id) {
         require(
             idToPool[id].canceled ||
-            block.timestamp >= idToPool[id].stakingStartedAt + stakingPeriod && idToPool[id].allocated > 0,
+            block.timestamp >= idToPool[id].stakingStartedAt + idToPool[id].stakingPeriod &&
+                idToPool[id].allocated > 0,
             Errors.FUNDS_LOCKED
         );
         _;
@@ -101,12 +100,12 @@ contract Pools {
         @notice Create a new pool.
         @dev Can be called only by admins or contract owners.
     */
-    function createPool()
+    function createPool(uint256 stakingPeriod)
         external
         isAdminOrOwner()
     {
-        idToPool[numberOfPools] = Pool(block.timestamp, 0, 0, false);
-        emit PoolCreated(numberOfPools);
+        idToPool[numberOfPools] = Pool(block.timestamp, 0, 0, false, stakingPeriod);
+        emit PoolCreated(numberOfPools, stakingPeriod);
         numberOfPools++;
     }
 
@@ -289,7 +288,7 @@ contract Pools {
         @notice Emitted when a new pool is created.
         @param id The id of the newly created pool.
     */
-    event PoolCreated(uint256 id);
+    event PoolCreated(uint256 id, uint256 stakingPeriod);
 
     /*
         @notice Emitted when the status of the Pool is updated.

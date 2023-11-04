@@ -29,7 +29,6 @@ async function main() {
 
     const pools = await Pools.deploy(
         rolesAddress,
-        stakingPeriod,
         usdcAddress
     );
 

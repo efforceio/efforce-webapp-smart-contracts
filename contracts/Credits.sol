@@ -2,12 +2,13 @@
 pragma solidity ^0.8.21;
 
 import "./modules/ERC5006.sol";
-import "./modules/Fundings.sol";
+import "./modules/Vintages.sol";
 import "./modules/ContractMetadata.sol";
 import "./modules/ERC165.sol";
 import "./modules/Royalties.sol";
+import "./modules/Store.sol";
 
-contract Credits is ERC5006, Fundings, ContractMetadata, ERC165, Royalties {
+contract Credits is ERC5006, Store, ContractMetadata, ERC165, Royalties {
 
     constructor(
         string memory metadataUri,

@@ -10,7 +10,7 @@ contract ERC165 {
         interfaceToSupported[0xd9b67a26] = true; // ERC-1155
         interfaceToSupported[0x0e89341c] = true; // ERC-1155 metadata
         interfaceToSupported[0xc26d96cc] = true; // ERC-5006
-        interfaceToSupported[0x2a55205a] = true; // ERC-2981 (royalties)
+        interfaceToSupported[0x2a55205a] = true; // ERC-2981
     }
 
     /*
@@ -18,9 +18,7 @@ contract ERC165 {
         @param interfaceID The target interface id.
         @return True if the target interface id is implemented by the smart contract, false otherwise.
     */
-    function supportsInterface(
-        bytes4 interfaceID
-    )
+    function supportsInterface(bytes4 interfaceID)
         external
         view
         returns(bool)

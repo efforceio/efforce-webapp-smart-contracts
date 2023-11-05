@@ -25,10 +25,11 @@ library Errors {
     //General
     string constant public NOT_EXISTS = "500";
 
-    //Fundings
+    //VINTAGES
     string constant public VINTAGE_ALREADY_OPEN = "600";
     string constant public CREDITS_NOT_AVAILABLE = "601";
     string constant public VINTAGE_NOT_OPEN = "602";
+    string constant public INCORRECT_VINTAGE_STATE = "603";
 
     //Pools
     string constant public POOL_IS_OPEN = "700";

@@ -6,7 +6,6 @@ import "./helpers/IERC20.sol";
 import "./libraries/Errors.sol";
 
 struct Pool {
-    uint256 createdAt;
     uint256 stakingStartedAt;
     uint256 allocated;
     bool canceled;
@@ -105,7 +104,7 @@ contract Pools {
         external
         isAdminOrOwner()
     {
-        idToPool[numberOfPools] = Pool(block.timestamp, 0, 0, false, stakingPeriod);
+        idToPool[numberOfPools] = Pool(0, 0, false, stakingPeriod);
         emit PoolCreated(numberOfPools, stakingPeriod);
         numberOfPools++;
     }

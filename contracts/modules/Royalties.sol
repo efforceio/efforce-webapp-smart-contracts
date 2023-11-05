@@ -8,6 +8,9 @@ abstract contract Royalties is RolesModifier, IRoyalties {
 
     uint256 private royaltyBps;
 
+    /*
+        @param _royaltyBps The percentage for royalties.
+    */
     constructor(uint256 _royaltyBps) {
         royaltyBps = _royaltyBps;
     }

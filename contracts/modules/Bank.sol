@@ -7,14 +7,23 @@ import "./RolesModifier.sol";
 abstract contract Bank is RolesModifier {
 
     address public immutable tokenAddress;
+    uint256 internal blockedERC20;
 
+    /*
+        @param _tokenAddress The address of the ERC20 token.
+    */
     constructor(address _tokenAddress) {
         tokenAddress = _tokenAddress;
     }
 
+    /*
+        @notice Raises an error if the available balance in the smart contract is not enough to cover the
+            requested amount.
+        @param amount The amount of token to be withdrawn from the smart contract.
+    */
     modifier availableBalance(uint256 amount) {
         require(
-            IERC20(tokenAddress).balanceOf(address(this)) - _blockedAmount() >= amount,
+            IERC20(tokenAddress).balanceOf(address(this)) - blockedERC20 >= amount,
             Errors.BALANCE_NOT_AVAILABLE
         );
         _;
@@ -38,16 +47,6 @@ abstract contract Bank is RolesModifier {
         emit Withdrawal(recipient, amount);
     }
 
-
-    function _blockedAmount()
-        internal
-        virtual
-        view
-        returns(uint256)
-    {
-        return 0;
-    }
-
     /*
         @notice Emitted when a withdrawal is approved.
         @param tokenAddress The ERC20 token which is transferred.
@@ -55,4 +54,9 @@ abstract contract Bank is RolesModifier {
         @param amount The amount of ERC20 token which are transferred.
     */
     event Withdrawal(address indexed recipient, uint256 amount);
+
+    /*
+        @notice Emitted when the amount of locked funds is updated.
+    */
+    event FundsLockedUpdated(uint256 lockedFunds);
 }

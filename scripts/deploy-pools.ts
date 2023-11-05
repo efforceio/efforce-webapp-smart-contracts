@@ -10,8 +10,8 @@ async function main() {
 
     switch (process.env.HARDHAT_NETWORK) {
         case 'polygon_mumbai':
-            if (!process.env.ROLES_MUMBAI || !process.env.USDC_MUMBAI || !process.env.LOCKING_PERIOD_MUMBAI) {
-                throw "Roles address, USDC address, or Licking period not set";
+            if (!process.env.ROLES_MUMBAI || !process.env.USDC_MUMBAI) {
+                throw "Roles address, USDC address, or Locking period not set";
             } else {
                 rolesAddress = process.env.ROLES_MUMBAI;
                 usdcAddress = process.env.USDC_MUMBAI;

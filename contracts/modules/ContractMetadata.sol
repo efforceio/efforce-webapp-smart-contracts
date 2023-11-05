@@ -7,9 +7,10 @@ abstract contract ContractMetadata is RolesModifier {
 
     string private contractMetadataURI;
 
-    constructor(
-        string memory _contractMetadataURI
-    ) {
+    /*
+        @param _contractMetadataURI The url to the contract metadata
+    */
+    constructor(string memory _contractMetadataURI) {
         contractMetadataURI = _contractMetadataURI;
     }
 

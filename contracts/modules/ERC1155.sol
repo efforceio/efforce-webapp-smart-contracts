@@ -12,15 +12,12 @@ abstract contract ERC1155 is Accounts, IERC1155 {
     mapping (uint256 => mapping(address => uint256)) internal balances;
     mapping (address => mapping(address => bool)) private operatorApproval;
     string private baseUri;
-    uint256 internal lastCreditsId;
 
     /*
         @param metadataUri Base uri for tokens metadata.
-        @dev It must contain the placeholder to token id.
     */
     constructor(string memory metadataUri) {
         baseUri = metadataUri;
-        lastCreditsId = 0;
     }
 
     /*
@@ -40,18 +37,9 @@ abstract contract ERC1155 is Accounts, IERC1155 {
     */
     modifier hasValue(address account, uint256 value, uint256 tokenId) {
         require(
-            balances[tokenId][account] >= value,
+            balances[tokenId][account] - _getFrozen(account, tokenId) >= value,
             Errors.INSUFFICIENT_BALANCE
         );
-        _;
-    }
-
-    /*
-        @notice Throws an error if the id is not an existing token id.
-        @param id Token id that is checked.
-    */
-    modifier idExists(uint256 id) {
-        require(id > 0 && id <= lastCreditsId, Errors.NOT_EXISTS);
         _;
     }
 
@@ -143,10 +131,7 @@ abstract contract ERC1155 is Accounts, IERC1155 {
         @param _operator The target address.
         @param _approved Set to true if the target address will be an operator, false otherwise.
     */
-    function setApprovalForAll(
-        address _operator,
-        bool _approved
-    )
+    function setApprovalForAll(address _operator, bool _approved)
         external
         override
         accountEnabled(_operator)
@@ -160,9 +145,7 @@ abstract contract ERC1155 is Accounts, IERC1155 {
         @dev Can be invoked only by the contract owner.
         @param uri The new base uri.
     */
-    function updateMetadataUri(
-        string calldata _uri
-    )
+    function updateMetadataUri(string calldata _uri)
         external
         adminOrOwner(msg.sender)
     {
@@ -176,10 +159,7 @@ abstract contract ERC1155 is Accounts, IERC1155 {
         @param _id The target token id.
         @return The amount of token owned by the target account having target id.
     */
-    function balanceOf(
-        address _owner,
-        uint256 _id
-    )
+    function balanceOf(address _owner, uint256 _id)
         external
         view
         returns(uint256)
@@ -193,10 +173,7 @@ abstract contract ERC1155 is Accounts, IERC1155 {
         @param _ids The target token ids.
         @return The amount of token owned by each target account having the corresponding target id.
     */
-    function balanceOfBatch(
-        address[] calldata _owners,
-        uint256[] calldata _ids
-    )
+    function balanceOfBatch(address[] calldata _owners, uint256[] calldata _ids)
         external
         view
         returns(uint256[] memory)
@@ -218,10 +195,7 @@ abstract contract ERC1155 is Accounts, IERC1155 {
         @param _operator Target account.
         @return True if the target account is the operator for NFTs owner, false otherwise.
     */
-    function isApprovedForAll(
-        address _owner,
-        address _operator
-    )
+    function isApprovedForAll(address _owner, address _operator)
         external
         view
         returns(bool)
@@ -234,29 +208,27 @@ abstract contract ERC1155 is Accounts, IERC1155 {
         @param _id Token id.
         @return The metadata uri for the given token id.
     */
-    function uri(
-        uint256 id
-    )
+    function uri(uint256)
         external
         view
-        idExists(id)
         returns(string memory)
     {
         return baseUri;
     }
 
-    function _doTransfer(
-        uint256 _id,
-        address _from,
-        uint256 _value,
-        address _to
-    )
+    function _doTransfer(uint256 _id, address _from, uint256 _value, address _to)
         private
         hasValue(_from, _value, _id)
     {
         balances[_id][_from] = balances[_id][_from] - _value;
         balances[_id][_to]   = _value + balances[_id][_to];
     }
+
+    function _getFrozen(address, uint256)
+        internal
+        virtual
+        view
+        returns(uint256);
 
     /*
         @notice Emitted when tokens are transferred, including zero value transfers as well as minting or burning.

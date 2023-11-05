@@ -16,6 +16,7 @@ abstract contract ERC5006 is ERC1155 {
     }
 
     mapping(uint256 => UserRecord) private records;
+    mapping(address => mapping(uint256 => uint256)) private frozen;
     mapping(address => mapping(uint256 => EnumerableSet.UintSet)) private usersToRecordsSet;
     uint256 private currentRecord;
 
@@ -28,17 +29,6 @@ abstract contract ERC5006 is ERC1155 {
         _;
     }
 
-    /*
-        @notice Throws an error if the record does not exist.
-        @param recordId The id of the target record.
-    */
-    modifier recordExists(uint256 recordId) {
-        require(
-            EnumerableSet.contains(usersToRecordsSet[records[recordId].user][records[recordId].tokenId], recordId),
-            Errors.NOT_EXISTS
-        );
-        _;
-    }
 
     /*
         @notice Gives permission to user to use amount of tokenId (id of credits) token owned by owner until expiry.
@@ -61,8 +51,6 @@ abstract contract ERC5006 is ERC1155 {
         hasValue(owner, amount, tokenId)
         returns(uint256)
     {
-        currentRecord++;
-
         records[currentRecord] = UserRecord(
             tokenId,
             owner,
@@ -70,9 +58,11 @@ abstract contract ERC5006 is ERC1155 {
             user,
             expiry
         );
+        frozen[owner][tokenId] += amount;
         EnumerableSet.add(usersToRecordsSet[user][tokenId], currentRecord);
 
         emit CreateUserRecord(currentRecord, tokenId, amount, owner, user, expiry);
+        currentRecord++;
 
         return currentRecord;
     }
@@ -87,11 +77,11 @@ abstract contract ERC5006 is ERC1155 {
     )
         external
         ownerOrOperator(records[recordId].owner)
-        recordExists(recordId)
         expiredRecord(recordId)
     {
         uint256 tokenId = records[recordId].tokenId;
 
+        frozen[records[recordId].owner][tokenId] -= records[recordId].amount;
         EnumerableSet.remove(usersToRecordsSet[records[recordId].user][tokenId], recordId);
 
         emit DeleteUserRecord(recordId);
@@ -122,6 +112,23 @@ abstract contract ERC5006 is ERC1155 {
     }
 
     /*
+        @notice Returns the amount of frozen tokens of token type id by account.
+        @param account The target account.
+        @param tokenId The target token id.
+        @return The amount of tokens that are blocked for the target account with target token id.
+    */
+    function frozenBalanceOf(
+        address account,
+        uint256 tokenId
+    )
+        external
+        view
+        returns(uint256)
+    {
+        return _getFrozen(account, tokenId);
+    }
+
+    /*
         @notice Returns the UserRecord of recordId.
         @param recordId The given record id.
         @return The details of the record with given id.
@@ -134,6 +141,15 @@ abstract contract ERC5006 is ERC1155 {
         returns(UserRecord memory)
     {
         return records[recordId];
+    }
+
+    function _getFrozen(address account, uint256 tokenId)
+        internal
+        override
+        view
+        returns(uint256)
+    {
+        return frozen[account][tokenId];
     }
 
     /*

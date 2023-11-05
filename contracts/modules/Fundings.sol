@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 abstract contract Fundings is Projects, Bank {
 
-    struct Phase {
+    struct Vintage {
         uint256 totalCredits;
         uint256 availableCredits;
         uint256 price;
@@ -18,51 +18,51 @@ abstract contract Fundings is Projects, Bank {
         uint256 tokenId;
     }
 
-    uint256 private nPhases;
-    mapping(uint256 => Phase) private projectIdToPhase;
-    mapping(uint256 => mapping(address => uint256)) private phaseIdToAmountPerBuyer;
-    mapping(uint256 => EnumerableSet.AddressSet) private phaseIdToBuyers;
+    uint256 public numberOfVintages;
+    mapping(uint256 => Vintage) private projectToVintage;
+    mapping(uint256 => mapping(address => uint256)) private vintageIdToAmountPerBuyer;
+    mapping(uint256 => EnumerableSet.AddressSet) private vintageIdToBuyers;
     mapping(address => uint256) private blockedAmountForToken;
 
-    modifier noPreviousPhase(uint256 projectId) {
-        require(!projectIdToPhase[projectId].open, Errors.PHASE_ALREADY_OPEN);
+    modifier noPreviousVintage(uint256 projectId) {
+        require(!projectToVintage[projectId].open, Errors.VINTAGE_ALREADY_OPEN);
         _;
     }
 
-    modifier phaseOpen(uint256 projectId) {
-        require(projectIdToPhase[projectId].open, Errors.PHASE_NOT_OPEN);
+    modifier vintageOpen(uint256 projectId) {
+        require(projectToVintage[projectId].open, Errors.VINTAGE_NOT_OPEN);
         _;
     }
 
     modifier availableCredits(uint256 projectId, uint256 credits) {
-        require(projectIdToPhase[projectId].availableCredits >= credits, Errors.CREDITS_NOT_AVAILABLE);
+        require(projectToVintage[projectId].availableCredits >= credits, Errors.CREDITS_NOT_AVAILABLE);
         _;
     }
 
     /*
-        @notice Opens a funding phase for project with given ID, allowing users to buy up to the given number
+        @notice Opens a funding vintage for project with given ID, allowing users to buy up to the given number
             of credits for fixed price.
         @dev Can be invoked only by the contract owner or admins.
-        @dev New phases cannot be opened if there is already an open phase for the same project id.
-        @param projectId The project id for which a new funding phase will be opened.
-        @param credits The number of credits that will be minted if the funding phase is successful.
+        @dev New vintages cannot be opened if there is already an open vintage for the same project id.
+        @param projectId The project id for which a new funding vintage will be opened.
+        @param credits The number of credits that will be minted if the funding vintage is successful.
         @param price The price of each credit.
     */
-    function openPhase(
+    function openVintage(
         uint256 projectId,
         uint256 credits,
         uint256 price
     )
         external
         adminOrOwner(msg.sender)
-        noPreviousPhase(projectId)
+        noPreviousVintage(projectId)
     {
-        nPhases++;
+        numberOfVintages++;
         lastCreditsId++;
 
         uint256 timestamp = block.timestamp;
 
-        projectIdToPhase[projectId] = Phase(
+        projectToVintage[projectId] = Vintage(
             credits,
             credits,
             price,
@@ -71,13 +71,13 @@ abstract contract Fundings is Projects, Bank {
             lastCreditsId
         );
 
-        emit PhaseAction(nPhases, true, credits, price, false);
+        emit VintageAction(numberOfVintages, true, credits, price, false);
     }
 
     /*
-        @notice If a funding phase is open for project with given ID and credits are still available, users can buy
+        @notice If a funding vintage is open for project with given ID and credits are still available, users can buy
             the given amount of credits for a fixed price - funds sent by users cannot be withdrawn by the contract
-            manager until the phase is open - only approved accounts can invoke this function.
+            manager until the vintage is open - only approved accounts can invoke this function.
         @param projectId The project id for which credits will be purchased.
         @param amount The amount of credits that will be purchased.
     */
@@ -88,79 +88,79 @@ abstract contract Fundings is Projects, Bank {
         external
         availableCredits(projectId, amount)
         accountEnabled(msg.sender)
-        phaseOpen(projectId)
+        vintageOpen(projectId)
     {
-        uint256 phaseId = projectIdToPhase[projectId].tokenId;
-        uint256 price = projectIdToPhase[projectId].price * amount;
+        uint256 vintageId = projectToVintage[projectId].tokenId;
+        uint256 price = projectToVintage[projectId].price * amount;
 
         IERC20(tokenAddress).transferFrom(msg.sender, address(this), price);
 
-        phaseIdToAmountPerBuyer[phaseId][msg.sender] += amount;
-        EnumerableSet.add(phaseIdToBuyers[phaseId], msg.sender);
-        projectIdToPhase[projectId].availableCredits -= amount;
+        vintageIdToAmountPerBuyer[vintageId][msg.sender] += amount;
+        EnumerableSet.add(vintageIdToBuyers[vintageId], msg.sender);
+        projectToVintage[projectId].availableCredits -= amount;
         blockedAmountForToken[tokenAddress] += price;
 
-        emit CreditsPurchased(phaseId, amount, msg.sender);
+        emit CreditsPurchased(vintageId, amount, msg.sender);
     }
 
     /*
-        @notice If the funding phase is successful, refund has to be set to false and users will receive previously
-            purchased credits (phase closed successfully), otherwise, the refund has to be set to false and users
-            will receive back the ERC20 tokens they have spent (phase closed unsuccessfully).
+        @notice If the funding vintage is successful, refund has to be set to false and users will receive previously
+            purchased credits (vintage closed successfully), otherwise, the refund has to be set to false and users
+            will receive back the ERC20 tokens they have spent (vintage closed unsuccessfully).
         @dev Can be invoked only by the contract owner or managers.
-        @param projectId The project id for which the funding phase will be closed.
-        @param refund If set to true, the funding phase is unsuccessful and received tokens will be refund,
+        @param projectId The project id for which the funding vintage will be closed.
+        @param refund If set to true, the funding vintage is unsuccessful and received tokens will be refund,
             otherwise credits are distributed and funds unblocked.
     */
-    function closePhase(
+    function closeVintage(
         uint256 projectId,
         bool refund
     )
         external
         adminOrOwner(msg.sender)
-        phaseOpen(projectId)
+        vintageOpen(projectId)
     {
-        uint256 phaseId = projectIdToPhase[projectId].tokenId;
-        uint256 pricePerCredit = projectIdToPhase[projectId].price;
+        uint256 vintageId = projectToVintage[projectId].tokenId;
+        uint256 pricePerCredit = projectToVintage[projectId].price;
 
-        for (uint256 i = 0; i < EnumerableSet.length(phaseIdToBuyers[phaseId]); i++) {
-            uint256 amount = phaseIdToAmountPerBuyer[phaseId][EnumerableSet.at(phaseIdToBuyers[phaseId], i)];
-            address account = EnumerableSet.at(phaseIdToBuyers[phaseId], i);
+        for (uint256 i = 0; i < EnumerableSet.length(vintageIdToBuyers[vintageId]); i++) {
+            uint256 amount = vintageIdToAmountPerBuyer[vintageId][EnumerableSet.at(vintageIdToBuyers[vintageId], i)];
+            address account = EnumerableSet.at(vintageIdToBuyers[vintageId], i);
             uint256 price = amount * pricePerCredit;
 
             if (refund) {
                 IERC20(tokenAddress).transfer(account, price);
             } else {
-                balances[phaseId][account] = amount;
+                balances[vintageId][account] = amount;
             }
 
             blockedAmountForToken[tokenAddress] -= price;
         }
 
-        projectIdToPhase[projectId].open = false;
+        projectToVintage[projectId].open = false;
 
-        emit PhaseAction(
-            phaseId,
+        emit VintageAction(
+            vintageId,
             false,
-            projectIdToPhase[projectId].totalCredits,
+            projectToVintage[projectId].totalCredits,
             pricePerCredit,
             refund
         );
     }
 
     /*
-        @notice Returns the details of the phase of project with given credits ID.
+        @notice Returns the details of the vintage of project with given credits ID.
         @param projectId The id of the target project.
-        @return The details of the funding phase for target project.
+        @return The details of the funding vintage for target project.
     */
-    function getPhaseForProject(
+    function getVintageForProject(
         uint256 projectId
     )
         external
         view
-        returns(Phase memory)
+        returns(Vintage memory)
     {
-        return projectIdToPhase[projectId];
+        return projectToVintage[projectId];
     }
 
 
@@ -174,15 +174,15 @@ abstract contract Fundings is Projects, Bank {
     }
 
     /*
-        @notice Emitted when a funding phase is opened or closed.
-        @param id The id of the funding phase (credits id).
-        @param opened Set to false if the phase is closed, true otherwise.
+        @notice Emitted when a funding vintage is opened or closed.
+        @param id The id of the funding vintage (credits id).
+        @param opened Set to false if the vintage is closed, true otherwise.
         @param credits The number of credits.
         @param price The price of credits.
         @param timestamp The opening timestamp.
-        @param refund Set to true if the funding phase was unsuccessful, false otherwise.
+        @param refund Set to true if the funding vintage was unsuccessful, false otherwise.
     */
-    event PhaseAction(
+    event VintageAction(
         uint256 indexed id,
         bool indexed opened,
         uint256 credits,

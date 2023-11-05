@@ -99,6 +99,7 @@ contract Pools {
     /*
         @notice Create a new pool.
         @dev Can be called only by admins or contract owners.
+        @param stakingPeriod The locking period expressed in seconds.
     */
     function createPool(uint256 stakingPeriod)
         external
@@ -191,7 +192,7 @@ contract Pools {
     }
 
     /*
-        @notice UnStakes funds from the smart contract.
+        @notice Unstakes funds from the smart contract.
             If the unstake is done after the staking period ended, it will return the staked amount plus interests,
             otherwise it will return the exact amount that was staked.
         @dev Can be called if the pool is canceled, the staking period ended or is not started.

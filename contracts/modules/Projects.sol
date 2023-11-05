@@ -6,7 +6,7 @@ import "../libraries/Errors.sol";
 
 abstract contract Projects is ERC1155 {
 
-    uint256 private nProjects;
+    uint256 public numberOfProjects;
     mapping(uint256 => uint256) private creditIdToProjectId;
 
     /*
@@ -14,7 +14,7 @@ abstract contract Projects is ERC1155 {
         @param projectId The target project id.
     */
     modifier projectExists(uint256 projectId) {
-        require(projectId > 0 && projectId <= nProjects, Errors.NOT_EXISTS);
+        require(projectId > 0 && projectId <= numberOfProjects, Errors.NOT_EXISTS);
         _;
     }
 
@@ -26,12 +26,9 @@ abstract contract Projects is ERC1155 {
     function createProject()
         external
         adminOrOwner(msg.sender)
-        returns(uint256)
     {
-        nProjects++;
-        emit ProjectCreation(nProjects);
-
-        return nProjects;
+        emit ProjectCreation(numberOfProjects);
+        numberOfProjects++;
     }
 
     /*

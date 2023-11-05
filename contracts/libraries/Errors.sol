@@ -26,9 +26,9 @@ library Errors {
     string constant public NOT_EXISTS = "500";
 
     //Fundings
-    string constant public PHASE_ALREADY_OPEN = "600";
+    string constant public VINTAGE_ALREADY_OPEN = "600";
     string constant public CREDITS_NOT_AVAILABLE = "601";
-    string constant public PHASE_NOT_OPEN = "602";
+    string constant public VINTAGE_NOT_OPEN = "602";
 
     //Pools
     string constant public POOL_IS_OPEN = "700";

@@ -40,7 +40,7 @@ abstract contract ERC1155 is Accounts, IERC1155 {
     */
     modifier hasValue(address account, uint256 value, uint256 tokenId) {
         require(
-            balances[tokenId][account] - _getFrozen(account, tokenId) >= value,
+            balances[tokenId][account] >= value,
             Errors.INSUFFICIENT_BALANCE
         );
         _;
@@ -257,12 +257,6 @@ abstract contract ERC1155 is Accounts, IERC1155 {
         balances[_id][_from] = balances[_id][_from] - _value;
         balances[_id][_to]   = _value + balances[_id][_to];
     }
-
-        function _getFrozen(address, uint256)
-        internal
-        virtual
-        view
-        returns(uint256);
 
     /*
         @notice Emitted when tokens are transferred, including zero value transfers as well as minting or burning.

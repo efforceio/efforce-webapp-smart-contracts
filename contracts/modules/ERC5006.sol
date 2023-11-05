@@ -16,7 +16,6 @@ abstract contract ERC5006 is ERC1155 {
     }
 
     mapping(uint256 => UserRecord) private records;
-    mapping(address => mapping(uint256 => uint256)) private frozen;
     mapping(address => mapping(uint256 => EnumerableSet.UintSet)) private usersToRecordsSet;
     uint256 private currentRecord;
 
@@ -71,7 +70,6 @@ abstract contract ERC5006 is ERC1155 {
             user,
             expiry
         );
-        frozen[owner][tokenId] += amount;
         EnumerableSet.add(usersToRecordsSet[user][tokenId], currentRecord);
 
         emit CreateUserRecord(currentRecord, tokenId, amount, owner, user, expiry);
@@ -94,7 +92,6 @@ abstract contract ERC5006 is ERC1155 {
     {
         uint256 tokenId = records[recordId].tokenId;
 
-        frozen[records[recordId].owner][tokenId] -= records[recordId].amount;
         EnumerableSet.remove(usersToRecordsSet[records[recordId].user][tokenId], recordId);
 
         emit DeleteUserRecord(recordId);
@@ -125,23 +122,6 @@ abstract contract ERC5006 is ERC1155 {
     }
 
     /*
-        @notice Returns the amount of frozen tokens of token type id by account.
-        @param account The target account.
-        @param tokenId The target token id.
-        @return The amount of tokens that are blocked for the target account with target token id.
-    */
-    function frozenBalanceOf(
-        address account,
-        uint256 tokenId
-    )
-        external
-        view
-        returns(uint256)
-    {
-        return _getFrozen(account, tokenId);
-    }
-
-    /*
         @notice Returns the UserRecord of recordId.
         @param recordId The given record id.
         @return The details of the record with given id.
@@ -154,15 +134,6 @@ abstract contract ERC5006 is ERC1155 {
         returns(UserRecord memory)
     {
         return records[recordId];
-    }
-
-    function _getFrozen(address account, uint256 tokenId)
-        internal
-        override
-        view
-        returns(uint256)
-    {
-        return frozen[account][tokenId];
     }
 
     /*

@@ -3,7 +3,6 @@ pragma solidity ^0.8.21;
 
 import "./Projects.sol";
 import "../libraries/Errors.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../Roles.sol";
 import "./Bank.sol";
 
@@ -14,25 +13,12 @@ abstract contract Vintages is Projects, Bank {
         uint256 availableCredits;
         uint256 price;
         uint8 state;
+        uint256 projectId;
     }
 
     uint256 private numberOfVintages;
-    mapping(uint256 => uint256) internal projectToActiveVintage;
-    mapping(uint256 => Vintage) internal vintageIdToDetails;
 
-    /*
-        @notice Throw an error if the project already has open vintages.
-        @param vintageId The id of the vintage.
-    */
-    modifier noPreviousVintage(uint256 vintageId) {
-        require(
-            numberOfVintages == 0  ||
-            vintageId == 0 && numberOfVintages > 0 ||
-            vintageIdToDetails[vintageId].state != 0,
-            Errors.VINTAGE_ALREADY_OPEN
-        );
-        _;
-    }
+    mapping(uint256 => Vintage) internal vintageIdToDetails;
 
     /*
         @notice Throw an error if the state of the vintage is different from the one provided.
@@ -49,20 +35,11 @@ abstract contract Vintages is Projects, Bank {
         @param projectId The id of the vintage.
         @param state The query state.
     */
-    modifier availableCredits(uint256 projectId, uint256 credits) {
+    modifier availableCredits(uint256 vintageId, uint256 credits) {
         require(
-            vintageIdToDetails[projectToActiveVintage[projectId]].availableCredits >= credits,
+            vintageIdToDetails[vintageId].availableCredits >= credits,
             Errors.CREDITS_NOT_AVAILABLE
         );
-        _;
-    }
-
-    /*
-        @notice Throws an error if the amount of credits is zero.
-        @param amount The amount of credits.
-    */
-    modifier positiveCredits(uint256 amount) {
-        require(amount > 0, Errors.NOT_ENOUGH_CREDITS);
         _;
     }
 
@@ -72,6 +49,15 @@ abstract contract Vintages is Projects, Bank {
     */
     modifier isValidState(uint256 state) {
         require(state < 3, Errors.NOT_VALID_STATE);
+        _;
+    }
+
+    /*
+        @notice Throws an error if the vintage id not exists.
+        @param vintageId The target vintage id.
+    */
+    modifier isValidVintageId(uint256 vintageId) {
+        require(vintageId < numberOfVintages, Errors.CREDITS_NOT_AVAILABLE);
         _;
     }
 
@@ -91,19 +77,16 @@ abstract contract Vintages is Projects, Bank {
     )
         external
         adminOrOwner(msg.sender)
-        noPreviousVintage(projectToActiveVintage[projectId])
-        positiveCredits(credits)
     {
-        projectToActiveVintage[projectId] = numberOfVintages;
         vintageIdToDetails[numberOfVintages] = Vintage(
             credits,
             credits,
             price,
-            0
+            0,
+            projectId
         );
 
         emit VintageOpened(numberOfVintages, credits, price, projectId);
-
         numberOfVintages++;
     }
 
@@ -117,16 +100,12 @@ abstract contract Vintages is Projects, Bank {
         @param refund If set to true, the funding vintage is unsuccessful and received tokens will be refund,
             otherwise credits are distributed and funds unblocked.
     */
-    function updateVintageState(
-        uint256 projectId,
-        uint8 newState
-    )
+    function updateVintageState(uint256 vintageId, uint8 newState)
         external
         adminOrOwner(msg.sender)
-        isVintageState(projectToActiveVintage[projectId], 0)
+        isVintageState(vintageId, 0)
         isValidState(newState)
     {
-        uint256 vintageId = projectToActiveVintage[projectId];
         vintageIdToDetails[vintageId].state = newState;
 
         if (newState == 1) {
@@ -134,21 +113,6 @@ abstract contract Vintages is Projects, Bank {
         }
 
         emit VintageAction(vintageId, newState);
-    }
-
-    /*
-        @notice Returns the id of the vintage of project with given project id.
-        @param projectId The id of the target project.
-        @return The id of the funding vintage for target project.
-    */
-    function getVintageForProject(
-        uint256 projectId
-    )
-        external
-        view
-        returns(uint256)
-    {
-        return projectToActiveVintage[projectId];
     }
 
     /*

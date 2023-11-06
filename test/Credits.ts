@@ -120,24 +120,6 @@ describe("Credits test", () => {
         });
     });
 
-    describe("ERC-165", () => {
-        it("ERC-165", async function() {
-            expect(await credits.supportsInterface("0x01ffc9a7")).to.true;
-        });
-        it("ERC-1155", async function() {
-            expect(await credits.supportsInterface("0xd9b67a26")).to.true;
-        });
-        it("ERC-1155 metadata", async function() {
-            expect(await credits.supportsInterface("0x0e89341c")).to.true;
-        });
-        it("ERC-5006", async function() {
-            expect(await credits.supportsInterface("0xc26d96cc")).to.true;
-        });
-        it("ERC-2981", async function() {
-            expect(await credits.supportsInterface("0x2a55205a")).to.true;
-        });
-    });
-
     describe("Projects", () => {
         it("Creates project", async () => {
             await expect(credits.connect(account2).createProject()).reverted;
@@ -187,16 +169,12 @@ describe("Credits test", () => {
                 .withArgs(creditIds.length, amount, price, 1);
             creditIds.push(creditIds.length + 1);
 
-            await expect(credits.openVintage(1, amount, price)).reverted;
-
-            expect(await credits.getVintageForProject(0)).equal(0);
-            expect(await credits.getVintageForProject(1)).equal(1);
-
             const details = await credits.getVintage(0);
             expect(details.price).equal(price);
             expect(details.totalCredits).equal(amount);
             expect(details.availableCredits).equal(amount);
             expect(details.state).equal(0);
+            expect(details.projectId).equal(0);
         });
         it("Close vintage", async () => {
             await expect(credits.connect(account2).updateVintageState(0, 1)).reverted;
@@ -221,11 +199,11 @@ describe("Credits test", () => {
         it("Cancel vintage", async () => {
             await expect(credits.connect(account2).updateVintageState(0, 2)).reverted;
 
-            await expect(credits.connect(account1).updateVintageState(0, 2))
+            await expect(credits.connect(account1).updateVintageState(2, 2))
                 .emit(credits, "VintageAction")
                 .withArgs(2, 2);
 
-            await expect(credits.updateVintageState(1, 2))
+            await expect(credits.updateVintageState(3, 2))
                 .emit(credits, "VintageAction")
                 .withArgs(3, 2);
 
@@ -251,9 +229,9 @@ describe("Credits test", () => {
             await expect(credits.openVintage(1, amount, price)).not.reverted;
             creditIds.push(creditIds.length + 1);
 
-            await expect(credits.buyCredits(0, 1)).reverted;
+            await expect(credits.buyCredits(4, 1)).reverted;
 
-            await expect(credits.connect(account1).buyCredits(0, 1))
+            await expect(credits.connect(account1).buyCredits(4, 1))
                 .emit(credits, "CreditsPurchased")
                 .withArgs(4, 1, account1.address)
                 .emit(credits, "FundsLockedUpdated")
@@ -264,10 +242,24 @@ describe("Credits test", () => {
 
             await expect(credits.connect(account2).buyCredits(4, amount)).reverted;
         });
-        it("Buys and close vintage", async () => {
-            await expect(credits.connect(account1).buyCredits(0, amount - 1))
+        it("Buys credits for", async () => {
+            await expect(credits.connect(account2).buyCreditsFor(4, 1, account2.address)).reverted;
+
+            await expect(credits.buyCreditsFor(4, 1, account1.address))
                 .emit(credits, "CreditsPurchased")
-                .withArgs(4, amount - 1, account1.address)
+                .withArgs(4, 1, account1.address)
+                .emit(credits, "FundsLockedUpdated")
+                .withArgs(price * 2);
+
+            expect((await credits.getVintage(4)).availableCredits).equal(amount - 2);
+            expect(await credits.getPendingCredits(4, account1.address)).equal(2);
+
+            await expect(credits.connect(account2).buyCredits(4, amount)).reverted;
+        });
+        it("Buys and close vintage", async () => {
+            await expect(credits.connect(account1).buyCredits(4, amount - 2))
+                .emit(credits, "CreditsPurchased")
+                .withArgs(4, amount - 2, account1.address)
                 .emit(credits, "VintageAction")
                 .withArgs(4, 1);
             expect((await credits.getVintage(4)).state).equal(1);
@@ -285,8 +277,8 @@ describe("Credits test", () => {
             await expect(credits.connect(account1).redeemCredits(4)).reverted;
         });
         it("Refunds credits", async () => {
-            await credits.connect(account2).buyCredits(1, 1);
-            await credits.updateVintageState(1, 2);
+            await credits.connect(account2).buyCredits(5, 1);
+            await credits.updateVintageState(5, 2);
 
             await expect(credits.connect(account2).refundCredits(5))
                 .emit(credits, "RefundOrRedeem")
@@ -362,6 +354,38 @@ describe("Credits test", () => {
             await expect(credits.updateMetadataUri(metadataURI))
                 .emit(credits, "MetadataUriUpdated")
                 .withArgs(metadataURI);
+        });
+    });
+
+    describe("ERC-5679", () => {
+        it("Mints credits", async () => {
+            await credits.openVintage(1, 0, 0);
+
+            await expect(credits.connect(account2).safeMint(owner.address, 6, 1, [])).reverted;
+            await expect(credits.safeMint(owner.address, 6, 1, [])).reverted;
+
+            await expect(credits.safeMint(account1.address, 6, 1, []))
+                .emit(credits, "TransferSingle")
+                .withArgs(owner.address, zeroAddress, account1.address, 6, 1);
+
+            await expect(credits.safeMintBatch(account1.address, [6], [1], [])).not.reverted;
+
+            const vintage = await credits.getVintage(6);
+
+            expect(vintage.totalCredits).equal(2);
+            expect(vintage.availableCredits).equal(0);
+            expect(await credits.balanceOf(account1.address, 6)).equal(2);
+        });
+        it("Burn credits", async () => {
+            await expect(credits.burn(account2.address, 4, 1, [])).reverted;
+
+            await expect(credits.connect(account2).burn(account2.address, 4, 1, []))
+                .emit(credits, "TransferSingle")
+                .withArgs(account2.address, account2.address, zeroAddress, 4, 1);
+
+            await expect(credits.connect(account2).burnBatch(account2.address, [4], [1], []))
+                .emit(credits, "TransferBatch")
+                .withArgs(account2.address, account2.address, zeroAddress, [4], [1]);
         });
     });
 

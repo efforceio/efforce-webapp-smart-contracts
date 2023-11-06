@@ -16,12 +16,10 @@ abstract contract ContractMetadata is RolesModifier {
 
     /*
         @notice Sets the URI for contract-level metadata.
-        @dev Can be invoked by contract owner.
+        @dev Can be invoked by admins or contract owner.
         @param _uri The new contract-level metadata uri.
     */
-    function setContractURI(
-        string calldata _uri
-    )
+    function setContractURI(string calldata _uri)
         external
         adminOrOwner(msg.sender)
     {
@@ -30,7 +28,6 @@ abstract contract ContractMetadata is RolesModifier {
     }
 
     /*
-        @notice Returns the contract metadata URI.
         @return The URI for contract-level metadata.
     */
     function contractURI()

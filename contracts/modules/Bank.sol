@@ -46,7 +46,6 @@ abstract contract Bank is RolesModifier {
 
     /*
         @notice Emitted when a withdrawal is approved.
-        @param tokenAddress The ERC20 token which is transferred.
         @param recipient The address that received the ERC20 tokens.
         @param amount The amount of ERC20 token which are transferred.
     */

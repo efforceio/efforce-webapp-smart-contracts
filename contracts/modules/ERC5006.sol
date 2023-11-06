@@ -34,6 +34,7 @@ abstract contract ERC5006 is ERC1155 {
         @notice Gives permission to user to use amount of tokenId (id of credits) token owned by owner until expiry.
         @param owner The owner of the nfts.
         @param user The address that will be the user for the given amount.
+        @param tokenId The token (vintage) id.
         @param amount The amount of nfts that will be assigned to user.
         @param expiry The expiration timestamp.
         @return The id of the user record.
@@ -72,9 +73,7 @@ abstract contract ERC5006 is ERC1155 {
         @dev Only of owners of the recordId can delete the record.
         @param recordId The id of the record to be deleted.
     */
-    function deleteUserRecord(
-        uint256 recordId
-    )
+    function deleteUserRecord(uint256 recordId)
         external
         ownerOrOperator(records[recordId].owner)
         expiredRecord(recordId)
@@ -93,10 +92,7 @@ abstract contract ERC5006 is ERC1155 {
         @param tokenId The target token id.
         @return The amount of tokens that the target account is user of.
     */
-    function usableBalanceOf(
-        address account,
-        uint256 tokenId
-    )
+    function usableBalanceOf(address account, uint256 tokenId)
         external
         view
         returns(uint256)
@@ -117,10 +113,7 @@ abstract contract ERC5006 is ERC1155 {
         @param tokenId The target token id.
         @return The amount of tokens that are blocked for the target account with target token id.
     */
-    function frozenBalanceOf(
-        address account,
-        uint256 tokenId
-    )
+    function frozenBalanceOf(address account, uint256 tokenId)
         external
         view
         returns(uint256)
@@ -133,9 +126,7 @@ abstract contract ERC5006 is ERC1155 {
         @param recordId The given record id.
         @return The details of the record with given id.
     */
-    function userRecordOf(
-        uint256 recordId
-    )
+    function userRecordOf(uint256 recordId)
         external
         view
         returns(UserRecord memory)

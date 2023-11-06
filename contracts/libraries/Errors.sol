@@ -25,7 +25,7 @@ library Errors {
     //General
     string constant public NOT_EXISTS = "500";
 
-    //VINTAGES
+    //Vintages
     string constant public VINTAGE_ALREADY_OPEN = "600";
     string constant public CREDITS_NOT_AVAILABLE = "601";
     string constant public VINTAGE_NOT_OPEN = "602";

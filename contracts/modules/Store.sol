@@ -28,31 +28,30 @@ abstract contract Store is ERC5679 {
         @param amount The amount of credits that will be purchased.
     */
     function buyCredits(
-        uint256 projectId,
+        uint256 vintageId,
         uint256 amount
     )
         external
-        availableCredits(projectId, amount)
+        availableCredits(vintageId, amount)
         accountEnabled(msg.sender)
-        isVintageState(projectToActiveVintage[projectId], 0)
+        isVintageState(vintageId, 0)
     {
-        uint256 vintageId = projectToActiveVintage[projectId];
-        uint256 totalPrice = vintageIdToDetails[vintageId].price * amount;
+        IERC20(tokenAddress).transferFrom(msg.sender, address(this), amount * vintageIdToDetails[vintageId].price);
+        _buyCredits(vintageId, amount, msg.sender);
+    }
 
-        IERC20(tokenAddress).transferFrom(msg.sender, address(this), totalPrice);
-
-        vintageIdToAmountPerBuyer[vintageId][msg.sender] += amount;
-        vintageIdToDetails[vintageId].availableCredits -= amount;
-        blockedERC20 += totalPrice;
-
-        if (vintageIdToDetails[vintageId].availableCredits == 0) {
-            vintageIdToDetails[vintageId].state = 1;
-            emit VintageAction(vintageId, 1);
-            _unlockFundsRaisedByVintage(vintageId);
-        }
-
-        emit FundsLockedUpdated(blockedERC20);
-        emit CreditsPurchased(vintageId, amount, msg.sender);
+    function buyCreditsFor(
+        uint256 vintageId,
+        uint256 amount,
+        address receiver
+    )
+        external
+        availableCredits(vintageId, amount)
+        accountEnabled(receiver)
+        adminOrOwner(msg.sender)
+        isVintageState(vintageId, 0)
+    {
+        _buyCredits(vintageId, amount, receiver);
     }
 
     /*
@@ -64,7 +63,7 @@ abstract contract Store is ERC5679 {
         isVintageState(vintageId, 1)
         hasPendingCredits(vintageId, msg.sender)
     {
-        _mint(msg.sender,vintageId, vintageIdToAmountPerBuyer[vintageId][msg.sender], abi.encodePacked(""));
+        _mint(msg.sender,vintageId, vintageIdToAmountPerBuyer[vintageId][msg.sender], abi.encodePacked(""), false);
 
         vintageIdToAmountPerBuyer[vintageId][msg.sender] = 0;
         emit RefundOrRedeem(msg.sender, vintageId, 1);
@@ -102,6 +101,25 @@ abstract contract Store is ERC5679 {
         returns(uint256)
     {
         return vintageIdToAmountPerBuyer[vintageId][account];
+    }
+
+    function _buyCredits(uint256 vintageId, uint256 amount, address receiver)
+        internal
+    {
+        uint256 totalPrice = vintageIdToDetails[vintageId].price * amount;
+
+        vintageIdToAmountPerBuyer[vintageId][receiver] += amount;
+        vintageIdToDetails[vintageId].availableCredits -= amount;
+        blockedERC20 += totalPrice;
+
+        if (vintageIdToDetails[vintageId].availableCredits == 0) {
+            vintageIdToDetails[vintageId].state = 1;
+            emit VintageAction(vintageId, 1);
+            _unlockFundsRaisedByVintage(vintageId);
+        }
+
+        emit FundsLockedUpdated(blockedERC20);
+        emit CreditsPurchased(vintageId, amount, receiver);
     }
 
     /*

@@ -35,10 +35,7 @@ abstract contract Bank is RolesModifier {
         @param recipient The address that will receive the ERC20 tokens.
         @param amount The amount of ERC20 tokens that will be transferred.
     */
-    function withdraw(
-        address recipient,
-        uint256 amount
-    )
+    function withdraw(address recipient, uint256 amount)
         external
         adminOrOwner(msg.sender)
         availableBalance(amount)
@@ -57,6 +54,7 @@ abstract contract Bank is RolesModifier {
 
     /*
         @notice Emitted when the amount of locked funds is updated.
+        @param The total number of funds that are locked.
     */
     event FundsLockedUpdated(uint256 lockedFunds);
 }

@@ -11,6 +11,7 @@ contract ERC165 {
         interfaceToSupported[0x0e89341c] = true; // ERC-1155 metadata
         interfaceToSupported[0xc26d96cc] = true; // ERC-5006
         interfaceToSupported[0x2a55205a] = true; // ERC-2981
+        interfaceToSupported[0xf4cedd5a] = true; // ERC-5679
     }
 
     /*

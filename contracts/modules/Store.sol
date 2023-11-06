@@ -2,10 +2,10 @@
 pragma solidity ^0.8.21;
 
 import "./Vintages.sol";
-import "./ERC1155.sol";
 import "../helpers/IERC20.sol";
+import "./ERC5679.sol";
 
-abstract contract Store is Vintages, ERC1155 {
+abstract contract Store is ERC5679 {
 
     mapping(uint256 => mapping(address => uint256)) private vintageIdToAmountPerBuyer;
 
@@ -64,15 +64,7 @@ abstract contract Store is Vintages, ERC1155 {
         isVintageState(vintageId, 1)
         hasPendingCredits(vintageId, msg.sender)
     {
-        balances[vintageId][msg.sender] = vintageIdToAmountPerBuyer[vintageId][msg.sender];
-
-        emit TransferSingle(
-            msg.sender,
-            address(0),
-            msg.sender,
-            vintageId,
-            vintageIdToAmountPerBuyer[vintageId][msg.sender]
-        );
+        _mint(msg.sender,vintageId, vintageIdToAmountPerBuyer[vintageId][msg.sender], abi.encodePacked(""));
 
         vintageIdToAmountPerBuyer[vintageId][msg.sender] = 0;
         emit RefundOrRedeem(msg.sender, vintageId, 1);

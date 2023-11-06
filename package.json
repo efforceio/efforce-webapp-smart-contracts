@@ -2,10 +2,10 @@
   "name": "efforce-marketplace",
   "scripts": {
     "compile": "npx hardhat compile",
-    "deploy-utils-testnet": "hardhat run scripts/deploy-utils.ts  --network polygon_mumbai",
-    "deploy-credits-testnet": "hardhat run scripts/deploy-credits.ts  --network polygon_mumbai",
-    "deploy-roles-testnet": "hardhat run scripts/deploy-roles.ts  --network polygon_mumbai",
-    "deploy-pools-testnet": "hardhat run scripts/deploy-pools.ts  --network polygon_mumbai",
+    "deploy-utils-testnet": "hardhat run scripts/deploy-utils.ts --network polygon_mumbai",
+    "deploy-credits-testnet": "hardhat run scripts/deploy-credits.ts --network polygon_mumbai",
+    "deploy-roles-testnet": "hardhat run scripts/deploy-roles.ts --network polygon_mumbai",
+    "deploy-pools-testnet": "hardhat run scripts/deploy-pools.ts --network polygon_mumbai",
     "test": "npx hardhat test"
   },
   "devDependencies": {

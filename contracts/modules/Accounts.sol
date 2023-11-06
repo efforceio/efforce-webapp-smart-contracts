@@ -33,10 +33,7 @@ abstract contract Accounts is RolesModifier {
         @param account The target account.
         @param enabling If true, the target account is enabled to receive the credits, otherwise it will be disabled.
     */
-    function updateAccount(
-        address account,
-        bool enabling
-    )
+    function updateAccount(address account, bool enabling)
         external
         adminOrOwner(msg.sender)
         notZeroAddress(account)
@@ -50,9 +47,7 @@ abstract contract Accounts is RolesModifier {
         @param account The target account.
         @return True if the target account is enabled, false otherwise.
     */
-    function isAccountEnabled(
-        address account
-    )
+    function isAccountEnabled(address account)
         external
         view
         returns(bool)

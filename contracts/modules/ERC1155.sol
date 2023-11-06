@@ -66,20 +66,7 @@ abstract contract ERC1155 is Accounts, IERC1155 {
         ownerOrOperator(_from)
     {
         _doTransfer(_id, _from, _value, _to);
-
-        if (Utils.isContract(_to)) {
-            require(
-                IERC1155TokenReceiver(_to).onERC1155Received(
-                    msg.sender,
-                    _from,
-                    _id,
-                    _value,
-                    data
-                ) == Constants.ERC1155_ACCEPTED,
-                Errors.UNKNOWN_VALUE_FROM_SAFE_TRANSFER
-            );
-        }
-
+        _checkIfContract(_from, _to, _id, _value, data);
         emit TransferSingle(msg.sender, _from, _to, _id, _value);
     }
 
@@ -222,6 +209,29 @@ abstract contract ERC1155 is Accounts, IERC1155 {
     {
         balances[_id][_from] = balances[_id][_from] - _value;
         balances[_id][_to]   = _value + balances[_id][_to];
+    }
+
+    function _checkIfContract(
+        address _from,
+        address _to,
+        uint256 _id,
+        uint256 _value,
+        bytes memory data
+    )
+        internal
+    {
+        if (Utils.isContract(_to)) {
+            require(
+                IERC1155TokenReceiver(_to).onERC1155Received(
+                    msg.sender,
+                    _from,
+                    _id,
+                    _value,
+                    data
+                ) == Constants.ERC1155_ACCEPTED,
+                Errors.UNKNOWN_VALUE_FROM_SAFE_TRANSFER
+            );
+        }
     }
 
     function _getFrozen(address, uint256)

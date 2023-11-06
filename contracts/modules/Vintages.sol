@@ -156,9 +156,7 @@ abstract contract Vintages is Projects, Bank {
         @param vintageId The id of the target vintage.
         @return The details of the funding vintage for target project.
     */
-    function getVintage(
-        uint256 vintageId
-    )
+    function getVintage(uint256 vintageId)
         external
         view
         returns(Vintage memory)
@@ -196,4 +194,6 @@ abstract contract Vintages is Projects, Bank {
         @param action Set to 1 if the vintage is closed, 2 if canceled.
     */
     event VintageAction(uint256 indexed vintageId, uint8 indexed action);
+
+    event VintageUpdatedCredits(uint256 indexed vintageId, uint256 newCredits);
 }

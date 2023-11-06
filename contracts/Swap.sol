@@ -4,7 +4,7 @@ pragma solidity ^0.8.21;
 import "./modules/Offers.sol";
 import "./modules/Listings.sol";
 
-contract Marketplace is Offers, Listings {
+contract Swap is Offers, Listings {
 
     address public immutable creditContract;
 

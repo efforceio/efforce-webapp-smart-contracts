@@ -30,6 +30,8 @@ library Errors {
     string constant public CREDITS_NOT_AVAILABLE = "601";
     string constant public VINTAGE_NOT_OPEN = "602";
     string constant public INCORRECT_VINTAGE_STATE = "603";
+    string constant public NOT_ENOUGH_CREDITS = "604";
+    string constant public NOT_VALID_STATE = "605";
 
     //Pools
     string constant public POOL_IS_OPEN = "700";

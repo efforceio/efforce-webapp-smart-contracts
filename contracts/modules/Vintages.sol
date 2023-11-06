@@ -58,6 +58,24 @@ abstract contract Vintages is Projects, Bank {
     }
 
     /*
+        @notice Throws an error if the amount of credits is zero.
+        @param amount The amount of credits.
+    */
+    modifier positiveCredits(uint256 amount) {
+        require(amount > 0, Errors.NOT_ENOUGH_CREDITS);
+        _;
+    }
+
+    /*
+        @notice Throws an error if the state is not valid.
+        @param state The state that has to be checked.
+    */
+    modifier isValidState(uint256 state) {
+        require(state < 3, Errors.NOT_VALID_STATE);
+        _;
+    }
+
+    /*
         @notice Opens a funding vintage for project with given ID, allowing users to buy up to the given number
             of credits for fixed price.
         @dev Can be invoked only by the contract owner or admins.
@@ -74,6 +92,7 @@ abstract contract Vintages is Projects, Bank {
         external
         adminOrOwner(msg.sender)
         noPreviousVintage(projectToActiveVintage[projectId])
+        positiveCredits(credits)
     {
         projectToActiveVintage[projectId] = numberOfVintages;
         vintageIdToDetails[numberOfVintages] = Vintage(
@@ -83,7 +102,7 @@ abstract contract Vintages is Projects, Bank {
             0
         );
 
-        emit VintageOpened(numberOfVintages, credits, price);
+        emit VintageOpened(numberOfVintages, credits, price, projectId);
 
         numberOfVintages++;
     }
@@ -105,59 +124,71 @@ abstract contract Vintages is Projects, Bank {
         external
         adminOrOwner(msg.sender)
         isVintageState(projectToActiveVintage[projectId], 0)
+        isValidState(newState)
     {
         uint256 vintageId = projectToActiveVintage[projectId];
         vintageIdToDetails[vintageId].state = newState;
 
         if (newState == 1) {
-            uint256 purchasedCredits = vintageIdToDetails[vintageId].totalCredits -
-                vintageIdToDetails[vintageId].availableCredits;
-            blockedERC20 -= purchasedCredits * vintageIdToDetails[vintageId].price;
-
-            emit FundsLockedUpdated(blockedERC20);
+            _unlockFundsRaisedByVintage(vintageId);
         }
 
         emit VintageAction(vintageId, newState);
     }
 
     /*
-        @notice Returns the details of the vintage of project with given credits ID.
+        @notice Returns the id of the vintage of project with given project id.
         @param projectId The id of the target project.
-        @return The details of the funding vintage for target project.
+        @return The id of the funding vintage for target project.
     */
     function getVintageForProject(
         uint256 projectId
     )
         external
         view
+        returns(uint256)
+    {
+        return projectToActiveVintage[projectId];
+    }
+
+    /*
+        @notice Returns the details of the vintage of project with given vintage id.
+        @param vintageId The id of the target vintage.
+        @return The details of the funding vintage for target project.
+    */
+    function getVintage(
+        uint256 vintageId
+    )
+        external
+        view
         returns(Vintage memory)
     {
-        uint256 vintageId = projectToActiveVintage[projectId];
         return vintageIdToDetails[vintageId];
+    }
+
+    function _unlockFundsRaisedByVintage(uint256 vintageId)
+        internal
+    {
+        uint256 purchasedCredits = vintageIdToDetails[vintageId].totalCredits -
+            vintageIdToDetails[vintageId].availableCredits;
+        blockedERC20 -= purchasedCredits * vintageIdToDetails[vintageId].price;
+
+        emit FundsLockedUpdated(blockedERC20);
     }
 
     /*
         @notice Emitted when a funding vintage is opened or closed.
         @param id The id of the funding vintage (credits id).
-        @param opened Set to false if the vintage is closed, true otherwise.
         @param credits The number of credits.
         @param price The price of credits.
-        @param timestamp The opening timestamp.
-        @param refund Set to true if the funding vintage was unsuccessful, false otherwise.
+        @param projectId the projectId for the new issued credits.
     */
     event VintageOpened(
         uint256 indexed id,
         uint256 credits,
-        uint256 price
+        uint256 price,
+        uint256 indexed projectId
     );
-
-    /*
-        @notice Emitted when the account buys some credits.
-        @param id The credits ID.
-        @param amount The amount of credits purchased.
-        @param account The buyer.
-    */
-    event CreditsPurchased(uint256 indexed id, uint256 amount, address indexed account);
 
     /*
         @notice Emitted when the state of a vintage is updated.

@@ -12,8 +12,6 @@ describe("Credits test", () => {
         token: Token,
         projectIds: number[],
         creditIds: number[],
-        recordIds: number[],
-        phaseIds: number[],
         lastDate: Date;
 
     const
@@ -22,6 +20,7 @@ describe("Credits test", () => {
         royaltyBps = 10_00,
         amount = 100,
         price = 1,
+        zeroAddress = "0x0000000000000000000000000000000000000000",
         days = 1;
 
     before("Initialization", async function() {
@@ -49,8 +48,6 @@ describe("Credits test", () => {
 
         projectIds = [];
         creditIds = [];
-        recordIds = [];
-        phaseIds = [];
         lastDate = new Date();
     });
 
@@ -141,6 +138,24 @@ describe("Credits test", () => {
         });
     });
 
+    describe("Projects", () => {
+        it("Creates project", async () => {
+            await expect(credits.connect(account2).createProject()).reverted;
+
+            await expect(credits.connect(account1).createProject())
+                .emit(credits, "ProjectCreation")
+                .withArgs(projectIds.length);
+            projectIds.push(projectIds.length + 1);
+
+            await expect(credits.createProject())
+                .emit(credits, "ProjectCreation")
+                .withArgs(projectIds.length);
+            projectIds.push(projectIds.length + 1);
+
+            expect(await credits.numberOfProjects()).equal(projectIds.length);
+        });
+    });
+
     describe("Bank", () => {
         it("Withdraws", async () => {
             await token.mintTo(credits.address, 1);
@@ -158,205 +173,195 @@ describe("Credits test", () => {
         });
     });
 
-    describe("Projects", () => {
-        it("Creates project", async () => {
-            await expect(credits.connect(account2).createProject()).reverted;
+    describe("Vintages", () => {
+        it("Open new vintage", async () => {
+            await expect(credits.connect(account2).openVintage(0, amount, price)).reverted;
 
-            await expect(credits.connect(account1).createProject())
-                .emit(credits, "ProjectCreation")
-                .withArgs(projectIds.length + 1);
-            projectIds.push(projectIds.length + 1);
-
-            await expect(credits.createProject())
-                .emit(credits, "ProjectCreation")
-                .withArgs(projectIds.length + 1);
-            projectIds.push(projectIds.length + 1);
-        });
-
-        it("Creates credits for project", async () => {
-            const projectId = projectIds[0];
-
-            await expect(credits.connect(account2).newCreditsForProject(0, amount, account1.address)).reverted;
-            await expect(credits.connect(account2).newCreditsForProject(3, amount, account1.address)).reverted;
-            await expect(credits.connect(account2).newCreditsForProject(3, amount, owner.address)).reverted;
-
-            expect(await credits.newCreditsForProject(projectId, amount, account1.address))
-                .emit(credits, "NewCreditsReleased")
-                .withArgs(
-                    creditIds.length + 1,
-                    projectId,
-                    amount,
-                    account1.address
-                );
-            expect(await credits.projectIdForCredit(creditIds.length + 1)).equal(projectId);
+            await expect(credits.connect(account1).openVintage(0, amount, price))
+                .emit(credits, "VintageOpened")
+                .withArgs(creditIds.length, amount, price, 0);
             creditIds.push(creditIds.length + 1);
 
-            expect(await credits.connect(account1).newCreditsForProject(projectId, amount, account2.address))
-                .emit(credits, "NewCreditsReleased")
-                .withArgs(
-                    creditIds.length + 1,
-                    projectId,
-                    amount,
-                    account2.address
-                );
-            expect(await credits.projectIdForCredit(creditIds.length + 1)).equal(projectId);
+            await expect(credits.openVintage(1, amount, price))
+                .emit(credits, "VintageOpened")
+                .withArgs(creditIds.length, amount, price, 1);
+            creditIds.push(creditIds.length + 1);
+
+            await expect(credits.openVintage(1, amount, price)).reverted;
+
+            expect(await credits.getVintageForProject(0)).equal(0);
+            expect(await credits.getVintageForProject(1)).equal(1);
+
+            const details = await credits.getVintage(0);
+            expect(details.price).equal(price);
+            expect(details.totalCredits).equal(amount);
+            expect(details.availableCredits).equal(amount);
+            expect(details.state).equal(0);
+        });
+        it("Close vintage", async () => {
+            await expect(credits.connect(account2).updateVintageState(0, 1)).reverted;
+
+            await expect(credits.connect(account1).updateVintageState(0, 1))
+                .emit(credits, "VintageAction")
+                .withArgs(0, 1);
+
+            await expect(credits.updateVintageState(1, 1))
+                .emit(credits, "VintageAction")
+                .withArgs(1, 1);
+
+            await expect(credits.updateVintageState(0, 2)).reverted;
+            await expect(credits.updateVintageState(1, 2)).reverted;
+
+            await expect(credits.openVintage(0, amount, price)).not.reverted;
+            creditIds.push(creditIds.length + 1);
+
+            await expect(credits.openVintage(1, amount, price)).not.reverted;
             creditIds.push(creditIds.length + 1);
         });
+        it("Cancel vintage", async () => {
+            await expect(credits.connect(account2).updateVintageState(0, 2)).reverted;
 
-        it("projectIdForCredit", async () => {
-            await expect(credits.projectIdForCredit(0)).reverted;
+            await expect(credits.connect(account1).updateVintageState(0, 2))
+                .emit(credits, "VintageAction")
+                .withArgs(2, 2);
+
+            await expect(credits.updateVintageState(1, 2))
+                .emit(credits, "VintageAction")
+                .withArgs(3, 2);
+
+            await expect(credits.updateVintageState(0, 1)).reverted;
+            await expect(credits.updateVintageState(1, 1)).reverted;
         });
     });
 
-    describe("ERC-1155", () => {
-        it("Transfers credits", async () => {
-            await expect(credits.connect(account2).safeTransferFrom(
-                account1.address,
-                account2.address,
-                creditIds[0],
-                amount,
-                "0x00"
-            )).reverted;
-            await expect(credits.connect(account1).safeTransferFrom(
-                account1.address,
-                owner.address,
-                creditIds[0],
-                amount,
-                "0x00"
-            )).reverted;
+    describe("Store", () => {
+        before("Distribute tokens", async () => {
+            await token.mintTo(owner.address, price * amount);
+            await token.mintTo(account1.address, price * amount);
+            await token.mintTo(account2.address, price * amount);
 
-            await expect(credits.connect(account1).safeTransferFrom(
-                account1.address,
-                account2.address,
-                creditIds[0],
-                amount,
-                "0x00"
-            ))
+            await token.approve(credits.address, price * amount);
+            await token.connect(account1).approve(credits.address, price * amount);
+            await token.connect(account2).approve(credits.address, price * amount);
+        });
+        it("Buys credits", async () => {
+            await expect(credits.openVintage(0, amount, price)).not.reverted;
+            creditIds.push(creditIds.length + 1);
+
+            await expect(credits.openVintage(1, amount, price)).not.reverted;
+            creditIds.push(creditIds.length + 1);
+
+            await expect(credits.buyCredits(0, 1)).reverted;
+
+            await expect(credits.connect(account1).buyCredits(0, 1))
+                .emit(credits, "CreditsPurchased")
+                .withArgs(4, 1, account1.address)
+                .emit(credits, "FundsLockedUpdated")
+                .withArgs(price);
+
+            expect((await credits.getVintage(4)).availableCredits).equal(amount - 1);
+            expect(await credits.getPendingCredits(4, account1.address)).equal(1);
+
+            await expect(credits.connect(account2).buyCredits(4, amount)).reverted;
+        });
+        it("Buys and close vintage", async () => {
+            await expect(credits.connect(account1).buyCredits(0, amount - 1))
+                .emit(credits, "CreditsPurchased")
+                .withArgs(4, amount - 1, account1.address)
+                .emit(credits, "VintageAction")
+                .withArgs(4, 1);
+            expect((await credits.getVintage(4)).state).equal(1);
+        });
+        it("Redeems credits", async () => {
+            await expect(credits.connect(account2).redeemCredits(4)).reverted;
+            await expect(credits.connect(account1).redeemCredits(4))
+                .emit(credits, "RefundOrRedeem")
+                .withArgs(account1.address, 4, 1)
                 .emit(credits, "TransferSingle")
-                .withArgs(
-                    account1.address,
-                    account1.address,
-                    account2.address,
-                    creditIds[0],
-                    amount
-                );
+                .withArgs(account1.address, zeroAddress, account1.address, 4, amount);
+            expect(await credits.balanceOf(account1.address, 4)).equal(amount);
 
-            expect(await credits.balanceOf(account2.address, creditIds[0])).equal(amount);
-            expect(await credits.balanceOf(account1.address, creditIds[0])).equal(0);
+            expect(await credits.getPendingCredits(4, account1.address)).equal(0);
+            await expect(credits.connect(account1).redeemCredits(4)).reverted;
         });
+        it("Refunds credits", async () => {
+            await credits.connect(account2).buyCredits(1, 1);
+            await credits.updateVintageState(1, 2);
 
+            await expect(credits.connect(account2).refundCredits(5))
+                .emit(credits, "RefundOrRedeem")
+                .withArgs(account2.address, 5, 2)
+                .emit(credits, "FundsLockedUpdated")
+                .withArgs(0);
+
+            expect(await token.balanceOf(account2.address)).equal(price * amount);
+            expect(await credits.getPendingCredits(5, account2.address)).equal(0);
+            await expect(credits.connect(account2).refundCredits(5)).reverted;
+
+            expect(await credits.balanceOf(account1.address, 5)).equal(0);
+        });
+    });
+
+    describe("ERC1155", () => {
+        it("Transfers credits", async () => {
+            await expect(credits.connect(account1).safeTransferFrom(account1.address, owner.address, 4, 1, []))
+                .reverted;
+            await expect(credits.connect(account2).safeTransferFrom(account1.address, account2.address, 4, 1, []))
+                .reverted;
+
+            await expect(credits.connect(account1).safeTransferFrom(account1.address, account2.address, 4, 1, []))
+                .emit(credits, "TransferSingle")
+                .withArgs(account1.address, account1.address, account2.address, 4, 1);
+            expect(await credits.balanceOf(account2.address, 4)).equal(1);
+        });
         it("Transfers credits batch", async () => {
-            await expect(credits.connect(account1).safeBatchTransferFrom(
-                account2.address,
-                account1.address,
-                [creditIds[0]],
-                [amount],
-                "0x00"
-            )).reverted;
-            await expect(credits.connect(account2).safeBatchTransferFrom(
-                account2.address,
-                owner.address,
-                [creditIds[0]],
-                [amount],
-                "0x00"
-            )).reverted;
+            await expect(
+                credits.connect(account1).safeBatchTransferFrom(account1.address, owner.address, [4], [1], [])
+            ).reverted;
+            await expect(
+                credits.connect(account2).safeBatchTransferFrom(account1.address, account2.address, [4], [1], [])
+            ).reverted;
 
-            await expect(credits.connect(account2).safeBatchTransferFrom(
-                account2.address,
-                account1.address,
-                creditIds,
-                [amount],
-                "0x00"
-            )).reverted;
-
-            await expect(credits.connect(account2).safeBatchTransferFrom(
-                account2.address,
-                account1.address,
-                creditIds,
-                [amount, amount],
-                "0x00"
-            )).
-            emit(credits, "TransferBatch")
-                .withArgs(
-                    account2.address,
-                    account2.address,
-                    account1.address,
-                    creditIds,
-                    [amount, amount]
-                );
-
-            expect(await credits.balanceOf(account1.address, creditIds[0])).equal(amount);
-            expect(await credits.balanceOf(account1.address, creditIds[1])).equal(amount);
-            expect(await credits.balanceOf(account2.address, creditIds[0])).equal(0);
-            expect(await credits.balanceOf(account2.address, creditIds[1])).equal(0);
-
-            await credits.connect(account1).safeTransferFrom(
-                account1.address,
-                account2.address,
-                creditIds[1],
-                amount,
-                "0x00"
-            );
+            await expect(
+                credits.connect(account1).safeBatchTransferFrom(account1.address, account2.address, [4], [1], [])
+            )
+                .emit(credits, "TransferBatch")
+                .withArgs(account1.address, account1.address, account2.address, [4], [1]);
+            expect(await credits.balanceOf(account2.address, 4)).equal(2);
         });
-
-        it("Sets approval for all", async () => {
-            await expect(credits.connect(account1).setApprovalForAll(owner.address, true)).reverted;
-
+        it("Gets balances of batch", async () => {
+            expect(await credits.balanceOfBatch([account2.address, account1.address], [4, 4]))
+                .deep.equal([2, 98]);
+        });
+        it("Approves all", async () => {
             await expect(credits.connect(account1).setApprovalForAll(account2.address, true))
                 .emit(credits, "ApprovalForAll")
-                .withArgs(
-                    account1.address,
-                    account2.address,
-                    true
-                );
+                .withArgs(account1.address, account2.address, true);
+            expect(await credits.isApprovedForAll(account1.address, account2.address)).true;
 
-            await expect(credits.connect(account2).safeTransferFrom(
-                account1.address,
-                account2.address,
-                creditIds[0],
-                amount,
-                "0x00"
-            )).not.reverted;
+            await expect(credits.connect(account2).safeTransferFrom(account1.address, account2.address, 4, 1, []))
+                .not.reverted;
 
-            await credits.connect(account2).safeTransferFrom(
-                account2.address,
-                account1.address,
-                creditIds[0],
-                amount,
-                "0x00"
-            );
+            await expect(credits.connect(account1).setApprovalForAll(account2.address, false))
+                .emit(credits, "ApprovalForAll")
+                .withArgs(account1.address, account2.address, false);
+            expect(await credits.isApprovedForAll(account1.address, account2.address)).false;
+
+            await expect(credits.connect(account2).safeTransferFrom(account1.address, account2.address, 4, 1, []))
+                .reverted;
         });
-
-        it("Updates metadata uri", async () => {
-            const newUri = "uri2";
+        it("Updates metadata URI", async () => {
+            const newUri = "testNewURI";
 
             await expect(credits.connect(account2).updateMetadataUri(newUri)).reverted;
 
-            await expect(credits.updateMetadataUri(newUri))
+            await expect(credits.connect(account1).updateMetadataUri(newUri))
                 .emit(credits, "MetadataUriUpdated")
-                .withArgs(
-                    newUri
-                );
+                .withArgs(newUri);
 
-            expect(await credits.uri(1)).equal(newUri);
-        });
-
-        it("Gets uri", async () => {
-            await expect(credits.uri(0)).reverted;
-        });
-
-        it("Gets balance of", async () => {
-            expect(await credits.balanceOf(owner.address, 0)).equal(0);
-        });
-
-        it("Gets balance of batch", async () => {
-            await expect(credits.balanceOfBatch([owner.address], [0, 1])).reverted;
-            expect(await credits.balanceOfBatch([owner.address, account1.address], [0, 1])).deep.equal([0, amount]);
-        });
-
-        it("Gets approved for all", async () => {
-            expect(await credits.isApprovedForAll(account1.address, account2.address)).is.true;
-            expect(await credits.isApprovedForAll(account2.address, account1.address)).is.false;
+            await expect(credits.updateMetadataUri(metadataURI))
+                .emit(credits, "MetadataUriUpdated")
+                .withArgs(metadataURI);
         });
     });
 
@@ -366,198 +371,68 @@ describe("Credits test", () => {
             lastDate.setDate(lastDate.getDate() + days);
             let timestamp = Math.floor(lastDate.getTime() / 1000);
 
-            await expect(credits.connect(account1).createUserRecord(
-                account2.address,
-                account1.address,
-                creditIds[1],
-                amount,
-                timestamp
-            )).reverted;
-
-            await expect(credits.connect(account2).createUserRecord(
-                account2.address,
-                owner.address,
-                creditIds[1],
-                amount,
-                timestamp
-            )).reverted;
-
-            await expect(credits.connect(account2).createUserRecord(
-                account2.address,
-                account1.address,
-                creditIds[0],
-                amount,
-                timestamp
-            )).reverted;
-
-            for (let i = 0; i < 2; i++) {
-                await expect(credits.connect(account2).createUserRecord(
-                    account2.address,
-                    account1.address,
-                    creditIds[1],
-                    1,
-                    timestamp
-                ))
-                    .emit(credits, "CreateUserRecord")
-                    .withArgs(
-                        recordIds.length + 1,
-                        creditIds[1],
-                        1,
-                        account2.address,
-                        account1.address,
-                        timestamp
-                    );
-                recordIds.push(recordIds.length + 1);
-            }
-
-            const record = await credits.userRecordOf(recordIds[0]);
-            expect(record.tokenId).equal(creditIds[1]);
-            expect(record.owner).equal(account2.address);
-            expect(record.amount).equal(1);
-            expect(record.user).equal(account1.address);
-            expect(record.expiry).equal(timestamp);
-
-            expect(await credits.usableBalanceOf(account1.address, creditIds[1])).equal(2);
-            expect(await credits.frozenBalanceOf(account2.address, creditIds[1])).equal(2);
-
             await expect(credits.connect(account2).createUserRecord(
                 account1.address,
                 account2.address,
-                creditIds[0],
+                4,
                 1,
                 timestamp
-            )).not.reverted;
-            recordIds.push(recordIds.length + 1);
+            )).reverted;
 
-            expect(await credits.usableBalanceOf(account2.address, creditIds[0])).equal(1);
-            expect(await credits.frozenBalanceOf(account1.address, creditIds[0])).equal(1);
+            await expect(credits.connect(account1).createUserRecord(
+                account1.address,
+                owner.address,
+                4,
+                1,
+                timestamp
+            )).reverted;
+
+            await expect(credits.connect(account1).createUserRecord(
+                account1.address,
+                account2.address,
+                4,
+                1,
+                timestamp
+            ))
+                .emit(credits, "CreateUserRecord")
+                .withArgs(
+                    0,
+                    4,
+                    1,
+                    account1.address,
+                    account2.address,
+                    timestamp
+                );
+
+            const record = await credits.userRecordOf(0);
+            expect(record.tokenId).equal(4);
+            expect(record.owner).equal(account1.address);
+            expect(record.amount).equal(1);
+            expect(record.user).equal(account2.address);
+            expect(record.expiry).equal(timestamp);
+
+            expect(await credits.usableBalanceOf(account2.address, 4)).equal(1);
+            expect(await credits.frozenBalanceOf(account1.address, 4)).equal(1);
+
+            await expect(credits.connect(account1).safeTransferFrom(account1.address, account2.address, 4, 97, []))
+                .reverted;
+            await expect(credits.connect(account1).safeTransferFrom(account1.address, account2.address, 4, 96, []))
+                .not.reverted;
         });
 
         it("Remove user record", async () => {
-            await expect(credits.connect(account2).deleteUserRecord(recordIds[0])).reverted;
+            await expect(credits.connect(account1).deleteUserRecord(0)).reverted;
 
             lastDate.setDate(lastDate.getDate() + days);
             const newDate = Math.floor(lastDate.getTime() / 1000);
             await ethers.provider.send("evm_mine", [newDate]);
 
-            await expect(credits.connect(account1).deleteUserRecord(recordIds[0])).reverted;
-
-            expect(await credits.usableBalanceOf(account1.address, creditIds[1])).equal(0);
-            expect(await credits.frozenBalanceOf(account2.address, creditIds[1])).equal(2);
-
-            await expect(credits.connect(account2).deleteUserRecord(recordIds[0]))
+            await expect(credits.connect(account1).deleteUserRecord(0))
                 .emit(credits, "DeleteUserRecord")
-                .withArgs(recordIds[0]);
+                .withArgs(0);
 
-            expect(await credits.frozenBalanceOf(account2.address, creditIds[1])).equal(1);
-
-            await expect(credits.connect(account2).deleteUserRecord(recordIds[0])).reverted;
-        });
-    });
-
-    describe("Fundings", () => {
-        it("Opens phase", async () => {
-            await expect(credits.connect(account2).openPhase(
-                projectIds[0],
-                amount,
-                price,
-            )).reverted;
-
-            await expect(credits.connect(account1).openPhase(
-                projectIds[0],
-                amount,
-                price,
-            ))
-                .emit(credits, "PhaseAction")
-                .withArgs(
-                    phaseIds.length + 1,
-                    true,
-                    amount,
-                    price,
-                    false
-                );
-
-            await expect(credits.connect(account1).openPhase(
-                projectIds[0],
-                amount,
-                price,
-            )).reverted;
-
-            await credits.connect(account1).openPhase(
-                projectIds[1],
-                amount,
-                price,
-            );
-        });
-
-        it("Buys credits", async () => {
-            await token.mintTo(account1.address, price);
-            await token.mintTo(account2.address, price * 101);
-            await token.mintTo(owner.address, price);
-
-            await expect(credits.buyCredits(projectIds[0], 1)).reverted;
-
-            await token.connect(account1).approve(credits.address, price);
-            await expect(credits.connect(account1).buyCredits(projectIds[0], 1))
-                .emit(credits, "CreditsPurchased")
-                .withArgs(
-                    creditIds.length + 1,
-                    1,
-                    account1.address
-                );
-            creditIds.push(creditIds.length + 1);
-
-            await token.connect(account2).approve(credits.address, price * 101);
-            await expect(credits.connect(account2).buyCredits(projectIds[1], 1))
-                .emit(credits, "CreditsPurchased")
-                .withArgs(
-                    creditIds.length + 1,
-                    1,
-                    account2.address
-                );
-            creditIds.push(creditIds.length + 1);
-
-            await expect(credits.connect(account2).buyCredits(projectIds[1], 99)).not.reverted;
-            await expect(credits.connect(account2).buyCredits(projectIds[1], 1)).reverted;
-
-            await expect(credits.withdraw(owner.address, price)).reverted;
-
-            expect(await token.balanceOf(credits.address)).equal(amount * price + price);
-            expect(await token.balanceOf(account2.address)).equal(1);
-        });
-
-        it("Closes phase", async () => {
-            await expect(credits.connect(account2).closePhase(projectIds[0], false)).reverted;
-
-            await expect(credits.connect(account1).closePhase(projectIds[0], true))
-                .emit(credits, "PhaseAction")
-                .withArgs(
-                    creditIds.length - 1,
-                    false,
-                    amount,
-                    price,
-                    true
-                );
-
-            expect(await token.balanceOf(account1.address)).equal(price);
-            expect(await credits.balanceOf(account1.address, creditIds.length - 1)).equal(0);
-
-            await expect(credits.withdraw(owner.address, price)).reverted;
-
-            await expect(credits.closePhase(projectIds[1], false))
-                .emit(credits, "PhaseAction")
-                .withArgs(
-                    creditIds.length,
-                    false,
-                    amount,
-                    price,
-                    false
-                );
-
-            expect(await token.balanceOf(account2.address)).equal(1);
-            expect(await credits.balanceOf(account2.address, creditIds.length)).equal(100);
-
-            await expect(credits.withdraw(owner.address, price)).not.reverted;
+            expect(await credits.frozenBalanceOf(account1.address, 0)).equal(0);
+            expect(await credits.usableBalanceOf(account2.address, 0)).equal(0);
         });
     });
 });

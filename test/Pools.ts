@@ -50,10 +50,8 @@ describe("Pools test", () => {
             ).withArgs(nPools, lockingPeriod);
             nPools++;
 
-            const timestamp = await time.latest();
             const poolItem = await pools.getPool(nPools-1);
 
-            expect(poolItem.createdAt).equal(timestamp);
             expect(poolItem.stakingStartedAt).equal(0);
             expect(poolItem.allocated).equal(0);
             expect(poolItem.canceled).equal(false);

@@ -45,6 +45,12 @@ abstract contract Store is Vintages, ERC1155 {
         vintageIdToDetails[vintageId].availableCredits -= amount;
         blockedERC20 += totalPrice;
 
+        if (vintageIdToDetails[vintageId].availableCredits == 0) {
+            vintageIdToDetails[vintageId].state = 1;
+            emit VintageAction(vintageId, 1);
+            _unlockFundsRaisedByVintage(vintageId);
+        }
+
         emit FundsLockedUpdated(blockedERC20);
         emit CreditsPurchased(vintageId, amount, msg.sender);
     }
@@ -79,7 +85,7 @@ abstract contract Store is Vintages, ERC1155 {
     */
     function refundCredits(uint256 vintageId)
         external
-        isVintageState(vintageId, 1)
+        isVintageState(vintageId, 2)
         hasPendingCredits(vintageId, msg.sender)
     {
         uint256 nCredits = vintageIdToAmountPerBuyer[vintageId][msg.sender];
@@ -94,6 +100,19 @@ abstract contract Store is Vintages, ERC1155 {
     }
 
     /*
+        @param vintageId The id of the vintage.
+        @param account The target account.
+        @return The pending credits bought by the account for the given vintage.
+    */
+    function getPendingCredits(uint256 vintageId, address account)
+        external
+        view
+        returns(uint256)
+    {
+        return vintageIdToAmountPerBuyer[vintageId][account];
+    }
+
+    /*
         @notice Emitted when a refund or credits redeem is completed.
         @param account The target account.
         @param vintageId The id of the vintage.
@@ -101,4 +120,11 @@ abstract contract Store is Vintages, ERC1155 {
     */
     event RefundOrRedeem(address indexed account, uint256 indexed vintageId, uint8 indexed action);
 
+    /*
+        @notice Emitted when the account buys some credits.
+        @param id The credits ID.
+        @param amount The amount of credits purchased.
+        @param account The buyer.
+    */
+    event CreditsPurchased(uint256 indexed id, uint256 amount, address indexed account);
 }

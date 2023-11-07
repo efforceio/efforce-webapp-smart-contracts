@@ -5,19 +5,19 @@ async function main() {
     let
         utils = "",
         roles = "",
-        token = "";
+        bank = "";
     const metadata = "metadata.json";
 
     console.log("Reading input…");
 
     switch (process.env.HARDHAT_NETWORK) {
         case 'polygon_mumbai':
-            if (!process.env.UTILS_MUMBAI || !process.env.ROLES_MUMBAI || !process.env.USDC_MUMBAI) {
+            if (!process.env.UTILS_MUMBAI || !process.env.ROLES_MUMBAI || !process.env.BANK_MUMBAI) {
                 throw "Utils address not set.";
             } else {
                 utils = process.env.UTILS_MUMBAI;
                 roles = process.env.ROLES_MUMBAI;
-                token = process.env.USDC_MUMBAI;
+                bank = process.env.BANK_MUMBAI;
             }
             break;
         default:
@@ -40,7 +40,7 @@ async function main() {
         roles,
         metadata,
         10_00,
-        token
+        bank
     );
 
     await credits.deployed();
@@ -64,7 +64,7 @@ async function main() {
                     roles,
                     metadata,
                     10_00,
-                    token
+                    bank
                 ],
                 network: process.env.HARDHAT_NETWORK,
                 libraries: {

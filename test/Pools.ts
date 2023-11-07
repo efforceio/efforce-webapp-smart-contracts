@@ -1,5 +1,5 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { Pools, Roles, Token } from "../typechain-types";
+import { Pools, Roles, Token, Bank } from "../typechain-types";
 import { ethers } from "hardhat";
 import { expect } from "chai";
 import { time } from '@nomicfoundation/hardhat-network-helpers';
@@ -9,6 +9,7 @@ describe("Pools test", () => {
         owner: SignerWithAddress,
         account1: SignerWithAddress,
         account2: SignerWithAddress,
+        bank: Bank,
         pools: Pools,
         roles: Roles,
         nPools = 0,
@@ -27,8 +28,11 @@ describe("Pools test", () => {
         const Token = await ethers.getContractFactory("Token");
         token = await Token.deploy("Token", "TKN");
 
+        const Bank = await ethers.getContractFactory("Bank");
+        bank = await Bank.deploy(token.address, roles.address);
+
         const Pools = await ethers.getContractFactory("Pools");
-        pools = await Pools.deploy(roles.address, token.address);
+        pools = await Pools.deploy(roles.address, bank.address);
     });
 
     describe("Create pool", () => {
@@ -76,7 +80,7 @@ describe("Pools test", () => {
 
             expect(await pools.getStakedAmountForAccount(0, account2.address)).equal(100);
             expect(await pools.getStakedAmount(0)).equal(100);
-            expect(await token.balanceOf(pools.address)).equal(100);
+            expect(await token.balanceOf(bank.address)).equal(100);
         });
         it("Stacks funds for", async () => {
             await expect(pools.connect(account2).stakingFor(0, 50, account2.address)).reverted;
@@ -167,17 +171,4 @@ describe("Pools test", () => {
             expect(ba).equal(Math.floor(bb + sc));
         });
     });
-
-    describe("Withdraw funds from contract", () => {
-        it("Withdraws", async () => {
-            const b1 = Number(await token.balanceOf(owner.address));
-
-            await expect(pools.connect(account2).withdraw(owner.address, 1)).reverted;
-            await expect(pools.connect(account1).withdraw(owner.address, 1)).not.reverted;
-            await expect(pools.withdraw(owner.address, 1)).not.reverted;
-
-            const b2 = Number(await token.balanceOf(owner.address));
-            expect(b2-b1).equal(2);
-        });
-    })
 });

@@ -6,9 +6,9 @@ import "../interfaces/IRoyalties.sol";
 import "../interfaces/IERC1155.sol";
 import "../helpers/IERC20.sol";
 import "../libraries/Errors.sol";
-import "./Bank.sol";
+import "./BankWrapper.sol";
 
-abstract contract Listings is IPurchases, Bank {
+abstract contract Listings is IPurchases, BankWrapper {
 
     struct Listing {
         address creatorAddress;
@@ -22,19 +22,30 @@ abstract contract Listings is IPurchases, Bank {
     uint256 public nListings;
 
 
+    /*
+        @notice Throws an error if the listing has not enough credits.
+        @param listingId The id of the listing.
+        @param quantity The quantity amount.
+    */
     modifier listingHasEnoughTokens(uint256 listingId, uint256 quantity) {
         require(idToListing[listingId].quantity - quantity >= 0, Errors.NOT_ENOUGHT_TOKENS);
         _;
     }
 
+    /*
+        @notice throws an error if the listing is closed.
+        @param listingId The id of the listing.
+    */
     modifier listingIsActive(uint256 listingId) {
-        require(
-            !idToListing[listingId].closed,
-            Errors.NOT_ACTIVE
-        );
+        require(!idToListing[listingId].closed, Errors.NOT_ACTIVE);
         _;
     }
 
+    /*
+        @notice Throws an error if the account is not the owner of the listing.
+        @param listingId The id of the listing.
+        @param account The target account.
+    */
     modifier isListingOwner(uint256 listingId, address account) {
         require(idToListing[listingId].creatorAddress == account, Errors.NOT_ALLOWED);
         _;
@@ -43,40 +54,26 @@ abstract contract Listings is IPurchases, Bank {
     /*
         @notice Purchase credits from an active listing. Credits are transferred to the buyers,
             while price deducted by royalties are send to the owner of the listing,
-            and royalties to the royalties receiver specifiedn in the credits smart contract.
+            and royalties to the royalties receiver specified in the credits smart contract.
         @param listingId The id of the target listing.
         @param quantity The amount of token that will be purchased.
     */
-    function buyFromListing(uint256 listingId, uint256 quantity)
-        listingHasEnoughTokens(listingId, quantity)
-        listingIsActive(listingId)
-        external
-    {
-        uint256 total = idToListing[listingId].pricePerToken * quantity;
-        (address royaltiesReceiver,uint256 royalties) = IRoyalties(_getCreditsContract()).royaltyInfo(
-            idToListing[listingId].creditId,
-            total
-        );
+    function buyFromListing(uint256 listingId, uint256 quantity) external {
+        _buyFromListing(listingId, quantity);
+    }
 
-        IERC20(tokenAddress).transferFrom(msg.sender, idToListing[listingId].creatorAddress, total - royalties);
-        IERC20(tokenAddress).transferFrom(msg.sender, royaltiesReceiver, royalties);
-        IERC1155(_getCreditsContract()).safeTransferFrom(
-            address(this),
-            msg.sender,
-            idToListing[listingId].creditId,
-            quantity,
-            ""
-        );
-
-        idToListing[listingId].quantity -= quantity;
-        emit ListingUpdated(listingId, idToListing[listingId].quantity, idToListing[listingId].pricePerToken, false);
-        emit Purchase(
-            idToListing[listingId].creditId,
-            idToListing[listingId].creatorAddress,
-            msg.sender,
-            total,
-            quantity
-        );
+    /*
+        @notice Purchase credits from an active listings. Credits are transferred to the buyers,
+            while price deducted by royalties are send to the owner of the listing,
+            and royalties to the royalties receiver specified in the credits smart contract.
+            The purchase action is repeated for each id and quantity.
+        @param ids The ids of the target listing.
+        @param quantities The amounts of token that will be purchased.
+    */
+    function buyFromListingBatch(uint256[] calldata ids, uint256[] calldata quantities) external {
+        for (uint256 i = 0; i < ids.length; i++) {
+            _buyFromListing(ids[i], quantities[i]);
+        }
     }
 
     /*
@@ -96,7 +93,7 @@ abstract contract Listings is IPurchases, Bank {
             idToListing[listingId].quantity,
             ""
         );
-        emit ListingUpdated(listingId, 0, 0, true);
+        emit ListingClosed(listingId, false);
     }
 
     /*
@@ -106,9 +103,7 @@ abstract contract Listings is IPurchases, Bank {
         @param pricePerToken The price for single tokens.
         @param quantity The amount of tokens that will be listed.
     */
-    function createListing(uint256 creditId, uint256 pricePerToken, uint256 quantity)
-        external
-    {
+    function createListing(uint256 creditId, uint256 pricePerToken, uint256 quantity) external {
         IERC1155(_getCreditsContract()).safeTransferFrom(
             msg.sender,
             address(this),
@@ -124,6 +119,7 @@ abstract contract Listings is IPurchases, Bank {
             false
         );
         nListings++;
+
         emit CreateListing(msg.sender, creditId, pricePerToken, quantity);
     }
 
@@ -162,7 +158,7 @@ abstract contract Listings is IPurchases, Bank {
                 );
             }
         }
-        emit ListingUpdated(listingId, quantity, pricePerToken, false);
+        emit ListingUpdated(listingId, quantity, pricePerToken);
     }
 
     /*
@@ -173,14 +169,60 @@ abstract contract Listings is IPurchases, Bank {
         return idToListing[listingId];
     }
 
+    function _buyFromListing(uint256 listingId, uint256 quantity)
+        listingHasEnoughTokens(listingId, quantity)
+        listingIsActive(listingId)
+        private
+    {
+        uint256 total = idToListing[listingId].pricePerToken * quantity;
+        (address royaltiesReceiver,uint256 royalties) = IRoyalties(_getCreditsContract()).royaltyInfo(
+            idToListing[listingId].creditId,
+            total
+        );
+
+        IERC20(tokenAddress).transferFrom(msg.sender, idToListing[listingId].creatorAddress, total - royalties);
+        IERC20(tokenAddress).transferFrom(msg.sender, royaltiesReceiver, royalties);
+        IERC1155(_getCreditsContract()).safeTransferFrom(
+            address(this),
+            msg.sender,
+            idToListing[listingId].creditId,
+            quantity,
+            ""
+        );
+
+        idToListing[listingId].quantity -= quantity;
+
+        if (idToListing[listingId].quantity == 0) {
+            idToListing[listingId].closed = true;
+            emit ListingClosed(listingId, true);
+        }
+
+        emit ListingUpdated(listingId, idToListing[listingId].quantity, idToListing[listingId].pricePerToken);
+        emit Purchase(
+            idToListing[listingId].creditId,
+            idToListing[listingId].creatorAddress,
+            msg.sender,
+            total,
+            quantity
+        );
+    }
+
+    function _getCreditsContract() internal view virtual returns(address);
+
     /*
-        @notice Emitted when a listing is updated: after a purchase, a listing closed, and listing update.
+        @notice Emitted when a listing is updated: after a purchase and listing update.
         @param listingId The id of the target listing.
         @param quantity The new amount of tokens listed.
         @param pricePerToken The new price for tokens.
-        @param closed True of the listing is closed.
     */
-    event ListingUpdated(uint256 indexed listingId, uint256 quantity, uint256 pricePerToken, bool closed);
+    event ListingUpdated(uint256 indexed listingId, uint256 quantity, uint256 pricePerToken);
+
+    /*
+        @notice Emitted when a listing is closed.
+        @param listingId The id of the listing.
+        @param funded Set to true if the listing is closed after all the credits are sold, false otherwise.
+    */
+    event ListingClosed(uint256 indexed listingId, bool indexed funded);
 
     /*
         @notice Emitted when a new listing is created.
@@ -190,7 +232,5 @@ abstract contract Listings is IPurchases, Bank {
         @param quantity The amount of tokens that are listed.
     */
     event CreateListing(address indexed owner, uint256 indexed creditId, uint256 pricePerToken, uint256 quantity);
-
-    function _getCreditsContract() internal view virtual returns(address);
 
 }

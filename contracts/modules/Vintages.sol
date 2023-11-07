@@ -4,9 +4,9 @@ pragma solidity ^0.8.21;
 import "./Projects.sol";
 import "../libraries/Errors.sol";
 import "../Roles.sol";
-import "./Bank.sol";
+import "./BankWrapper.sol";
 
-abstract contract Vintages is Projects, Bank {
+abstract contract Vintages is Projects, BankWrapper {
 
     struct Vintage {
         uint256 totalCredits;

@@ -33,7 +33,7 @@ abstract contract Store is ERC5679 {
         accountEnabled(msg.sender)
         isVintageState(vintageId, 0)
     {
-        IERC20(tokenAddress).transferFrom(msg.sender, address(this), amount * vintageIdToDetails[vintageId].price);
+        IERC20(tokenAddress).transferFrom(msg.sender, bankContract, amount * vintageIdToDetails[vintageId].price);
         _buyCredits(vintageId, amount, msg.sender);
     }
 
@@ -64,7 +64,7 @@ abstract contract Store is ERC5679 {
         isVintageState(vintageId, 1)
         hasPendingCredits(vintageId, msg.sender)
     {
-        _mint(msg.sender,vintageId, vintageIdToAmountPerBuyer[vintageId][msg.sender], abi.encodePacked(""), false);
+        _mint(msg.sender,vintageId, vintageIdToAmountPerBuyer[vintageId][msg.sender], "", false);
 
         vintageIdToAmountPerBuyer[vintageId][msg.sender] = 0;
         emit RefundOrRedeem(msg.sender, vintageId, 1);
@@ -82,7 +82,7 @@ abstract contract Store is ERC5679 {
     {
         uint256 nCredits = vintageIdToAmountPerBuyer[vintageId][msg.sender];
         uint256 totalPrice = vintageIdToDetails[vintageId].price * nCredits;
-        IERC20(tokenAddress).transfer(msg.sender, totalPrice);
+        IBank(bankContract).withdraw(msg.sender, totalPrice);
 
         vintageIdToAmountPerBuyer[vintageId][msg.sender] = 0;
 

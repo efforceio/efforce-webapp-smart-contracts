@@ -121,7 +121,6 @@ abstract contract ERC1155 is Accounts, IERC1155 {
     function setApprovalForAll(address _operator, bool _approved)
         external
         override
-        accountEnabled(_operator)
     {
         operatorApproval[msg.sender][_operator] = _approved;
         emit ApprovalForAll(msg.sender, _operator, _approved);

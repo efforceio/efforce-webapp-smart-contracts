@@ -3,8 +3,9 @@ pragma solidity ^0.8.21;
 
 import "./RolesModifier.sol";
 import "../interfaces/IRoyalties.sol";
+import "./BankWrapper.sol";
 
-abstract contract Royalties is RolesModifier, IRoyalties {
+abstract contract Royalties is RolesModifier, IRoyalties, BankWrapper {
 
     uint256 private royaltyBps;
 
@@ -39,7 +40,7 @@ abstract contract Royalties is RolesModifier, IRoyalties {
         override
         returns(address, uint256)
     {
-        return (address(this), (salePrice * royaltyBps) / 10_000);
+        return (bankContract, (salePrice * royaltyBps) / 10_000);
     }
 
     /*

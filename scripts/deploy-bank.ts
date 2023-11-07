@@ -1,41 +1,36 @@
-import { ethers } from "hardhat";
-import hre from "hardhat";
+import hre, { ethers } from "hardhat";
 
 async function main() {
-
     let rolesAddress = "";
-    let bankAddress = "";
+    let usdcAddress = "";
 
     console.log("Reading input…");
 
     switch (process.env.HARDHAT_NETWORK) {
         case 'polygon_mumbai':
-            if (!process.env.ROLES_MUMBAI || !process.env.BANK_MUMBAI) {
-                throw "Roles address, USDC address, or Locking period not set";
+            if (!process.env.ROLES_MUMBAI || !process.env.USDC_MUMBAI) {
+                throw "Roles address or usdc address not set";
             } else {
-                rolesAddress = process.env.ROLES_MUMBAI;
-                bankAddress = process.env.BANK_MUMBAI;
+                rolesAddress = process.env.ROLES_MUMBAI || "";
+                usdcAddress = process.env.USDC_MUMBAI || "";
             }
             break;
         default:
             throw "Network not supported";
     }
 
-    const Pools = await ethers.getContractFactory("Pools");
+    const Bank = await ethers.getContractFactory("Bank");
 
     console.log("Start deployment…");
 
-    const pools = await Pools.deploy(
-        rolesAddress,
-        bankAddress
-    );
+    const bank = await Bank.deploy(usdcAddress, rolesAddress);
 
-    await pools.deployed();
+    await bank.deployed();
 
-    console.log(`Pools deployed to ${pools.address}`);
+    console.log(`Roles deployed to ${bank.address}`);
     console.log(`Awaiting 5 confirmations…`);
 
-    await pools.deployTransaction.wait(5);
+    await bank.deployTransaction.wait(5);
 
     console.log(`Done.`);
     console.log("Verifying in etherscan…");
@@ -45,18 +40,14 @@ async function main() {
         try {
             console.log(`Done.`);
             await hre.run("verify:verify", {
-                address: pools.address,
-                constructorArguments: [
-                    rolesAddress,
-                    bankAddress
-                ],
+                address: bank.address,
+                constructorArguments: [usdcAddress, rolesAddress],
                 network: process.env.HARDHAT_NETWORK
             });
         } catch (e) {
             console.error(e);
         }
     }, 120000);
-
 }
 
 main().catch((error) => {

@@ -2,16 +2,18 @@
 pragma solidity ^0.8.21;
 
 import "./libraries/Errors.sol";
-import "./modules/Bank.sol";
+import "./modules/BankWrapper.sol";
+import "./modules/RolesModifier.sol";
+import "./helpers/IERC20.sol";
 
-    struct Pool {
+struct Pool {
     uint256 stakingStartedAt;
     uint256 allocated;
     bool canceled;
     uint256 stakingPeriod;
 }
 
-contract Pools is Bank {
+contract Pools is BankWrapper, RolesModifier {
     uint256 public numberOfPools;
 
     mapping(uint256=>Pool) private idToPool;
@@ -22,8 +24,8 @@ contract Pools is Bank {
         @param _rolesContract The address of the roles smart contract.
         @param _tokenContract The erc20 token address to be staked and unstaked.
     */
-    constructor(address _rolesContract, address _tokenContract)
-        Bank(_tokenContract)
+    constructor(address _rolesContract, address _bankContract)
+        BankWrapper(_bankContract)
         RolesModifier(_rolesContract)
     {}
 
@@ -149,7 +151,7 @@ contract Pools is Bank {
         external
         isStakingPeriod(id)
     {
-        IERC20(tokenAddress).transferFrom(msg.sender, address(this), amount);
+        IERC20(tokenAddress).transferFrom(msg.sender, bankContract, amount);
         addressToPoolStaking[msg.sender][id] += amount;
         poolToStaked[id] += amount;
         emit Staking(msg.sender, msg.sender, id, amount, true);
@@ -190,10 +192,7 @@ contract Pools is Bank {
             uint256 amountWithInterests = (
                 addressToPoolStaking[msg.sender][id] * idToPool[id].allocated
             ) / poolToStaked[id];
-            IERC20(tokenAddress).transfer(
-                msg.sender,
-                amountWithInterests
-            );
+            IERC20(tokenAddress).transfer(msg.sender, amountWithInterests);
             emit Staking(msg.sender, msg.sender, id, amountWithInterests, false);
         } else {
             IERC20(tokenAddress).transfer(msg.sender, amount);

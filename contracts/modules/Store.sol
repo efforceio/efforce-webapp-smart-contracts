@@ -20,17 +20,14 @@ abstract contract Store is ERC5679 {
     }
 
     /*
-        @notice If a funding vintage is open for project with given ID and credits are still available, users can buy
-            the given amount of credits for a fixed price.
+        @notice If the funding vintage is open and credits are still available, users can buy the given amount
+            of credits for a fixed price.
         @dev Funds sent by users cannot be withdrawn by the contract owner or admins until the vintage is open.
         @dev Only approved accounts can invoke this function.
-        @param projectId The project id for which credits will be purchased.
+        @param vintageId The vintage id for which credits will be purchased.
         @param amount The amount of credits that will be purchased.
     */
-    function buyCredits(
-        uint256 vintageId,
-        uint256 amount
-    )
+    function buyCredits(uint256 vintageId, uint256 amount)
         external
         availableCredits(vintageId, amount)
         accountEnabled(msg.sender)
@@ -40,11 +37,15 @@ abstract contract Store is ERC5679 {
         _buyCredits(vintageId, amount, msg.sender);
     }
 
-    function buyCreditsFor(
-        uint256 vintageId,
-        uint256 amount,
-        address receiver
-    )
+    /*
+        @notice Allows to buy credits using external payments modes.
+        @dev Cab be called only by contract owner or admins.
+        @dev The receiver must be an allowed account.
+        @param vintageId The id of the vintage.
+        @param amount The amount of credits that are bought.
+        @param receiver The address that will receive the credits.
+    */
+    function buyCreditsFor(uint256 vintageId, uint256 amount, address receiver)
         external
         availableCredits(vintageId, amount)
         accountEnabled(receiver)

@@ -19,9 +19,7 @@ abstract contract Royalties is RolesModifier, IRoyalties {
         @notice Updates default royalty bps.
         @dev Can be invoked only by the contract owner.
     */
-    function setRoyaltyInfo(
-        uint256 _royaltyBps
-    )
+    function setRoyaltyInfo(uint256 _royaltyBps)
         external
         adminOrOwner(msg.sender)
     {
@@ -35,10 +33,7 @@ abstract contract Royalties is RolesModifier, IRoyalties {
         @param salePrice The sale price for the target token id.
         @return The address of the receiver and the royalty amount.
     */
-    function royaltyInfo(
-        uint256,
-        uint256 salePrice
-    )
+    function royaltyInfo(uint256, uint256 salePrice)
         external
         view
         override

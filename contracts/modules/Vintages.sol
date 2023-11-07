@@ -65,16 +65,11 @@ abstract contract Vintages is Projects, Bank {
         @notice Opens a funding vintage for project with given ID, allowing users to buy up to the given number
             of credits for fixed price.
         @dev Can be invoked only by the contract owner or admins.
-        @dev New vintages cannot be opened if there is already an open vintage for the same project id.
         @param projectId The project id for which a new funding vintage will be opened.
         @param credits The number of credits that will be minted if the funding vintage is successful.
         @param price The price of each credit.
     */
-    function openVintage(
-        uint256 projectId,
-        uint256 credits,
-        uint256 price
-    )
+    function openVintage(uint256 projectId, uint256 credits, uint256 price)
         external
         adminOrOwner(msg.sender)
     {
@@ -92,13 +87,11 @@ abstract contract Vintages is Projects, Bank {
 
 
     /*
-        @notice If the funding vintage is successful, refund has to be set to false and users will receive previously
-            purchased credits (vintage closed successfully), otherwise, the refund has to be set to false and users
-            will receive back the ERC20 tokens they have spent (vintage closed unsuccessfully).
+        @notice Closes or cancels an open vintage.
         @dev Can be invoked only by the contract owner or managers.
-        @param projectId The project id for which the funding vintage will be closed.
-        @param refund If set to true, the funding vintage is unsuccessful and received tokens will be refund,
-            otherwise credits are distributed and funds unblocked.
+        @dev Can be invoked only if the vintage is open.
+        @param vintageId The id of the vintage that will be updated.
+        @param newState The new state can be 1 (closed) or 2 (canceled).
     */
     function updateVintageState(uint256 vintageId, uint8 newState)
         external
@@ -116,13 +109,13 @@ abstract contract Vintages is Projects, Bank {
     }
 
     /*
-        @notice Returns the details of the vintage of project with given vintage id.
         @param vintageId The id of the target vintage.
-        @return The details of the funding vintage for target project.
+        @return The details of the vintage of given id.
     */
     function getVintage(uint256 vintageId)
         external
         view
+        isValidVintageId(vintageId)
         returns(Vintage memory)
     {
         return vintageIdToDetails[vintageId];
@@ -145,12 +138,7 @@ abstract contract Vintages is Projects, Bank {
         @param price The price of credits.
         @param projectId the projectId for the new issued credits.
     */
-    event VintageOpened(
-        uint256 indexed id,
-        uint256 credits,
-        uint256 price,
-        uint256 indexed projectId
-    );
+    event VintageOpened(uint256 indexed id, uint256 credits, uint256 price, uint256 indexed projectId);
 
     /*
         @notice Emitted when the state of a vintage is updated.
@@ -159,5 +147,11 @@ abstract contract Vintages is Projects, Bank {
     */
     event VintageAction(uint256 indexed vintageId, uint8 indexed action);
 
+    /*
+        @notice Emitted when the number of total credits of a vintage is updated.
+            Can be invoked by burn or mint functions.
+        @param vintageId The id of the target vintage.
+        @param newCredits The new number of total credits.
+    */
     event VintageUpdatedCredits(uint256 indexed vintageId, uint256 newCredits);
 }

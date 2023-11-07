@@ -1,21 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.21;
 
-import "./interfaces/IRoles.sol";
-import "./helpers/IERC20.sol";
 import "./libraries/Errors.sol";
+import "./modules/Bank.sol";
 
-struct Pool {
+    struct Pool {
     uint256 stakingStartedAt;
     uint256 allocated;
     bool canceled;
     uint256 stakingPeriod;
 }
 
-contract Pools {
-    address immutable public rolesContract;
-    address immutable public tokenContract;
-
+contract Pools is Bank {
     uint256 public numberOfPools;
 
     mapping(uint256=>Pool) private idToPool;
@@ -26,22 +22,10 @@ contract Pools {
         @param _rolesContract The address of the roles smart contract.
         @param _tokenContract The erc20 token address to be staked and unstaked.
     */
-    constructor(address _rolesContract, address _tokenContract) {
-        rolesContract = _rolesContract;
-        tokenContract = _tokenContract;
-    }
-
-    /*
-        @notice Raise an error if the sender is not an Admin or contract owner.
-    */
-    modifier isAdminOrOwner() {
-        require(
-            IRoles(rolesContract).getOwner() == msg.sender ||
-            IRoles(rolesContract).isAdmin(msg.sender),
-            Errors.NOT_ALLOWED
-        );
-        _;
-    }
+    constructor(address _rolesContract, address _tokenContract)
+        Bank(_tokenContract)
+        RolesModifier(_rolesContract)
+    {}
 
     /*
         @notice Raise an error if the staking period already started.
@@ -102,7 +86,7 @@ contract Pools {
     */
     function createPool(uint256 stakingPeriod)
         external
-        isAdminOrOwner()
+        adminOrOwner(msg.sender)
     {
         idToPool[numberOfPools] = Pool(0, 0, false, stakingPeriod);
         emit PoolCreated(numberOfPools, stakingPeriod);
@@ -117,7 +101,7 @@ contract Pools {
     */
     function startStakingPeriod(uint256 id)
         external
-        isAdminOrOwner()
+        adminOrOwner(msg.sender)
         canStartStaking(id)
     {
         idToPool[id].stakingStartedAt = block.timestamp;
@@ -132,7 +116,7 @@ contract Pools {
     */
     function cancelPool(uint256 id)
         external
-        isAdminOrOwner()
+        adminOrOwner(msg.sender)
         canCancel(id)
     {
         idToPool[id].canceled = true;
@@ -147,7 +131,7 @@ contract Pools {
     */
     function setDistributionForPool(uint256 id, uint256 allocated)
         external
-        isAdminOrOwner()
+        adminOrOwner(msg.sender)
         poolNotAllocated(id)
     {
         idToPool[id].allocated = allocated;
@@ -165,7 +149,7 @@ contract Pools {
         external
         isStakingPeriod(id)
     {
-        IERC20(tokenContract).transferFrom(msg.sender, address(this), amount);
+        IERC20(tokenAddress).transferFrom(msg.sender, address(this), amount);
         addressToPoolStaking[msg.sender][id] += amount;
         poolToStaked[id] += amount;
         emit Staking(msg.sender, msg.sender, id, amount, true);
@@ -183,7 +167,7 @@ contract Pools {
     function stakingFor(uint256 id, uint256 amount, address account)
         external
         isStakingPeriod(id)
-        isAdminOrOwner()
+        adminOrOwner(msg.sender)
     {
         addressToPoolStaking[account][id] += amount;
         poolToStaked[id] += amount;
@@ -206,30 +190,17 @@ contract Pools {
             uint256 amountWithInterests = (
                 addressToPoolStaking[msg.sender][id] * idToPool[id].allocated
             ) / poolToStaked[id];
-            IERC20(tokenContract).transfer(
+            IERC20(tokenAddress).transfer(
                 msg.sender,
                 amountWithInterests
             );
             emit Staking(msg.sender, msg.sender, id, amountWithInterests, false);
         } else {
-            IERC20(tokenContract).transfer(msg.sender, amount);
+            IERC20(tokenAddress).transfer(msg.sender, amount);
             poolToStaked[id] -= amount;
             emit Staking(msg.sender, msg.sender, id, amount, false);
         }
         addressToPoolStaking[msg.sender][id] = 0;
-    }
-
-    /*
-        @notice Withdraw funds from the smart contract.
-        @dev Can be called only by contract owner or admins.
-        @param amount The amount to be withdrawn.
-        @param to The address that will receive the funds.
-    */
-    function withdraw(uint256 amount, address to)
-        external
-        isAdminOrOwner()
-    {
-        IERC20(tokenContract).transfer(to, amount);
     }
 
     /*

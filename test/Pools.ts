@@ -172,9 +172,9 @@ describe("Pools test", () => {
         it("Withdraws", async () => {
             const b1 = Number(await token.balanceOf(owner.address));
 
-            await expect(pools.connect(account2).withdraw(1, owner.address)).reverted;
-            await expect(pools.connect(account1).withdraw(1, owner.address)).not.reverted;
-            await expect(pools.withdraw(1, owner.address)).not.reverted;
+            await expect(pools.connect(account2).withdraw(owner.address, 1)).reverted;
+            await expect(pools.connect(account1).withdraw(owner.address, 1)).not.reverted;
+            await expect(pools.withdraw(owner.address, 1)).not.reverted;
 
             const b2 = Number(await token.balanceOf(owner.address));
             expect(b2-b1).equal(2);

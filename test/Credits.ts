@@ -234,8 +234,6 @@ describe("Credits test", () => {
             await expect(credits.connect(account1).buyCredits(4, 1))
                 .emit(credits, "CreditsPurchased")
                 .withArgs(4, 1, account1.address)
-                .emit(credits, "FundsLockedUpdated")
-                .withArgs(price);
 
             expect((await credits.getVintage(4)).availableCredits).equal(amount - 1);
             expect(await credits.getPendingCredits(4, account1.address)).equal(1);
@@ -248,8 +246,6 @@ describe("Credits test", () => {
             await expect(credits.buyCreditsFor(4, 1, account1.address))
                 .emit(credits, "CreditsPurchased")
                 .withArgs(4, 1, account1.address)
-                .emit(credits, "FundsLockedUpdated")
-                .withArgs(price * 2);
 
             expect((await credits.getVintage(4)).availableCredits).equal(amount - 2);
             expect(await credits.getPendingCredits(4, account1.address)).equal(2);
@@ -283,8 +279,6 @@ describe("Credits test", () => {
             await expect(credits.connect(account2).refundCredits(5))
                 .emit(credits, "RefundOrRedeem")
                 .withArgs(account2.address, 5, 2)
-                .emit(credits, "FundsLockedUpdated")
-                .withArgs(0);
 
             expect(await token.balanceOf(account2.address)).equal(price * amount);
             expect(await credits.getPendingCredits(5, account2.address)).equal(0);

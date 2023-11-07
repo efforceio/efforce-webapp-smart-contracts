@@ -100,11 +100,6 @@ abstract contract Vintages is Projects, Bank {
         isValidState(newState)
     {
         vintageIdToDetails[vintageId].state = newState;
-
-        if (newState == 1) {
-            _unlockFundsRaisedByVintage(vintageId);
-        }
-
         emit VintageAction(vintageId, newState);
     }
 
@@ -119,16 +114,6 @@ abstract contract Vintages is Projects, Bank {
         returns(Vintage memory)
     {
         return vintageIdToDetails[vintageId];
-    }
-
-    function _unlockFundsRaisedByVintage(uint256 vintageId)
-        internal
-    {
-        uint256 purchasedCredits = vintageIdToDetails[vintageId].totalCredits -
-            vintageIdToDetails[vintageId].availableCredits;
-        blockedERC20 -= purchasedCredits * vintageIdToDetails[vintageId].price;
-
-        emit FundsLockedUpdated(blockedERC20);
     }
 
     /*

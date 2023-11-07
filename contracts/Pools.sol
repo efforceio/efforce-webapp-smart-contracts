@@ -247,13 +247,7 @@ contract Pools is Bank {
         @param amount The amount that is staked or unstaked.
         @param isStaking If the target account is staking funds, it is set to true, otherwise false.
     */
-    event Staking(
-        address indexed account,
-        address sender,
-        uint256 indexed id,
-        uint256 amount,
-        bool indexed isStaking
-    );
+    event Staking(address indexed account, address sender, uint256 indexed id, uint256 amount, bool indexed isStaking);
 
     /*
         @notice Emitted when a new pool is created.

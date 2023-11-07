@@ -83,11 +83,9 @@ abstract contract Store is ERC5679 {
         uint256 nCredits = vintageIdToAmountPerBuyer[vintageId][msg.sender];
         uint256 totalPrice = vintageIdToDetails[vintageId].price * nCredits;
         IERC20(tokenAddress).transfer(msg.sender, totalPrice);
-        blockedERC20 -= totalPrice;
 
         vintageIdToAmountPerBuyer[vintageId][msg.sender] = 0;
 
-        emit FundsLockedUpdated(blockedERC20);
         emit RefundOrRedeem(msg.sender, vintageId, 2);
     }
 
@@ -107,19 +105,14 @@ abstract contract Store is ERC5679 {
     function _buyCredits(uint256 vintageId, uint256 amount, address receiver)
         internal
     {
-        uint256 totalPrice = vintageIdToDetails[vintageId].price * amount;
-
         vintageIdToAmountPerBuyer[vintageId][receiver] += amount;
         vintageIdToDetails[vintageId].availableCredits -= amount;
-        blockedERC20 += totalPrice;
 
         if (vintageIdToDetails[vintageId].availableCredits == 0) {
             vintageIdToDetails[vintageId].state = 1;
             emit VintageAction(vintageId, 1);
-            _unlockFundsRaisedByVintage(vintageId);
         }
 
-        emit FundsLockedUpdated(blockedERC20);
         emit CreditsPurchased(vintageId, amount, receiver);
     }
 

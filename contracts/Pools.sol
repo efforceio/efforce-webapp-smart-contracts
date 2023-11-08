@@ -5,6 +5,7 @@ import "./libraries/Errors.sol";
 import "./modules/BankWrapper.sol";
 import "./modules/RolesModifier.sol";
 import "./helpers/IERC20.sol";
+import "./interfaces/IBank.sol";
 
 struct Pool {
     uint256 stakingStartedAt;
@@ -192,10 +193,10 @@ contract Pools is BankWrapper, RolesModifier {
             uint256 amountWithInterests = (
                 addressToPoolStaking[msg.sender][id] * idToPool[id].allocated
             ) / poolToStaked[id];
-            IERC20(tokenAddress).transfer(msg.sender, amountWithInterests);
+            IBank(bankContract).withdraw(msg.sender, amountWithInterests);
             emit Staking(msg.sender, msg.sender, id, amountWithInterests, false);
         } else {
-            IERC20(tokenAddress).transfer(msg.sender, amount);
+            IBank(bankContract).withdraw(msg.sender, amount);
             poolToStaked[id] -= amount;
             emit Staking(msg.sender, msg.sender, id, amount, false);
         }

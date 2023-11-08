@@ -33,6 +33,7 @@ describe("Pools test", () => {
 
         const Pools = await ethers.getContractFactory("Pools");
         pools = await Pools.deploy(roles.address, bank.address);
+        await roles.setAdmin(pools.address, true);
     });
 
     describe("Create pool", () => {
@@ -95,6 +96,7 @@ describe("Pools test", () => {
 
             expect(await pools.getStakedAmountForAccount(0, account1.address)).equal(50);
             expect(await pools.getStakedAmount(0)).equal(150);
+            await token.mintTo(bank.address, 50);
         });
         it("Cannot unstack during pool funding", async () => {
             await expect(pools.connect(account2).unstake(0)).reverted;
@@ -119,7 +121,7 @@ describe("Pools test", () => {
             await expect(pools.connect(account2).unstake(0)).reverted;
         });
         it("Allocates funds", async () => {
-            await token.mintTo(pools.address, 10000);
+            await token.mintTo(bank.address, 10000);
 
             await expect(pools.connect(account2).setDistributionForPool(0, 1000)).reverted;
             await expect(pools.connect(account1).setDistributionForPool(0, 1000))

@@ -157,6 +157,7 @@ abstract contract Listings is IPurchases, BankWrapper {
                     ""
                 );
             }
+            idToListing[listingId].quantity = quantity;
         }
         emit ListingUpdated(listingId, quantity, pricePerToken);
     }

@@ -36,8 +36,16 @@ async function main() {
     console.log(`Awaiting 5 confirmations…`);
 
     await pools.deployTransaction.wait(5);
+    console.log(`Done.`);
+
+    console.log(`Granting admin role to contract...`);
+
+    const Roles = await ethers.getContractFactory("Roles");
+    const roles = Roles.attach(rolesAddress);
+    await roles.setAdmin(pools.address, true);
 
     console.log(`Done.`);
+
     console.log("Verifying in etherscan…");
     console.log("Waiting 2 min. for registration…");
 

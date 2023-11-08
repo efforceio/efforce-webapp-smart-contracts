@@ -102,7 +102,7 @@ abstract contract Offers is IPurchases, BankWrapper {
             price,
             false
         );
-        IERC20(tokenAddress).transferFrom(msg.sender, bankContract, price);
+        IERC20(tokenAddress).transferFrom(msg.sender, bankContract, price * quantity);
         emit OfferCreated(tokenId, price, quantity, msg.sender);
     }
 
@@ -169,8 +169,8 @@ abstract contract Offers is IPurchases, BankWrapper {
         );
         idToOffer[offerId].quantity -= amount;
 
-        IERC20(tokenAddress).transfer(msg.sender, total - royalties);
-        IERC20(tokenAddress).transfer(royaltiesReceiver, royalties);
+        IBank(bankContract).withdraw(msg.sender, total - royalties);
+        IBank(bankContract).withdraw(royaltiesReceiver, royalties);
 
         if (idToOffer[offerId].quantity == 0) {
             idToOffer[offerId].closed = true;

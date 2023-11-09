@@ -15,12 +15,11 @@ contract Credits is ERC5006, ERC5679, ContractMetadata, ERC165, Royalties {
         address _rolesAddress,
         string memory contractMetadataURI,
         uint256 royaltyBps,
-        address bankAddress
+        address royaltyReceiver
     )
         ERC1155(metadataUri)
         RolesModifier(_rolesAddress)
         ContractMetadata(contractMetadataURI)
-        Royalties(royaltyBps)
-        BankWrapper(bankAddress)
+        Royalties(royaltyBps, royaltyReceiver)
     {}
 }

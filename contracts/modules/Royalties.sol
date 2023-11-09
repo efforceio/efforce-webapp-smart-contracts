@@ -3,17 +3,18 @@ pragma solidity ^0.8.21;
 
 import "./RolesModifier.sol";
 import "../interfaces/IRoyalties.sol";
-import "./BankWrapper.sol";
 
-abstract contract Royalties is RolesModifier, IRoyalties, BankWrapper {
+abstract contract Royalties is RolesModifier, IRoyalties {
 
     uint256 private royaltyBps;
+    address public receiver;
 
     /*
         @param _royaltyBps The percentage for royalties.
     */
-    constructor(uint256 _royaltyBps) {
+    constructor(uint256 _royaltyBps, address _receiver) {
         royaltyBps = _royaltyBps;
+        receiver = _receiver;
     }
 
     /*
@@ -29,6 +30,19 @@ abstract contract Royalties is RolesModifier, IRoyalties, BankWrapper {
     }
 
     /*
+        @notice Updates the receiver of royalties.
+        @dev Can be called only by contract owner or admins.
+        @param _receiver The new receiver.
+    */
+    function setRoyaltyReceiver(address _receiver)
+        external
+        adminOrOwner(msg.sender)
+    {
+        receiver = _receiver;
+        emit RoyaltiesReceiverUpdated(_receiver);
+    }
+
+    /*
         @notice Returns royalty info for a given token and sale price.
         @param tokenId The id of the target token.
         @param salePrice The sale price for the target token id.
@@ -40,7 +54,7 @@ abstract contract Royalties is RolesModifier, IRoyalties, BankWrapper {
         override
         returns(address, uint256)
     {
-        return (bankContract, (salePrice * royaltyBps) / 10_000);
+        return (receiver, (salePrice * royaltyBps) / 10_000);
     }
 
     /*
@@ -48,5 +62,11 @@ abstract contract Royalties is RolesModifier, IRoyalties, BankWrapper {
         @param royaltyBps The new royalty bps.
     */
     event RoyaltiesUpdated(uint256 royaltyBps);
+
+    /*
+        @notice Emitted when the royalty receiver is updated.
+        @param receiver The new receiver address.
+    */
+    event RoyaltiesReceiverUpdated(address receiver);
 
 }

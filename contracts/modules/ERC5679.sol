@@ -18,10 +18,11 @@ abstract contract ERC5679 is ERC1155, Vintages {
     */
     function safeMint(address to, uint256 id, uint256 amount, bytes calldata data)
         external
+        override
         adminOrOwner(msg.sender)
         accountEnabled(to)
     {
-        _mint(to, id, amount,data, true);
+        _mint(to, id, amount, data);
     }
 
     /*
@@ -40,7 +41,7 @@ abstract contract ERC5679 is ERC1155, Vintages {
         external
     {
         for (uint256 i = 0; i < ids.length; i++) {
-            _mint(to, ids[i], amounts[i], data, true);
+            _mint(to, ids[i], amounts[i], data);
         }
     }
 
@@ -54,8 +55,7 @@ abstract contract ERC5679 is ERC1155, Vintages {
         external
         ownerOrOperator(_from)
     {
-        balances[_id][_from] -= _amount;
-        vintageIdToDetails[_id].totalCredits -= _amount;
+        _burn(_from, _id, _amount);
 
         emit TransferSingle(
             msg.sender,
@@ -64,7 +64,7 @@ abstract contract ERC5679 is ERC1155, Vintages {
             _id,
             _amount
         );
-        emit VintageUpdatedCredits(_id, vintageIdToDetails[_id].totalCredits);
+
     }
 
     /*
@@ -78,23 +78,28 @@ abstract contract ERC5679 is ERC1155, Vintages {
         ownerOrOperator(_from)
     {
         for (uint256 i = 0; i < amounts.length; i++) {
-            balances[ids[i]][_from] -= amounts[i];
-            vintageIdToDetails[ids[i]].totalCredits -= amounts[i];
-            emit VintageUpdatedCredits(ids[i], vintageIdToDetails[ids[i]].totalCredits);
+            _burn(_from, ids[i], amounts[i]);
         }
         emit TransferBatch(msg.sender, _from, address(0), ids, amounts);
     }
 
-    function _mint(address _to, uint256 _id, uint256 _amount, bytes memory _data, bool increment)
-        internal
+    function _burn(address _from, uint256 _id, uint256 _amount)
+        private
+        isValidVintageId(_id)
+    {
+        balances[_id][_from] -= _amount;
+        vintageIdToDetails[_id].totalCredits -= _amount;
+        emit VintageUpdatedCredits(_id, vintageIdToDetails[_id].totalCredits);
+    }
+
+    function _mint(address _to, uint256 _id, uint256 _amount, bytes memory _data)
+        private
         isValidVintageId(_id)
     {
         balances[_id][_to] += _amount;
 
-        if (increment) {
-            vintageIdToDetails[_id].totalCredits += _amount;
-            emit VintageUpdatedCredits(_id, vintageIdToDetails[_id].totalCredits);
-        }
+        vintageIdToDetails[_id].totalCredits += _amount;
+        emit VintageUpdatedCredits(_id, vintageIdToDetails[_id].totalCredits);
 
         _checkIfContract(address(0), _to, _id, _amount, _data);
 

@@ -5,16 +5,9 @@ import "./Projects.sol";
 import "../libraries/Errors.sol";
 import "../Roles.sol";
 import "./BankWrapper.sol";
+import "../interfaces/ICredits.sol";
 
-abstract contract Vintages is Projects, BankWrapper {
-
-    struct Vintage {
-        uint256 totalCredits;
-        uint256 availableCredits;
-        uint256 price;
-        uint8 state;
-        uint256 projectId;
-    }
+abstract contract Vintages is Projects, BankWrapper, ICredits {
 
     uint256 private numberOfVintages;
 
@@ -27,19 +20,6 @@ abstract contract Vintages is Projects, BankWrapper {
     */
     modifier isVintageState(uint256 vintageId, uint8 state) {
         require(vintageIdToDetails[vintageId].state == state, Errors.INCORRECT_VINTAGE_STATE);
-        _;
-    }
-
-    /*
-        @notice Throw an error if users has not credits to redeem or refund.
-        @param projectId The id of the vintage.
-        @param state The query state.
-    */
-    modifier availableCredits(uint256 vintageId, uint256 credits) {
-        require(
-            vintageIdToDetails[vintageId].availableCredits >= credits,
-            Errors.CREDITS_NOT_AVAILABLE
-        );
         _;
     }
 
@@ -74,7 +54,7 @@ abstract contract Vintages is Projects, BankWrapper {
         adminOrOwner(msg.sender)
     {
         vintageIdToDetails[numberOfVintages] = Vintage(
-            credits,
+            0,
             credits,
             price,
             0,
@@ -104,6 +84,27 @@ abstract contract Vintages is Projects, BankWrapper {
     }
 
     /*
+        @notice Updates the vintage availability.
+        @dev Can be invoked only by the contract owner or managers.
+        @dev Can be invoked only if the vintage is open.
+        @param vintageId The id of the vintage that will be updated.
+        @param availability The availability.
+    */
+    function updateVintageAvailability(uint256 vintageId, uint256 availability)
+        external
+        adminOrOwner(msg.sender)
+        isVintageState(vintageId, 0)
+    {
+        vintageIdToDetails[vintageId].availableCredits = availability;
+        emit VintageUpdatedAvailability(vintageId, availability);
+
+        if (vintageIdToDetails[vintageId].availableCredits == 0) {
+            vintageIdToDetails[vintageId].state = 1;
+            emit VintageAction(vintageId, 1);
+        }
+    }
+
+    /*
         @param vintageId The id of the target vintage.
         @return The details of the vintage of given id.
     */
@@ -111,6 +112,7 @@ abstract contract Vintages is Projects, BankWrapper {
         external
         view
         isValidVintageId(vintageId)
+        override
         returns(Vintage memory)
     {
         return vintageIdToDetails[vintageId];
@@ -139,4 +141,11 @@ abstract contract Vintages is Projects, BankWrapper {
         @param newCredits The new number of total credits.
     */
     event VintageUpdatedCredits(uint256 indexed vintageId, uint256 newCredits);
+
+    /*
+        @notice Emitted when the number of available credits for an open vintage is updated.
+        @param vintageId The id of the target vintage.
+        @param availability The new availability.
+    */
+    event VintageUpdatedAvailability(uint256 indexed vintageId, uint256 availability);
 }

@@ -1,13 +1,25 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.21;
 
-import "./Vintages.sol";
-import "../helpers/IERC20.sol";
-import "./ERC5679.sol";
+import "./helpers/IERC20.sol";
+import "./modules/BankWrapper.sol";
+import "./interfaces/ICredits.sol";
+import "./libraries/Errors.sol";
+import "./interfaces/IPurchases.sol";
+import "./modules/RolesModifier.sol";
+import "./interfaces/IAccount.sol";
 
-abstract contract Store is ERC5679 {
+contract Store is BankWrapper, RolesModifier {
 
     mapping(uint256 => mapping(address => uint256)) private vintageIdToAmountPerBuyer;
+    address public immutable creditsContract;
+
+    constructor(address _credits, address bankAddress, address rolesAddress)
+        BankWrapper(bankAddress)
+        RolesModifier(rolesAddress)
+    {
+        creditsContract = _credits;
+    }
 
     /*
         @notice Throws an error if the user has not pending credits for the given vintage.
@@ -16,6 +28,38 @@ abstract contract Store is ERC5679 {
     */
     modifier hasPendingCredits(uint256 vintageId, address account) {
         require(vintageIdToAmountPerBuyer[vintageId][account] > 0);
+        _;
+    }
+
+    /*
+        @notice Raises an error if the input account is not enabled for tradings.
+        @param account The target account.
+    */
+    modifier accountEnabled(address account) {
+        require(IAccount(creditsContract).isAccountEnabled(account), Errors.IS_NOT_ENABLED);
+        _;
+    }
+
+    /*
+        @notice Throw an error if users has not credits to redeem or refund.
+        @param projectId The id of the vintage.
+        @param state The query state.
+    */
+    modifier availableCredits(uint256 vintageId, uint256 credits) {
+        require(
+            ICredits(creditsContract).getVintage(vintageId).availableCredits >= credits,
+            Errors.CREDITS_NOT_AVAILABLE
+        );
+        _;
+    }
+
+    /*
+        @notice Throw an error if the state of the vintage is different from the one provided.
+        @param vintageId The id of the vintage.
+        @param state The query state.
+    */
+    modifier isVintageState(uint256 vintageId, uint8 state) {
+        require( ICredits(creditsContract).getVintage(vintageId).state == state, Errors.INCORRECT_VINTAGE_STATE);
         _;
     }
 
@@ -33,7 +77,11 @@ abstract contract Store is ERC5679 {
         accountEnabled(msg.sender)
         isVintageState(vintageId, 0)
     {
-        IERC20(tokenAddress).transferFrom(msg.sender, bankContract, amount * vintageIdToDetails[vintageId].price);
+        IERC20(tokenAddress).transferFrom(
+            msg.sender,
+            bankContract,
+            amount * ICredits(creditsContract).getVintage(vintageId).price
+        );
         _buyCredits(vintageId, amount, msg.sender);
     }
 
@@ -64,7 +112,12 @@ abstract contract Store is ERC5679 {
         isVintageState(vintageId, 1)
         hasPendingCredits(vintageId, msg.sender)
     {
-        _mint(msg.sender,vintageId, vintageIdToAmountPerBuyer[vintageId][msg.sender], "", false);
+        ICredits(creditsContract).safeMint(
+            msg.sender,
+            vintageId,
+            vintageIdToAmountPerBuyer[vintageId][msg.sender],
+            ""
+        );
 
         vintageIdToAmountPerBuyer[vintageId][msg.sender] = 0;
         emit RefundOrRedeem(msg.sender, vintageId, 1);
@@ -81,7 +134,7 @@ abstract contract Store is ERC5679 {
         hasPendingCredits(vintageId, msg.sender)
     {
         uint256 nCredits = vintageIdToAmountPerBuyer[vintageId][msg.sender];
-        uint256 totalPrice = vintageIdToDetails[vintageId].price * nCredits;
+        uint256 totalPrice = ICredits(creditsContract).getVintage(vintageId).price * nCredits;
         IBank(bankContract).withdraw(msg.sender, totalPrice);
 
         vintageIdToAmountPerBuyer[vintageId][msg.sender] = 0;
@@ -106,12 +159,10 @@ abstract contract Store is ERC5679 {
         internal
     {
         vintageIdToAmountPerBuyer[vintageId][receiver] += amount;
-        vintageIdToDetails[vintageId].availableCredits -= amount;
-
-        if (vintageIdToDetails[vintageId].availableCredits == 0) {
-            vintageIdToDetails[vintageId].state = 1;
-            emit VintageAction(vintageId, 1);
-        }
+        ICredits(creditsContract).updateVintageAvailability(
+            vintageId,
+            ICredits(creditsContract).getVintage(vintageId).availableCredits - amount
+        );
 
         emit CreditsPurchased(vintageId, amount, receiver);
     }

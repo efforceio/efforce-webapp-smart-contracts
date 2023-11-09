@@ -6,9 +6,9 @@ import "./modules/Vintages.sol";
 import "./modules/ContractMetadata.sol";
 import "./modules/ERC165.sol";
 import "./modules/Royalties.sol";
-import "./modules/Store.sol";
+import "./modules/ERC5679.sol";
 
-contract Credits is ERC5006, Store, ContractMetadata, ERC165, Royalties {
+contract Credits is ERC5006, ERC5679, ContractMetadata, ERC165, Royalties {
 
     constructor(
         string memory metadataUri,

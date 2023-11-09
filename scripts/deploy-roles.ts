@@ -21,6 +21,14 @@ async function main() {
                 envName = "ROLES_MUMBAI";
             }
             break;
+        case 'polygon':
+            if (!envConfig["OWNER"]) {
+                throw "Owner address not set";
+            } else {
+                address = envConfig["OWNER"];
+                envName = "ROLES";
+            }
+            break;
         default:
             throw "Network not supported";
     }

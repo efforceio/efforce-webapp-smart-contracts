@@ -28,6 +28,16 @@ async function main() {
                 envName = "STORE_MUMBAI";
             }
             break;
+        case 'polygon':
+            if (!envConfig["ROLES"] || !envConfig["BANK"] || !envConfig["CREDITS"]) {
+                throw "Roles address, USDC address, or Locking period not set";
+            } else {
+                rolesAddress = envConfig["ROLES"];
+                bankAddress = envConfig["BANK"];
+                creditsAddress = envConfig["CREDITS"];
+                envName = "STORE";
+            }
+            break;
         default:
             throw "Network not supported";
     }

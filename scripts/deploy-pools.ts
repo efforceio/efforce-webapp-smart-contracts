@@ -25,6 +25,15 @@ async function main() {
                 envName = "POOLS_MUMBAI";
             }
             break;
+        case 'polygon':
+            if (!envConfig["ROLES"] || !envConfig["BANK"]) {
+                throw "Roles address, USDC address, or Locking period not set";
+            } else {
+                rolesAddress = envConfig["ROLES"];
+                bankAddress = envConfig["BANK"];
+                envName = "POOLS";
+            }
+            break;
         default:
             throw "Network not supported";
     }

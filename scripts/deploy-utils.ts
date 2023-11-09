@@ -12,6 +12,9 @@ async function main() {
         case 'polygon_mumbai':
             envName = "UTILS_MUMBAI";
             break;
+        case 'polygon':
+            envName = "UTILS";
+            break;
         default:
             throw "Network not supported";
     }

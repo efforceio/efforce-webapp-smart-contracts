@@ -27,6 +27,16 @@ async function main() {
                 envName = "CREDITS_MUMBAI";
             }
             break;
+        case 'polygon':
+            if (!envConfig["UTILS"] || !envConfig["ROLES"] || !envConfig["BANK"]) {
+                throw "Utils address not set.";
+            } else {
+                utils = envConfig["UTILS"];
+                roles = envConfig["ROLES"];
+                bank = envConfig["BANK"];
+                envName = "CREDITS";
+            }
+            break;
         default:
             throw "Network not supported";
     }

@@ -23,6 +23,15 @@ async function main() {
                 envName = "BANK_MUMBAI";
             }
             break;
+        case 'polygon':
+            if (!envConfig["ROLES"] || !envConfig["USDC"]) {
+                throw "Roles address or usdc address not set";
+            } else {
+                rolesAddress = envConfig["ROLES"];
+                usdcAddress = envConfig["USDC"];
+                envName = "BANK";
+            }
+            break;
         default:
             throw "Network not supported";
     }

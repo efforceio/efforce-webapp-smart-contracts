@@ -18,7 +18,11 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {},
     polygon_mumbai: {
-      url: "https://rpc-mumbai.maticvigil.com",
+      url: "https://mumbai.rpc.thirdweb.com",
+      accounts: [process.env.PRIVATE_KEY || ""]
+    },
+    polygon: {
+      url: "https://polygon.rpc.thirdweb.com",
       accounts: [process.env.PRIVATE_KEY || ""]
     }
   },

@@ -1,6 +1,20 @@
 import hre, { ethers } from "hardhat";
+import dotenv from "dotenv";
+import fs from "fs";
 
 async function main() {
+    let envName = "";
+    const envPath = '.env';
+
+    switch (process.env.HARDHAT_NETWORK) {
+        case 'polygon_mumbai':
+            envName = "UTILS_MUMBAI";
+            break;
+        default:
+            throw "Network not supported";
+    }
+
+    const envConfig = dotenv.parse(fs.readFileSync(envPath));
 
     const Utils = await ethers.getContractFactory("Utils");
 
@@ -9,6 +23,9 @@ async function main() {
     const utils = await Utils.deploy();
 
     await utils.deployed();
+
+    envConfig[envName] = utils.address;
+    fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
     console.log(`Roles deployed to ${utils.address}`);
     console.log(`Awaiting 5 confirmations…`);

@@ -1,18 +1,26 @@
 import hre, { ethers } from "hardhat";
+const fs = require('fs');
+const dotenv = require('dotenv');
 
 async function main() {
-    let rolesAddress = "";
-    let usdcAddress = "";
+    let
+        rolesAddress = "",
+        envName = "",
+        usdcAddress = "";
+
+    const envPath = '.env';
+    const envConfig = dotenv.parse(fs.readFileSync(envPath));
 
     console.log("Reading input…");
 
     switch (process.env.HARDHAT_NETWORK) {
         case 'polygon_mumbai':
-            if (!process.env.ROLES_MUMBAI || !process.env.USDC_MUMBAI) {
+            if (!envConfig["ROLES_MUMBAI"] || !envConfig["USDC_MUMBAI"]) {
                 throw "Roles address or usdc address not set";
             } else {
-                rolesAddress = process.env.ROLES_MUMBAI || "";
-                usdcAddress = process.env.USDC_MUMBAI || "";
+                rolesAddress = envConfig["ROLES_MUMBAI"];
+                usdcAddress = envConfig["USDC_MUMBAI"];
+                envName = "BANK_MUMBAI";
             }
             break;
         default:
@@ -26,6 +34,9 @@ async function main() {
     const bank = await Bank.deploy(usdcAddress, rolesAddress);
 
     await bank.deployed();
+
+    envConfig[envName] = bank.address;
+    fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
     console.log(`Roles deployed to ${bank.address}`);
     console.log(`Awaiting 5 confirmations…`);

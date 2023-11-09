@@ -1,16 +1,24 @@
 import hre, { ethers } from "hardhat";
+import dotenv from "dotenv";
+import fs from "fs";
 
 async function main() {
-    let address = "";
+    let
+        address = "",
+        envName = "";
+    const envPath = '.env';
 
     console.log("Reading input…");
 
+    const envConfig = dotenv.parse(fs.readFileSync(envPath));
+
     switch (process.env.HARDHAT_NETWORK) {
         case 'polygon_mumbai':
-            if (!process.env.OWNER_MUMBAI) {
+            if (!envConfig["OWNER_MUMBAI"]) {
                 throw "Owner address not set";
             } else {
-                address = process.env.OWNER_MUMBAI || "";
+                address = envConfig["OWNER_MUMBAI"];
+                envName = "ROLES_MUMBAI";
             }
             break;
         default:
@@ -24,6 +32,9 @@ async function main() {
     const roles = await Roles.deploy(address);
 
     await roles.deployed();
+
+    envConfig[envName] = roles.address;
+    fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
     console.log(`Roles deployed to ${roles.address}`);
     console.log(`Awaiting 5 confirmations…`);

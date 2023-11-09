@@ -1,20 +1,28 @@
 import { ethers } from "hardhat";
 import hre from "hardhat";
+const fs = require('fs');
+const dotenv = require('dotenv');
 
 async function main() {
 
-    let rolesAddress = "";
-    let bankAddress = "";
+    let
+        rolesAddress = "",
+        bankAddress = "",
+        envName = "";
+
+    const envPath = '.env';
 
     console.log("Reading input…");
+    const envConfig = dotenv.parse(fs.readFileSync(envPath));
 
     switch (process.env.HARDHAT_NETWORK) {
         case 'polygon_mumbai':
-            if (!process.env.ROLES_MUMBAI || !process.env.BANK_MUMBAI) {
+            if (!envConfig["ROLES_MUMBAI"] || !envConfig["BANK_MUMBAI"]) {
                 throw "Roles address, USDC address, or Locking period not set";
             } else {
-                rolesAddress = process.env.ROLES_MUMBAI;
-                bankAddress = process.env.BANK_MUMBAI;
+                rolesAddress = envConfig["ROLES_MUMBAI"];
+                bankAddress = envConfig["BANK_MUMBAI"];
+                envName = "POOLS_MUMBAI";
             }
             break;
         default:
@@ -31,6 +39,9 @@ async function main() {
     );
 
     await pools.deployed();
+
+    envConfig[envName] = pools.address;
+    fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
     console.log(`Pools deployed to ${pools.address}`);
     console.log(`Awaiting 5 confirmations…`);

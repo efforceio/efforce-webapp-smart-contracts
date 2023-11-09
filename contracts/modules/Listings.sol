@@ -104,6 +104,7 @@ abstract contract Listings is IPurchases, BankWrapper {
         @param quantity The amount of tokens that will be listed.
     */
     function createListing(uint256 creditId, uint256 pricePerToken, uint256 quantity) external {
+        _positiveAmount(quantity);
         IERC1155(_getCreditsContract()).safeTransferFrom(
             msg.sender,
             address(this),
@@ -136,6 +137,7 @@ abstract contract Listings is IPurchases, BankWrapper {
         external
         isListingOwner(listingId, msg.sender)
     {
+        _positiveAmount(quantity);
         if (idToListing[listingId].pricePerToken != pricePerToken) {
             idToListing[listingId].pricePerToken = pricePerToken;
         }
@@ -209,6 +211,7 @@ abstract contract Listings is IPurchases, BankWrapper {
     }
 
     function _getCreditsContract() internal view virtual returns(address);
+    function _positiveAmount(uint256 amount) internal pure virtual;
 
     /*
         @notice Emitted when a listing is updated: after a purchase and listing update.

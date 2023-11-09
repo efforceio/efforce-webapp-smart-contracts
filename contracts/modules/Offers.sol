@@ -83,7 +83,7 @@ abstract contract Offers is IPurchases, BankWrapper {
         isOfferOwner(offerId, msg.sender)
     {
         idToOffer[offerId].closed = true;
-        IERC20(tokenAddress).transfer(msg.sender, idToOffer[offerId].price * idToOffer[offerId].quantity);
+        IBank(bankContract).withdraw(msg.sender, idToOffer[offerId].price * idToOffer[offerId].quantity);
 
         emit OfferClosed(offerId, false);
     }
@@ -95,6 +95,7 @@ abstract contract Offers is IPurchases, BankWrapper {
         @param quantity The amount of credits that will be purchased.
     */
     function makeOffer(uint256 tokenId, uint256 price, uint256 quantity) external {
+        _positiveAmount(quantity);
         idToOffer[nOffers] = Offer(
             msg.sender,
             tokenId,
@@ -104,6 +105,7 @@ abstract contract Offers is IPurchases, BankWrapper {
         );
         IERC20(tokenAddress).transferFrom(msg.sender, bankContract, price * quantity);
         emit OfferCreated(tokenId, price, quantity, msg.sender);
+        nOffers++;
     }
 
     /*
@@ -118,19 +120,26 @@ abstract contract Offers is IPurchases, BankWrapper {
         external
         isOfferOwner(offerId, msg.sender)
     {
-        if (idToOffer[offerId].price != price) {
-            if (idToOffer[offerId].price > price) {
-                IERC20(tokenAddress).transfer(
+        _positiveAmount(quantity);
+
+        uint256 totalOld = idToOffer[offerId].price * idToOffer[offerId].quantity;
+        uint256 total = price * quantity;
+
+        if (totalOld != total) {
+            if (totalOld > total) {
+                IBank(bankContract).withdraw(
                     msg.sender,
-                    (idToOffer[offerId].price - price) * idToOffer[offerId].quantity
+                    totalOld - total
                 );
             } else {
                 IERC20(tokenAddress).transferFrom(
                     msg.sender,
                     bankContract,
-                    (price - idToOffer[offerId].price) * idToOffer[offerId].quantity
+                    total - totalOld
                 );
             }
+        }
+        if (idToOffer[offerId].price != price) {
             idToOffer[offerId].price = price;
         }
         if (idToOffer[offerId].quantity != quantity) {
@@ -146,8 +155,6 @@ abstract contract Offers is IPurchases, BankWrapper {
     function getOffer(uint256 offerId) external view returns(Offer memory) {
         return idToOffer[offerId];
     }
-
-    function _getCreditsContract() internal view virtual returns(address);
 
     function _acceptOffer(uint256 offerId, uint256 amount)
         offerActive(offerId)
@@ -186,6 +193,9 @@ abstract contract Offers is IPurchases, BankWrapper {
             amount
         );
     }
+
+    function _getCreditsContract() internal view virtual returns(address);
+    function _positiveAmount(uint256 amount) internal pure virtual;
 
     /*
         @notice Emitted when an offer is updated, closed, or accepted.

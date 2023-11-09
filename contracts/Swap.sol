@@ -42,4 +42,12 @@ contract Swap is Offers, Listings, IERC1155TokenReceiver {
     {
         return bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"));
     }
+
+    function _positiveAmount(uint256 amount)
+        internal
+        pure
+        override(Listings, Offers)
+    {
+        require(amount > 0, Errors.NOT_ENOUGH_CREDITS);
+    }
 }

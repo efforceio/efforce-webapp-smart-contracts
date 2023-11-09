@@ -6,6 +6,8 @@ async function main() {
     let envName = "";
     const envPath = '.env';
 
+    console.log("--- DEPLOYING UTILS ---");
+
     switch (process.env.HARDHAT_NETWORK) {
         case 'polygon_mumbai':
             envName = "UTILS_MUMBAI";

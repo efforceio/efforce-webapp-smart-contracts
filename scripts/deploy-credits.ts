@@ -14,6 +14,8 @@ async function main() {
 
     const envConfig = dotenv.parse(fs.readFileSync(envPath));
 
+    console.log("--- DEPLOYING CREDITS ---");
+
     switch (process.env.HARDHAT_NETWORK) {
         case 'polygon_mumbai':
             if (!envConfig["UTILS_MUMBAI"] || !envConfig["ROLES_MUMBAI"] || !envConfig["BANK_MUMBAI"]) {

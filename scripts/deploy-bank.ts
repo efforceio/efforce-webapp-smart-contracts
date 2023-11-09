@@ -11,7 +11,7 @@ async function main() {
     const envPath = '.env';
     const envConfig = dotenv.parse(fs.readFileSync(envPath));
 
-    console.log("Reading input…");
+    console.log("--- DEPLOYING BANK ---");
 
     switch (process.env.HARDHAT_NETWORK) {
         case 'polygon_mumbai':

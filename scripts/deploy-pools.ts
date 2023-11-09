@@ -12,7 +12,7 @@ async function main() {
 
     const envPath = '.env';
 
-    console.log("Reading input…");
+    console.log("--- DEPLOYING POOLS ---");
     const envConfig = dotenv.parse(fs.readFileSync(envPath));
 
     switch (process.env.HARDHAT_NETWORK) {

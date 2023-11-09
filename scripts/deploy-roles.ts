@@ -8,7 +8,7 @@ async function main() {
         envName = "";
     const envPath = '.env';
 
-    console.log("Reading input…");
+    console.log("--- DEPLOYING ROLES ---");
 
     const envConfig = dotenv.parse(fs.readFileSync(envPath));
 
@@ -26,8 +26,6 @@ async function main() {
     }
 
     const Roles = await ethers.getContractFactory("Roles");
-
-    console.log("Start deployment…");
 
     const roles = await Roles.deploy(address);
 

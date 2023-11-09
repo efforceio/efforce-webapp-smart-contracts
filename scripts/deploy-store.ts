@@ -6,56 +6,58 @@ const dotenv = require('dotenv');
 async function main() {
 
     let
-        creditsAddress = "",
         rolesAddress = "",
+        creditsAddress = "",
         bankAddress = "",
         envName = "";
 
     const envPath = '.env';
 
-    console.log("--- DEPLOYING SWAP ---");
+    console.log("--- DEPLOYING STORE ---");
+
     const envConfig = dotenv.parse(fs.readFileSync(envPath));
 
     switch (process.env.HARDHAT_NETWORK) {
         case 'polygon_mumbai':
-            if (!envConfig["CREDITS_MUMBAI"] || !envConfig["BANK_MUMBAI"] || !envConfig["ROLES_MUMBAI"]) {
+            if (!envConfig["ROLES_MUMBAI"] || !envConfig["BANK_MUMBAI"] || !envConfig["CREDITS_MUMBAI"]) {
                 throw "Roles address, USDC address, or Locking period not set";
             } else {
-                creditsAddress = envConfig["CREDITS_MUMBAI"];
-                bankAddress = envConfig["BANK_MUMBAI"];
-                envName = "SWAP_MUMBAI";
                 rolesAddress = envConfig["ROLES_MUMBAI"];
+                bankAddress = envConfig["BANK_MUMBAI"];
+                creditsAddress = envConfig["CREDITS_MUMBAI"];
+                envName = "STORE_MUMBAI";
             }
             break;
         default:
             throw "Network not supported";
     }
 
-    const Swap = await ethers.getContractFactory("Swap");
+    const Store = await ethers.getContractFactory("Store");
 
     console.log("Start deployment…");
 
-    const swap = await Swap.deploy(
+    const store = await Store.deploy(
         creditsAddress,
-        bankAddress
+        bankAddress,
+        rolesAddress
     );
 
-    await swap.deployed();
+    await store.deployed();
 
-    envConfig[envName] = swap.address;
+    envConfig[envName] = store.address;
     fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
-    console.log(`Pools deployed to ${swap.address}`);
+    console.log(`Pools deployed to ${store.address}`);
     console.log(`Awaiting 5 confirmations…`);
 
-    await swap.deployTransaction.wait(5);
+    await store.deployTransaction.wait(5);
     console.log(`Done.`);
 
     console.log(`Granting admin role to contract...`);
 
     const Roles = await ethers.getContractFactory("Roles");
     const roles = Roles.attach(rolesAddress);
-    await roles.setAdmin(swap.address, true);
+    await roles.setAdmin(store.address, true);
 
     console.log(`Done.`);
 
@@ -66,10 +68,11 @@ async function main() {
         try {
             console.log(`Done.`);
             await hre.run("verify:verify", {
-                address: swap.address,
+                address: store.address,
                 constructorArguments: [
                     creditsAddress,
-                    bankAddress
+                    bankAddress,
+                    rolesAddress
                 ],
                 network: process.env.HARDHAT_NETWORK
             });

@@ -7,6 +7,9 @@
     "deploy-roles-testnet": "hardhat run scripts/deploy-roles.ts --network polygon_mumbai",
     "deploy-pools-testnet": "hardhat run scripts/deploy-pools.ts --network polygon_mumbai",
     "deploy-bank-testnet": "hardhat run scripts/deploy-bank.ts --network polygon_mumbai",
+    "deploy-store-testnet": "hardhat run scripts/deploy-store.ts --network polygon_mumbai",
+    "deploy-swap-testnet": "hardhat run scripts/deploy-swap.ts --network polygon_mumbai",
+    "deploy-testnet": "node scripts/deploy.ts --network testnet",
     "test": "npx hardhat test"
   },
   "devDependencies": {
@@ -17,6 +20,7 @@
   "dependencies": {
     "@openzeppelin/contracts": "4.9.3",
     "@thirdweb-dev/contracts": "^3.8.0",
+    "child_process": "^1.0.2",
     "dotenv": "^16.3.1"
   }
 }

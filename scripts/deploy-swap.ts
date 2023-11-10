@@ -67,6 +67,12 @@ async function main() {
     const roles = Roles.attach(rolesAddress);
     await roles.setAdmin(swap.address, true);
 
+    console.log(`Allowing swap to receive credits...`);
+
+    const Credits = await ethers.getContractFactory("Credits");
+    const credits = Credits.attach(creditsAddress);
+    await credits.updateAccount(swap.address, true);
+
     console.log(`Done.`);
 
     console.log("Verifying in etherscan…");

@@ -9,6 +9,7 @@ async function main() {
         creditsAddress = "",
         rolesAddress = "",
         bankAddress = "",
+        utilsAddress = "",
         envName = "";
 
     const envPath = '.env';
@@ -18,23 +19,35 @@ async function main() {
 
     switch (process.env.HARDHAT_NETWORK) {
         case 'polygon_mumbai':
-            if (!envConfig["CREDITS_MUMBAI"] || !envConfig["BANK_MUMBAI"] || !envConfig["ROLES_MUMBAI"]) {
-                throw "Roles address, USDC address, or Locking period not set";
+            if (
+                !envConfig["CREDITS_MUMBAI"] ||
+                !envConfig["BANK_MUMBAI"] ||
+                !envConfig["ROLES_MUMBAI"] ||
+                !envConfig["UTILS_MUMBAI"]
+            ) {
+                throw "Credits address, Bank address, Roles address, or Utils address not set";
             } else {
                 creditsAddress = envConfig["CREDITS_MUMBAI"];
                 bankAddress = envConfig["BANK_MUMBAI"];
                 envName = "SWAP_MUMBAI";
                 rolesAddress = envConfig["ROLES_MUMBAI"];
+                utilsAddress = envConfig["UTILS_MUMBAI"];
             }
             break;
         case 'polygon':
-            if (!envConfig["CREDITS"] || !envConfig["BANK"] || !envConfig["ROLES"]) {
-                throw "Roles address, USDC address, or Locking period not set";
+            if (
+                !envConfig["CREDITS"] ||
+                !envConfig["BANK"] ||
+                !envConfig["ROLES"] ||
+                !envConfig["UTLS"]
+            ) {
+                throw "Credits address, Bank address, Roles address, or Utils address not set";
             } else {
                 creditsAddress = envConfig["CREDITS"];
                 bankAddress = envConfig["BANK"];
                 envName = "SWAP";
                 rolesAddress = envConfig["ROLES"];
+                utilsAddress = envConfig["UTILS"];
             }
             break;
         default:
@@ -69,7 +82,11 @@ async function main() {
 
     console.log(`Allowing swap to receive credits...`);
 
-    const Credits = await ethers.getContractFactory("Credits");
+    const Credits = await ethers.getContractFactory("Credits", {
+        libraries: {
+            Utils: utilsAddress
+        }
+    });
     const credits = Credits.attach(creditsAddress);
     await credits.updateAccount(swap.address, true);
     await credits.setSwapOperator(swap.address);

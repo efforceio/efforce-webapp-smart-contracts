@@ -16,7 +16,7 @@ async function main() {
     switch (process.env.HARDHAT_NETWORK) {
         case 'polygon_mumbai':
             if (!envConfig["ROLES_MUMBAI"] || !envConfig["USDC_MUMBAI"]) {
-                throw "Roles address or usdc address not set";
+                throw "Roles address or USDC address not set";
             } else {
                 rolesAddress = envConfig["ROLES_MUMBAI"];
                 usdcAddress = envConfig["USDC_MUMBAI"];
@@ -25,7 +25,7 @@ async function main() {
             break;
         case 'polygon':
             if (!envConfig["ROLES"] || !envConfig["USDC"]) {
-                throw "Roles address or usdc address not set";
+                throw "Roles address or USDC address not set";
             } else {
                 rolesAddress = envConfig["ROLES"];
                 usdcAddress = envConfig["USDC"];

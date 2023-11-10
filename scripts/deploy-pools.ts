@@ -18,7 +18,7 @@ async function main() {
     switch (process.env.HARDHAT_NETWORK) {
         case 'polygon_mumbai':
             if (!envConfig["ROLES_MUMBAI"] || !envConfig["BANK_MUMBAI"]) {
-                throw "Roles address, USDC address, or Locking period not set";
+                throw "Roles address or Bank address not set";
             } else {
                 rolesAddress = envConfig["ROLES_MUMBAI"];
                 bankAddress = envConfig["BANK_MUMBAI"];
@@ -27,7 +27,7 @@ async function main() {
             break;
         case 'polygon':
             if (!envConfig["ROLES"] || !envConfig["BANK"]) {
-                throw "Roles address, USDC address, or Locking period not set";
+                throw "Roles address or Bank address not set";
             } else {
                 rolesAddress = envConfig["ROLES"];
                 bankAddress = envConfig["BANK"];

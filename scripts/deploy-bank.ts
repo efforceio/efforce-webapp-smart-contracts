@@ -47,7 +47,7 @@ async function main() {
     envConfig[envName] = bank.address;
     fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
-    console.log(`Roles deployed to ${bank.address}`);
+    console.log(`Bank deployed to ${bank.address}`);
     console.log(`Awaiting 5 confirmations…`);
 
     await bank.deployTransaction.wait(5);

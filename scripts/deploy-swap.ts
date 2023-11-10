@@ -55,7 +55,7 @@ async function main() {
     envConfig[envName] = swap.address;
     fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
-    console.log(`Pools deployed to ${swap.address}`);
+    console.log(`Swap deployed to ${swap.address}`);
     console.log(`Awaiting 5 confirmations…`);
 
     await swap.deployTransaction.wait(5);

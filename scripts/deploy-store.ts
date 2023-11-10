@@ -57,7 +57,7 @@ async function main() {
     envConfig[envName] = store.address;
     fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
-    console.log(`Pools deployed to ${store.address}`);
+    console.log(`Store deployed to ${store.address}`);
     console.log(`Awaiting 5 confirmations…`);
 
     await store.deployTransaction.wait(5);

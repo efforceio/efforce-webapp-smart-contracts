@@ -78,9 +78,8 @@ async function main() {
 
     const Roles = await ethers.getContractFactory("Roles");
     const roles = Roles.attach(rolesAddress);
-    await roles.setAdmin(swap.address, true);
-
-    console.log(`Allowing swap to receive credits...`);
+    let res = await roles.setAdmin(swap.address, true);
+    await res.wait(5);
 
     const Credits = await ethers.getContractFactory("Credits", {
         libraries: {
@@ -88,8 +87,14 @@ async function main() {
         }
     });
     const credits = Credits.attach(creditsAddress);
-    await credits.updateAccount(swap.address, true);
-    await credits.setSwapOperator(swap.address);
+
+    console.log(`Allowing swap to receive credits...`);
+    res = await credits.updateAccount(swap.address, true);
+    await res.wait(5);
+
+    console.log(`Allowing swap to receive credits...`);
+    res = await credits.setSwapOperator(swap.address);
+    await res.wait(5);
 
     console.log(`Done.`);
 

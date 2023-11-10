@@ -27,6 +27,6 @@ if (!envConfig[`CREDITS${addEnv}`]) {
 if (!envConfig[`STORE${addEnv}`]) {
     execSync(`hardhat run scripts/deploy-store.ts --network ${addScript}`, {stdio: 'inherit'});
 }
-if (!envConfig[`SWAP${addEnv}`]) {
+if (envConfig[`SWAP${addEnv}`]) {
     execSync(`hardhat run scripts/deploy-swap.ts --network ${addScript}`, {stdio: 'inherit'});
 }

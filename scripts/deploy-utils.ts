@@ -32,7 +32,7 @@ async function main() {
     envConfig[envName] = utils.address;
     fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
-    console.log(`Roles deployed to ${utils.address}`);
+    console.log(`Utils deployed to ${utils.address}`);
     console.log(`Awaiting 5 confirmations…`);
 
     await utils.deployTransaction.wait(5);

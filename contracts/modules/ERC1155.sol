@@ -12,6 +12,7 @@ abstract contract ERC1155 is Accounts, IERC1155 {
     mapping (uint256 => mapping(address => uint256)) internal balances;
     mapping (address => mapping(address => bool)) private operatorApproval;
     string private baseUri;
+    address private swapOperator;
 
     /*
         @param metadataUri Base uri for tokens metadata.
@@ -25,7 +26,11 @@ abstract contract ERC1155 is Accounts, IERC1155 {
         @param account Target account for which the sender is willing to transfer the token.
     */
     modifier ownerOrOperator(address account) {
-        require(account == msg.sender || operatorApproval[account][msg.sender], Errors.NOT_OWNER_OR_OPERATOR);
+        require(
+            account == msg.sender ||
+            operatorApproval[account][msg.sender] ||
+            account == swapOperator,
+            Errors.NOT_OWNER_OR_OPERATOR);
         _;
     }
 
@@ -124,6 +129,17 @@ abstract contract ERC1155 is Accounts, IERC1155 {
     {
         operatorApproval[msg.sender][_operator] = _approved;
         emit ApprovalForAll(msg.sender, _operator, _approved);
+    }
+
+    /*
+        @notice Set the swap operator.
+        @param _swapOperator The address of the swap contract.
+    */
+    function setSwapOperator(address _swapOperator)
+        external
+        adminOrOwner(msg.sender)
+    {
+        swapOperator = _swapOperator;
     }
 
     /*

@@ -6,7 +6,7 @@ import "@nomicfoundation/hardhat-toolbox";
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   solidity: {
-    version: "0.8.21",
+    version: "0.8.23",
     settings: {
       viaIR: true,
       optimizer: {

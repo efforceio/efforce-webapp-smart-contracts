@@ -72,6 +72,7 @@ async function main() {
     const Credits = await ethers.getContractFactory("Credits");
     const credits = Credits.attach(creditsAddress);
     await credits.updateAccount(swap.address, true);
+    await credits.setSwapOperator(swap.address);
 
     console.log(`Done.`);
 

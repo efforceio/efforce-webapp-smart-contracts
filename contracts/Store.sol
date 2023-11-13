@@ -119,7 +119,7 @@ contract Store is BankWrapper, RolesModifier {
         );
         ICredits(creditsContract).safeMint(receiver, vintageId, amount, "");
 
-        emit CreditsPurchased(vintageId, amount, receiver);
+        emit CreditsPurchased(vintageId, amount, receiver, receiver == msg.sender);
     }
 
     /*
@@ -135,6 +135,7 @@ contract Store is BankWrapper, RolesModifier {
         @param id The credits ID.
         @param amount The amount of credits purchased.
         @param account The buyer.
+        @param crypto Is set to true if the sender is making the payment, false otherwise.
     */
-    event CreditsPurchased(uint256 indexed id, uint256 amount, address indexed account);
+    event CreditsPurchased(uint256 indexed id, uint256 amount, address indexed account, bool indexed crypto);
 }

@@ -71,7 +71,7 @@ describe("Store test", () => {
 
         await expect(store.connect(account1).buyCredits(0, 1))
             .emit(store, "CreditsPurchased")
-            .withArgs(0, 1, account1.address)
+            .withArgs(0, 1, account1.address, true)
 
         expect((await credits.getVintage(0)).availableCredits).equal(amount - 1);
         expect(await credits.balanceOf(account1.address, 0)).equal(1);
@@ -84,7 +84,7 @@ describe("Store test", () => {
 
         await expect(store.buyCreditsFor(1, 1, account1.address))
             .emit(store, "CreditsPurchased")
-            .withArgs(1, 1, account1.address)
+            .withArgs(1, 1, account1.address, false)
 
         expect((await credits.getVintage(1)).availableCredits).equal(amount - 1);
         expect(await credits.balanceOf(account1.address, 1)).equal(1);
@@ -95,7 +95,7 @@ describe("Store test", () => {
     it("Buys and close vintage", async () => {
         await expect(store.connect(account1).buyCredits(1, amount - 1))
             .emit(store, "CreditsPurchased")
-            .withArgs(1, amount - 1, account1.address)
+            .withArgs(1, amount - 1, account1.address, true)
             .emit(credits, "VintageAction")
             .withArgs(1, 1);
         expect((await credits.getVintage(1)).state).equal(1);

@@ -9,6 +9,7 @@ async function main() {
         rolesAddress = "",
         creditsAddress = "",
         bankAddress = "",
+        utilsAddress = "",
         envName = "";
 
     const envPath = '.env';
@@ -19,22 +20,29 @@ async function main() {
 
     switch (process.env.HARDHAT_NETWORK) {
         case 'polygon_mumbai':
-            if (!envConfig["ROLES_MUMBAI"] || !envConfig["BANK_MUMBAI"] || !envConfig["CREDITS_MUMBAI"]) {
+            if (
+                !envConfig["ROLES_MUMBAI"] ||
+                !envConfig["BANK_MUMBAI"] ||
+                !envConfig["CREDITS_MUMBAI"] ||
+                !envConfig["UTILS_MUMBAI"]
+            ) {
                 throw "Roles address, Bank address, or Credits address not set";
             } else {
                 rolesAddress = envConfig["ROLES_MUMBAI"];
                 bankAddress = envConfig["BANK_MUMBAI"];
                 creditsAddress = envConfig["CREDITS_MUMBAI"];
+                utilsAddress = envConfig["UTILS_MUMBAI"];
                 envName = "STORE_MUMBAI";
             }
             break;
         case 'polygon':
-            if (!envConfig["ROLES"] || !envConfig["BANK"] || !envConfig["CREDITS"]) {
+            if (!envConfig["ROLES"] || !envConfig["BANK"] || !envConfig["CREDITS"] || !envConfig["UTILS"]) {
                 throw "Roles address, Bank address, or Credits address not set";
             } else {
                 rolesAddress = envConfig["ROLES"];
                 bankAddress = envConfig["BANK"];
                 creditsAddress = envConfig["CREDITS"];
+                utilsAddress = envConfig["UTILS"];
                 envName = "STORE";
             }
             break;
@@ -67,7 +75,21 @@ async function main() {
 
     const Roles = await ethers.getContractFactory("Roles");
     const roles = Roles.attach(rolesAddress);
-    await roles.setAdmin(store.address, true);
+    let res = await roles.setAdmin(store.address, true);
+    await res.wait(5);
+
+    console.log(`Done.`);
+
+    console.log(`Setting operator...`);
+
+    const Credits = await ethers.getContractFactory("Credits", {
+        libraries: {
+            Utils: utilsAddress
+        }
+    });
+    const credits = Credits.attach(creditsAddress);
+    res = await credits.setContractOperator(store.address, true);
+    await res.wait(5);
 
     console.log(`Done.`);
 

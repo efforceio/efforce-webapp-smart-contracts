@@ -86,14 +86,14 @@ async function main() {
             Utils: utilsAddress
         }
     });
-    const credits = Credits.attach(creditsAddress);
+    const credits = Credits.attach(creditsAddress, );
 
     console.log(`Allowing swap to receive credits...`);
     res = await credits.updateAccount(swap.address, true);
     await res.wait(5);
 
-    console.log(`Allowing swap to receive credits...`);
-    res = await credits.setSwapOperator(swap.address);
+    console.log(`Allowing swap to manage credits...`);
+    res = await credits.setContractOperator(swap.address, true);
     await res.wait(5);
 
     console.log(`Done.`);

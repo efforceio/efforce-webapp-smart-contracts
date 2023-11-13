@@ -15,7 +15,6 @@ describe("Store test", () => {
         credits: Credits;
     const
         price = 1,
-        zeroAddress = "0x0000000000000000000000000000000000000000",
         amount = 100;
 
     before("Initialization", async () => {
@@ -61,6 +60,7 @@ describe("Store test", () => {
         await credits.updateAccount(account2.address, true);
 
         await credits.createProject();
+        await credits.setContractOperator(store.address, true);
     });
 
     it("Buys credits", async () => {
@@ -74,7 +74,7 @@ describe("Store test", () => {
             .withArgs(0, 1, account1.address)
 
         expect((await credits.getVintage(0)).availableCredits).equal(amount - 1);
-        expect(await store.getPendingCredits(0, account1.address)).equal(1);
+        expect(await credits.balanceOf(account1.address, 0)).equal(1);
 
         await expect(store.connect(account2).buyCredits(0, amount)).reverted;
     });
@@ -87,7 +87,7 @@ describe("Store test", () => {
             .withArgs(1, 1, account1.address)
 
         expect((await credits.getVintage(1)).availableCredits).equal(amount - 1);
-        expect(await store.getPendingCredits(1, account1.address)).equal(1);
+        expect(await credits.balanceOf(account1.address, 1)).equal(1);
 
         await expect(store.connect(account2).buyCreditsFor(1, amount, account1.address)).reverted;
     });
@@ -101,23 +101,12 @@ describe("Store test", () => {
         expect((await credits.getVintage(1)).state).equal(1);
     });
 
-    it("Redeems credits", async () => {
-        await expect(store.connect(account2).redeemCredits(1)).reverted;
-        await expect(store.connect(account1).redeemCredits(1))
-            .emit(store, "RefundOrRedeem")
-            .withArgs(account1.address, 1, 1)
-            .emit(credits, "TransferSingle")
-            .withArgs(store.address, zeroAddress, account1.address, 1, amount);
-        expect(await credits.balanceOf(account1.address, 1)).equal(amount);
-
-        expect(await store.getPendingCredits(1, account1.address)).equal(0);
-        await expect(store.connect(account1).redeemCredits(1)).reverted;
-    });
-
     it("Refunds credits", async () => {
         await credits.openVintage(0, 100, 1);
         await store.connect(account2).buyCredits(2, 1);
         await credits.updateVintageState(2, 2);
+
+        await expect(credits.safeTransferFrom(account2.address, account1.address, 2, 1, [])).reverted;
 
         await expect(store.connect(account2).refundCredits(2))
             .emit(store, "RefundOrRedeem")
@@ -126,9 +115,6 @@ describe("Store test", () => {
             .withArgs(bank.address, account2.address, 1);
 
         expect(await token.balanceOf(account2.address)).equal(price * amount);
-        expect(await store.getPendingCredits(2, account2.address)).equal(0);
-        await expect(store.connect(account2).refundCredits(2)).reverted;
-
         expect(await credits.balanceOf(account2.address, 2)).equal(0);
     });
 });

@@ -11,7 +11,6 @@ import "./interfaces/IAccount.sol";
 
 contract Store is BankWrapper, RolesModifier {
 
-    mapping(uint256 => mapping(address => uint256)) private vintageIdToAmountPerBuyer;
     address public immutable creditsContract;
 
     constructor(address _credits, address bankAddress, address rolesAddress)
@@ -19,16 +18,6 @@ contract Store is BankWrapper, RolesModifier {
         RolesModifier(rolesAddress)
     {
         creditsContract = _credits;
-    }
-
-    /*
-        @notice Throws an error if the user has not pending credits for the given vintage.
-        @param vintageId The id of the target vintage.
-        @param account The target user.
-    */
-    modifier hasPendingCredits(uint256 vintageId, address account) {
-        require(vintageIdToAmountPerBuyer[vintageId][account] > 0);
-        _;
     }
 
     /*
@@ -104,26 +93,6 @@ contract Store is BankWrapper, RolesModifier {
     }
 
     /*
-        @notice After a vintage is closed, if users have bought some credits, they can redeem them using this function.
-        @param vintageId The id of the vintage.
-    */
-    function redeemCredits(uint256 vintageId)
-        external
-        isVintageState(vintageId, 1)
-        hasPendingCredits(vintageId, msg.sender)
-    {
-        ICredits(creditsContract).safeMint(
-            msg.sender,
-            vintageId,
-            vintageIdToAmountPerBuyer[vintageId][msg.sender],
-            ""
-        );
-
-        vintageIdToAmountPerBuyer[vintageId][msg.sender] = 0;
-        emit RefundOrRedeem(msg.sender, vintageId, 1);
-    }
-
-    /*
         @notice After a vintage is canceled, if users have bought some credits, they can get the refund using
             this function.
         @param vintageId The id of the vintage.
@@ -131,38 +100,24 @@ contract Store is BankWrapper, RolesModifier {
     function refundCredits(uint256 vintageId)
         external
         isVintageState(vintageId, 2)
-        hasPendingCredits(vintageId, msg.sender)
     {
-        uint256 nCredits = vintageIdToAmountPerBuyer[vintageId][msg.sender];
+        uint256 nCredits = ICredits(creditsContract).balanceOf(msg.sender, vintageId);
         uint256 totalPrice = ICredits(creditsContract).getVintage(vintageId).price * nCredits;
         IBank(bankContract).withdraw(msg.sender, totalPrice);
-
-        vintageIdToAmountPerBuyer[vintageId][msg.sender] = 0;
+        ICredits(creditsContract).burn(msg.sender, vintageId, nCredits, "");
 
         emit RefundOrRedeem(msg.sender, vintageId, 2);
     }
 
-    /*
-        @param vintageId The id of the vintage.
-        @param account The target account.
-        @return The pending credits bought by the account for the given vintage.
-    */
-    function getPendingCredits(uint256 vintageId, address account)
-        external
-        view
-        returns(uint256)
-    {
-        return vintageIdToAmountPerBuyer[vintageId][account];
-    }
 
     function _buyCredits(uint256 vintageId, uint256 amount, address receiver)
         internal
     {
-        vintageIdToAmountPerBuyer[vintageId][receiver] += amount;
         ICredits(creditsContract).updateVintageAvailability(
             vintageId,
             ICredits(creditsContract).getVintage(vintageId).availableCredits - amount
         );
+        ICredits(creditsContract).safeMint(receiver, vintageId, amount, "");
 
         emit CreditsPurchased(vintageId, amount, receiver);
     }

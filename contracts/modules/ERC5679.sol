@@ -4,7 +4,7 @@ pragma solidity ^0.8.21;
 import "./ERC1155.sol";
 import "./Vintages.sol";
 
-abstract contract ERC5679 is ERC1155, Vintages {
+abstract contract ERC5679 is ERC1155 {
 
     /*
         @notice Emits new credits.
@@ -51,7 +51,7 @@ abstract contract ERC5679 is ERC1155, Vintages {
         @param _id The vintage id.
         @param _amount The amount of credits to be destroyed.
     */
-    function burn(address _from, uint256 _id, uint256 _amount, bytes[] calldata)
+    function burn(address _from, uint256 _id, uint256 _amount, bytes calldata)
         external
         ownerOrOperator(_from)
     {

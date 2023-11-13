@@ -7,12 +7,15 @@ import "../libraries/Constants.sol";
 import "../libraries/Errors.sol";
 import "../libraries/Utils.sol";
 import "../interfaces/IERC1155.sol";
+import "../interfaces/ICredits.sol";
+import "./Vintages.sol";
 
-abstract contract ERC1155 is Accounts, IERC1155 {
+
+abstract contract ERC1155 is Accounts, IERC1155, Vintages {
     mapping (uint256 => mapping(address => uint256)) internal balances;
     mapping (address => mapping(address => bool)) private operatorApproval;
     string private baseUri;
-    address private swapOperator;
+    mapping(address=>bool) private contractOperator;
 
     /*
         @param metadataUri Base uri for tokens metadata.
@@ -29,7 +32,7 @@ abstract contract ERC1155 is Accounts, IERC1155 {
         require(
             account == msg.sender ||
             operatorApproval[account][msg.sender] ||
-            account == swapOperator,
+            contractOperator[msg.sender],
             Errors.NOT_OWNER_OR_OPERATOR);
         _;
     }
@@ -45,6 +48,15 @@ abstract contract ERC1155 is Accounts, IERC1155 {
             balances[tokenId][account] - _getFrozen(account, tokenId) >= value,
             Errors.INSUFFICIENT_BALANCE
         );
+        _;
+    }
+
+    /*
+        @notice Throws an error if the vintage is not closed.
+        @param tokenId The id of the token.
+    */
+    modifier isNotBlocked(uint256 tokenId) {
+        require(vintageIdToDetails[tokenId].state == 1, Errors.NOT_ALLOWED);
         _;
     }
 
@@ -67,8 +79,6 @@ abstract contract ERC1155 is Accounts, IERC1155 {
     )
         external
         override
-        accountEnabled(_to)
-        ownerOrOperator(_from)
     {
         _doTransfer(_id, _from, _value, _to);
         _checkIfContract(_from, _to, _id, _value, data);
@@ -93,8 +103,6 @@ abstract contract ERC1155 is Accounts, IERC1155 {
         bytes calldata _data
     )
         external
-        accountEnabled(_to)
-        ownerOrOperator(_from)
     {
         require(_ids.length == _values.length, Errors.NOT_MATCHING_LENGTHS);
 
@@ -132,14 +140,16 @@ abstract contract ERC1155 is Accounts, IERC1155 {
     }
 
     /*
-        @notice Set the swap operator.
-        @param _swapOperator The address of the swap contract.
+        @notice Set allowed operators.
+        @param operator The address of the allowed operator.
+        @param approved True if the operator is approved, false otherwise.
     */
-    function setSwapOperator(address _swapOperator)
+    function setContractOperator(address operator, bool approved)
         external
         adminOrOwner(msg.sender)
     {
-        swapOperator = _swapOperator;
+        contractOperator[operator] = approved;
+        emit AddedOperator(operator, approved);
     }
 
     /*
@@ -206,6 +216,18 @@ abstract contract ERC1155 is Accounts, IERC1155 {
     }
 
     /*
+        @param account The target account.
+        @return True if the input account is allowed to operate, false otherwise.
+    */
+    function isApprovedContract(address account)
+        external
+        view
+        returns(bool)
+    {
+        return contractOperator[account];
+    }
+
+    /*
         @notice Returns a distinct Uniform Resource Identifier (URI) for a given token.
         @param _id Token id.
         @return The metadata uri for the given token id.
@@ -221,6 +243,9 @@ abstract contract ERC1155 is Accounts, IERC1155 {
     function _doTransfer(uint256 _id, address _from, uint256 _value, address _to)
         private
         hasValue(_from, _value, _id)
+        isNotBlocked(_id)
+        accountEnabled(_to)
+        ownerOrOperator(_from)
     {
         balances[_id][_from] = balances[_id][_from] - _value;
         balances[_id][_to]   = _value + balances[_id][_to];
@@ -295,6 +320,13 @@ abstract contract ERC1155 is Accounts, IERC1155 {
         @param _approved True if the target address is set as operator, false otherwise.
     */
     event ApprovalForAll(address indexed _owner, address indexed _operator, bool _approved);
+
+    /*
+        @notice Emitted when a new operator is set.
+        @param operator The target operator.
+        @param allowed True if the operator is allowed, false otherwise.
+    */
+    event AddedOperator(address indexed operator, bool indexed allowed);
 
     /*
         @notice Emitted when the metadata base URI is updated.

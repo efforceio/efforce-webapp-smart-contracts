@@ -46,6 +46,7 @@ describe("Swap test", () => {
         await credits.updateAccount(account2.address, true);
         await credits.createProject();
         await credits.openVintage(0, 0, 0);
+        await credits.updateVintageState(0, 1);
         await credits.safeMint(account1.address, 0, 100, []);
         await token.mintTo(account2.address, 100);
 
@@ -54,15 +55,12 @@ describe("Swap test", () => {
 
         await credits.updateAccount(swap.address, true);
         await roles.setAdmin(swap.address, true);
+        await credits.setContractOperator(swap.address, true);
     });
 
     describe("Listings", async () => {
         it("Creates listing", async () => {
             await expect(swap.connect(account2).createListing(0, 1, 1)).reverted;
-            await expect(swap.connect(account1).createListing(0, 1, 100)).reverted;
-
-            await credits.connect(account1).setApprovalForAll(swap.address, true);
-            await credits.connect(account2).setApprovalForAll(swap.address, true);
 
             await expect(swap.connect(account1).createListing(0, 1, 100))
                 .emit(swap, "CreateListing")
@@ -105,6 +103,7 @@ describe("Swap test", () => {
         it("Updates listing", async () => {
             await credits.openVintage(0, 0, 0);
             await credits.safeMint(account1.address, 1, 100, []);
+            await credits.updateVintageState(1, 1);
             await swap.connect(account1).createListing(1, 1, 100);
 
             await expect(swap.connect(account2).updateListing(1, 2, 90)).reverted;

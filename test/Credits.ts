@@ -210,6 +210,7 @@ describe("Credits test", () => {
             creditIds.push(creditIds.length + 1);
 
             await credits.safeMint(account1.address, 4, amount, []);
+            await credits.updateVintageState(4, 1);
         });
         it("Transfers credits", async () => {
             await expect(credits.connect(account1).safeTransferFrom(account1.address, owner.address, 4, 1, []))

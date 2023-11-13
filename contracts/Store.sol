@@ -4,7 +4,6 @@ pragma solidity ^0.8.21;
 import "./helpers/IERC20.sol";
 import "./modules/BankWrapper.sol";
 import "./interfaces/ICredits.sol";
-import "./libraries/Errors.sol";
 import "./modules/RolesModifier.sol";
 import "./interfaces/IAccount.sol";
 

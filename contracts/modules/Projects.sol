@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.21;
 
-import "../libraries/Errors.sol";
 import "./RolesModifier.sol";
 
 abstract contract Projects is RolesModifier {

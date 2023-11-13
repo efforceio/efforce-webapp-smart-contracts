@@ -2,7 +2,6 @@
 pragma solidity ^0.8.21;
 
 import "./modules/ERC5006.sol";
-import "./modules/Vintages.sol";
 import "./modules/ContractMetadata.sol";
 import "./modules/ERC165.sol";
 import "./modules/Royalties.sol";

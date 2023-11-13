@@ -2,7 +2,6 @@
 pragma solidity ^0.8.21;
 
 import "./ERC1155.sol";
-import "./Vintages.sol";
 
 abstract contract ERC5679 is ERC1155 {
 

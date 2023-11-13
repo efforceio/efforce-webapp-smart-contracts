@@ -3,7 +3,6 @@ pragma solidity ^0.8.21;
 
 import "./ERC1155.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "../libraries/Errors.sol";
 
 abstract contract ERC5006 is ERC1155 {
 

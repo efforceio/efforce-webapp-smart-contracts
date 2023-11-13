@@ -2,8 +2,6 @@
 pragma solidity ^0.8.21;
 
 import "./Projects.sol";
-import "../libraries/Errors.sol";
-import "../Roles.sol";
 import "../interfaces/ICredits.sol";
 
 abstract contract Vintages is Projects, ICredits {

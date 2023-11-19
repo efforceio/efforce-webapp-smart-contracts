@@ -7,6 +7,7 @@ import "./BankWrapper.sol";
 import "../libraries/Errors.sol";
 import "../helpers/IERC20.sol";
 import "../interfaces/IERC1155.sol";
+import "../interfaces/ICredits.sol";
 
 abstract contract Offers is IPurchases, BankWrapper {
 
@@ -85,7 +86,11 @@ abstract contract Offers is IPurchases, BankWrapper {
         idToOffer[offerId].closed = true;
         IBank(bankContract).withdraw(msg.sender, idToOffer[offerId].price * idToOffer[offerId].quantity);
 
-        emit OfferClosed(offerId, false);
+        emit OfferClosed(
+            offerId,
+            ICredits(_getCreditsContract()).getVintage(idToOffer[offerId].tokenId).projectId,
+            false
+        );
     }
 
     /*
@@ -104,7 +109,13 @@ abstract contract Offers is IPurchases, BankWrapper {
             false
         );
         IERC20(tokenAddress).transferFrom(msg.sender, bankContract, price * quantity);
-        emit OfferCreated(tokenId, price, quantity, msg.sender);
+        emit OfferCreated(
+            tokenId,
+            ICredits(_getCreditsContract()).getVintage(tokenId).projectId,
+            price,
+            quantity,
+            msg.sender
+        );
         nOffers++;
     }
 
@@ -145,7 +156,12 @@ abstract contract Offers is IPurchases, BankWrapper {
         if (idToOffer[offerId].quantity != quantity) {
             idToOffer[offerId].quantity = quantity;
         }
-        emit OfferUpdated(offerId, price, quantity);
+        emit OfferUpdated(
+            offerId,
+            ICredits(_getCreditsContract()).getVintage(idToOffer[offerId].tokenId).projectId,
+            price,
+            quantity
+        );
     }
 
     /*
@@ -181,12 +197,23 @@ abstract contract Offers is IPurchases, BankWrapper {
 
         if (idToOffer[offerId].quantity == 0) {
             idToOffer[offerId].closed = true;
-            emit OfferClosed(offerId, true);
+            emit OfferClosed(
+                offerId,
+                ICredits(_getCreditsContract()).getVintage(idToOffer[offerId].tokenId).projectId,
+                true
+            );
         }
 
-        emit OfferUpdated(offerId, idToOffer[offerId].price, idToOffer[offerId].quantity);
+        emit OfferUpdated(
+            offerId,
+            ICredits(_getCreditsContract()).getVintage(idToOffer[offerId].tokenId).projectId,
+            idToOffer[offerId].price,
+            idToOffer[offerId].quantity
+        );
+
         emit Purchase(
             idToOffer[offerId].tokenId,
+            ICredits(_getCreditsContract()).getVintage(idToOffer[offerId].tokenId).projectId,
             msg.sender,
             idToOffer[offerId].offererAddress,
             total,
@@ -203,14 +230,14 @@ abstract contract Offers is IPurchases, BankWrapper {
         @param price The new price.
         @param quantity The new quantity.
     */
-    event OfferUpdated(uint256 indexed offerId, uint256 price, uint256 quantity);
+    event OfferUpdated(uint256 indexed offerId, uint256 indexed projectId, uint256 price, uint256 quantity);
 
     /*
         @notice Emitted when a offer is closed.
         @param offerId The id of the offer.
         @param funded Set to true if the listing is closed after all the credits are bought, false otherwise.
     */
-    event OfferClosed(uint256 indexed offerId, bool indexed funded);
+    event OfferClosed(uint256 indexed offerId, uint256 indexed projectId, bool indexed funded);
 
     /*
         @notice Emitted when a new offer is created.
@@ -219,5 +246,11 @@ abstract contract Offers is IPurchases, BankWrapper {
         @param quantity The required amount of credits.
         @param offerer The account that opened the offer.
     */
-    event OfferCreated(uint256 indexed creditId, uint256 price, uint256 quantity, address offerer);
+    event OfferCreated(
+        uint256 indexed creditId,
+        uint256 indexed projectId,
+        uint256 price,
+        uint256 quantity,
+        address indexed offerer
+    );
 }

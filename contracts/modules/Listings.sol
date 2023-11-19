@@ -4,6 +4,7 @@ pragma solidity ^0.8.21;
 import "../interfaces/IPurchases.sol";
 import "../interfaces/IRoyalties.sol";
 import "../interfaces/IERC1155.sol";
+import "../interfaces/ICredits.sol";
 import "../helpers/IERC20.sol";
 import "../libraries/Errors.sol";
 import "./BankWrapper.sol";
@@ -93,7 +94,11 @@ abstract contract Listings is IPurchases, BankWrapper {
             idToListing[listingId].quantity,
             ""
         );
-        emit ListingClosed(listingId, false);
+        emit ListingClosed(
+            listingId,
+            ICredits(_getCreditsContract()).getVintage(idToListing[listingId].creditId).projectId,
+            false
+        );
     }
 
     /*
@@ -121,7 +126,13 @@ abstract contract Listings is IPurchases, BankWrapper {
         );
         nListings++;
 
-        emit CreateListing(msg.sender, creditId, pricePerToken, quantity);
+        emit CreateListing(
+            msg.sender,
+            ICredits(_getCreditsContract()).getVintage(creditId).projectId,
+            creditId,
+            pricePerToken,
+            quantity
+        );
     }
 
     /*
@@ -161,7 +172,12 @@ abstract contract Listings is IPurchases, BankWrapper {
             }
             idToListing[listingId].quantity = quantity;
         }
-        emit ListingUpdated(listingId, quantity, pricePerToken);
+        emit ListingUpdated(
+            listingId,
+            ICredits(_getCreditsContract()).getVintage(idToListing[listingId].creditId).projectId,
+            quantity,
+            pricePerToken
+        );
     }
 
     /*
@@ -197,12 +213,22 @@ abstract contract Listings is IPurchases, BankWrapper {
 
         if (idToListing[listingId].quantity == 0) {
             idToListing[listingId].closed = true;
-            emit ListingClosed(listingId, true);
+            emit ListingClosed(
+                listingId,
+                ICredits(_getCreditsContract()).getVintage(idToListing[listingId].creditId).projectId,
+                true
+            );
         }
 
-        emit ListingUpdated(listingId, idToListing[listingId].quantity, idToListing[listingId].pricePerToken);
+        emit ListingUpdated(
+            listingId,
+            ICredits(_getCreditsContract()).getVintage(idToListing[listingId].creditId).projectId,
+            idToListing[listingId].quantity,
+            idToListing[listingId].pricePerToken
+        );
         emit Purchase(
             idToListing[listingId].creditId,
+            ICredits(_getCreditsContract()).getVintage(idToListing[listingId].creditId).projectId,
             idToListing[listingId].creatorAddress,
             msg.sender,
             total,
@@ -216,25 +242,34 @@ abstract contract Listings is IPurchases, BankWrapper {
     /*
         @notice Emitted when a listing is updated: after a purchase and listing update.
         @param listingId The id of the target listing.
+        @param projectId The project id of the vintages (credits).
         @param quantity The new amount of tokens listed.
         @param pricePerToken The new price for tokens.
     */
-    event ListingUpdated(uint256 indexed listingId, uint256 quantity, uint256 pricePerToken);
+    event ListingUpdated(uint256 indexed listingId, uint256 indexed projectId, uint256 quantity, uint256 pricePerToken);
 
     /*
         @notice Emitted when a listing is closed.
         @param listingId The id of the listing.
+        @param projectId The project id of the vintages (credits).
         @param funded Set to true if the listing is closed after all the credits are sold, false otherwise.
     */
-    event ListingClosed(uint256 indexed listingId, bool indexed funded);
+    event ListingClosed(uint256 indexed listingId, uint256 indexed projectId, bool indexed funded);
 
     /*
         @notice Emitted when a new listing is created.
         @param owner The owner of the new listing.
+        @param projectId The project id of the vintages (credits).
         @param creditId The id of the credits that are listed.
         @param pricePerToken The tokens price.
         @param quantity The amount of tokens that are listed.
     */
-    event CreateListing(address indexed owner, uint256 indexed creditId, uint256 pricePerToken, uint256 quantity);
+    event CreateListing(
+        address indexed owner,
+        uint256 indexed projectId,
+        uint256 indexed creditId,
+        uint256 pricePerToken,
+        uint256 quantity
+    );
 
 }

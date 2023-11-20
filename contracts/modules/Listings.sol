@@ -124,15 +124,17 @@ abstract contract Listings is IPurchases, BankWrapper {
             pricePerToken,
             false
         );
-        nListings++;
 
         emit CreateListing(
+            nListings,
             msg.sender,
             ICredits(_getCreditsContract()).getVintage(creditId).projectId,
             creditId,
             pricePerToken,
             quantity
         );
+
+        nListings++;
     }
 
     /*
@@ -265,6 +267,7 @@ abstract contract Listings is IPurchases, BankWrapper {
         @param quantity The amount of tokens that are listed.
     */
     event CreateListing(
+        uint256 id,
         address indexed owner,
         uint256 indexed projectId,
         uint256 indexed creditId,

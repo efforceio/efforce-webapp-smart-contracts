@@ -109,13 +109,16 @@ abstract contract Offers is IPurchases, BankWrapper {
             false
         );
         IERC20(tokenAddress).transferFrom(msg.sender, bankContract, price * quantity);
+
         emit OfferCreated(
+            nOffers,
             tokenId,
             ICredits(_getCreditsContract()).getVintage(tokenId).projectId,
             price,
             quantity,
             msg.sender
         );
+
         nOffers++;
     }
 
@@ -247,6 +250,7 @@ abstract contract Offers is IPurchases, BankWrapper {
         @param offerer The account that opened the offer.
     */
     event OfferCreated(
+        uint256 id,
         uint256 indexed creditId,
         uint256 indexed projectId,
         uint256 price,

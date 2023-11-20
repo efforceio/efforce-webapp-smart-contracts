@@ -69,9 +69,9 @@ async function main() {
     fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
     console.log(`Swap deployed to ${swap.address}`);
-    console.log(`Awaiting 5 confirmations…`);
+    console.log(`Awaiting 10 confirmations…`);
 
-    await swap.deployTransaction.wait(5);
+    await swap.deployTransaction.wait(10);
     console.log(`Done.`);
 
     console.log(`Granting admin role to contract...`);
@@ -79,7 +79,7 @@ async function main() {
     const Roles = await ethers.getContractFactory("Roles");
     const roles = Roles.attach(rolesAddress);
     let res = await roles.setAdmin(swap.address, true);
-    await res.wait(5);
+    await res.wait(10);
 
     const Credits = await ethers.getContractFactory("Credits", {
         libraries: {
@@ -90,11 +90,11 @@ async function main() {
 
     console.log(`Allowing swap to receive credits...`);
     res = await credits.updateAccount(swap.address, true);
-    await res.wait(5);
+    await res.wait(10);
 
     console.log(`Allowing swap to manage credits...`);
     res = await credits.setContractOperator(swap.address, true);
-    await res.wait(5);
+    await res.wait(10);
 
     console.log(`Done.`);
 

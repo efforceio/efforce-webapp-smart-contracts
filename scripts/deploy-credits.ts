@@ -66,9 +66,9 @@ async function main() {
     fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
     console.log(`Credits deployed to ${credits.address}`);
-    console.log(`Awaiting 5 confirmations…`);
+    console.log(`Awaiting 10 confirmations…`);
 
-    await credits.deployTransaction.wait(5);
+    await credits.deployTransaction.wait(10);
     console.log(`Done.`);
 
     console.log(`Granting admin role to contract...`);

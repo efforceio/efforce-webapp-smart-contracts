@@ -48,9 +48,9 @@ async function main() {
     fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
     console.log(`Bank deployed to ${bank.address}`);
-    console.log(`Awaiting 5 confirmations…`);
+    console.log(`Awaiting 10 confirmations…`);
 
-    await bank.deployTransaction.wait(5);
+    await bank.deployTransaction.wait(10);
 
     console.log(`Done.`);
     console.log("Verifying in etherscan…");

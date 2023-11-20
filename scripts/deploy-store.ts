@@ -66,9 +66,9 @@ async function main() {
     fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
     console.log(`Store deployed to ${store.address}`);
-    console.log(`Awaiting 5 confirmations…`);
+    console.log(`Awaiting 10 confirmations…`);
 
-    await store.deployTransaction.wait(5);
+    await store.deployTransaction.wait(10);
     console.log(`Done.`);
 
     console.log(`Granting admin role to contract...`);
@@ -76,7 +76,7 @@ async function main() {
     const Roles = await ethers.getContractFactory("Roles");
     const roles = Roles.attach(rolesAddress);
     let res = await roles.setAdmin(store.address, true);
-    await res.wait(5);
+    await res.wait(10);
 
     console.log(`Done.`);
 
@@ -89,7 +89,7 @@ async function main() {
     });
     const credits = Credits.attach(creditsAddress);
     res = await credits.setContractOperator(store.address, true);
-    await res.wait(5);
+    await res.wait(10);
 
     console.log(`Done.`);
 

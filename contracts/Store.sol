@@ -4,6 +4,7 @@ pragma solidity ^0.8.21;
 import "./helpers/IERC20.sol";
 import "./modules/BankWrapper.sol";
 import "./interfaces/ICredits.sol";
+import "./interfaces/IERC1155.sol";
 import "./modules/RolesModifier.sol";
 import "./interfaces/IAccount.sol";
 
@@ -99,7 +100,7 @@ contract Store is BankWrapper, RolesModifier {
         external
         isVintageState(vintageId, 2)
     {
-        uint256 nCredits = ICredits(creditsContract).balanceOf(msg.sender, vintageId);
+        uint256 nCredits = IERC1155(creditsContract).balanceOf(msg.sender, vintageId);
         uint256 totalPrice = ICredits(creditsContract).getVintage(vintageId).price * nCredits;
         IBank(bankContract).withdraw(msg.sender, totalPrice);
         ICredits(creditsContract).burn(msg.sender, vintageId, nCredits, "");

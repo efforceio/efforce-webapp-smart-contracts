@@ -26,4 +26,12 @@ interface IERC1155 {
         @param _approved Set to true if the target address will be an operator, false otherwise.
     */
     function setApprovalForAll(address _operator, bool _approved) external;
+
+    /*
+        @notice Get the balance of an account's tokens.
+        @param _owner The target account.
+        @param _id The target token id.
+        @return The amount of token owned by the target account having target id.
+    */
+    function balanceOf(address _owner, uint256 _id) external view returns(uint256);
 }

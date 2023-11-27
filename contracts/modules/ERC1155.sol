@@ -163,15 +163,10 @@ abstract contract ERC1155 is Accounts, IERC1155, Vintages {
         emit MetadataUriUpdated(_uri);
     }
 
-    /*
-        @notice Get the balance of an account's tokens.
-        @param _owner The target account.
-        @param _id The target token id.
-        @return The amount of token owned by the target account having target id.
-    */
     function balanceOf(address _owner, uint256 _id)
         external
         view
+        override
         returns(uint256)
     {
         return balances[_id][_owner];

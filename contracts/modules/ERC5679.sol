@@ -39,7 +39,8 @@ abstract contract ERC5679 is ERC1155 {
         accountEnabled(to)
         external
     {
-        for (uint256 i = 0; i < ids.length; i++) {
+        uint len = ids.length;
+        for (uint256 i = 0; i < len; i++) {
             _mint(to, ids[i], amounts[i], data);
         }
     }
@@ -76,7 +77,8 @@ abstract contract ERC5679 is ERC1155 {
         external
         ownerOrOperator(_from)
     {
-        for (uint256 i = 0; i < amounts.length; i++) {
+        uint len = amounts.length;
+        for (uint256 i = 0; i < len; i++) {
             _burn(_from, ids[i], amounts[i]);
         }
         emit TransferBatch(msg.sender, _from, address(0), ids, amounts);

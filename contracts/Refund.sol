@@ -30,7 +30,8 @@ contract Refund is RolesModifier {
         external
     {
         uint256 reward;
-        for (uint256 i = 0; i < creditIds.length; i++) {
+        uint len = creditIds.length;
+        for (uint256 i = 0; i < len; i++) {
             uint256 projectId = ICredits(creditsAddress).getVintage(creditIds[i]).projectId;
             uint256 balance = IERC1155(creditsAddress).balanceOf(msg.sender, creditIds[i]);
             reward += balance * projectIdToRefund[projectId];

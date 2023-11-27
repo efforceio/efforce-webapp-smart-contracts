@@ -72,7 +72,8 @@ abstract contract Listings is IPurchases, BankWrapper {
         @param quantities The amounts of token that will be purchased.
     */
     function buyFromListingBatch(uint256[] calldata ids, uint256[] calldata quantities) external {
-        for (uint256 i = 0; i < ids.length; i++) {
+        uint len = ids.length;
+        for (uint256 i = 0; i < len; i++) {
             _buyFromListing(ids[i], quantities[i]);
         }
     }

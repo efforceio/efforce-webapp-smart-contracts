@@ -9,6 +9,6 @@ interface IRoyalties {
         @param salePrice The sale price for the target token id.
         @return The address of the receiver and the royalty amount.
     */
-    function royaltyInfo(uint256 tokenId, uint256 salePrice) external view returns(address, uint256);
+    function royaltyInfo(uint tokenId, uint salePrice) external view returns(address, uint);
 
 }

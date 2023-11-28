@@ -10,7 +10,7 @@ import "./Vintages.sol";
 
 
 abstract contract ERC1155 is Accounts, IERC1155, Vintages {
-    mapping (uint256 => mapping(address => uint256)) internal balances;
+    mapping (uint => mapping(address => uint)) internal balances;
     mapping (address => mapping(address => bool)) private operatorApproval;
     string private baseUri;
     mapping(address=>bool) private contractOperator;
@@ -41,7 +41,7 @@ abstract contract ERC1155 is Accounts, IERC1155, Vintages {
         @param value The amount of token of given id.
         @param tokenId The id of the token.
     */
-    modifier hasValue(address account, uint256 value, uint256 tokenId) {
+    modifier hasValue(address account, uint value, uint tokenId) {
         require(
             balances[tokenId][account] - _getFrozen(account, tokenId) >= value,
             Errors.INSUFFICIENT_BALANCE
@@ -53,7 +53,7 @@ abstract contract ERC1155 is Accounts, IERC1155, Vintages {
         @notice Throws an error if the vintage is not closed.
         @param tokenId The id of the token.
     */
-    modifier isNotBlocked(uint256 tokenId) {
+    modifier isNotBlocked(uint tokenId) {
         require(vintageIdToDetails[tokenId].state == 1, Errors.NOT_ALLOWED);
         _;
     }
@@ -71,8 +71,8 @@ abstract contract ERC1155 is Accounts, IERC1155, Vintages {
     function safeTransferFrom(
         address _from,
         address _to,
-        uint256 _id,
-        uint256 _value,
+        uint _id,
+        uint _value,
         bytes calldata data
     )
         external
@@ -96,8 +96,8 @@ abstract contract ERC1155 is Accounts, IERC1155, Vintages {
     function safeBatchTransferFrom(
         address _from,
         address _to,
-        uint256[] calldata _ids,
-        uint256[] calldata _values,
+        uint[] calldata _ids,
+        uint[] calldata _values,
         bytes calldata _data
     )
         external

@@ -26,7 +26,7 @@ contract Swap is Offers, Listings, IERC1155TokenReceiver {
         return creditContract;
     }
 
-    function onERC1155Received(address, address, uint256, uint256, bytes calldata)
+    function onERC1155Received(address, address, uint, uint, bytes calldata)
         external
         override
         pure
@@ -35,7 +35,7 @@ contract Swap is Offers, Listings, IERC1155TokenReceiver {
         return Constants.ERC1155_ACCEPTED;
     }
 
-    function onERC1155BatchReceived(address, address, uint256[] calldata, uint256[] calldata, bytes calldata)
+    function onERC1155BatchReceived(address, address, uint[] calldata, uint256[] calldata, bytes calldata)
         external
         override
         pure

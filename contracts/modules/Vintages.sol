@@ -15,7 +15,7 @@ abstract contract Vintages is Projects, ICredits {
         @param vintageId The id of the vintage.
         @param state The query state.
     */
-    modifier isVintageState(uint256 vintageId, uint8 state) {
+    modifier isVintageState(uint256 vintageId, uint state) {
         require(vintageIdToDetails[vintageId].state == state, Errors.INCORRECT_VINTAGE_STATE);
         _;
     }

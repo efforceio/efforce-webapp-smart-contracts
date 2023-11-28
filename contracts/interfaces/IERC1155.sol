@@ -15,8 +15,8 @@ interface IERC1155 {
     function safeTransferFrom(
         address _from,
         address _to,
-        uint256 _id,
-        uint256 _value,
+        uint _id,
+        uint _value,
         bytes calldata data
     ) external;
 
@@ -33,5 +33,5 @@ interface IERC1155 {
         @param _id The target token id.
         @return The amount of token owned by the target account having target id.
     */
-    function balanceOf(address _owner, uint256 _id) external view returns(uint256);
+    function balanceOf(address _owner, uint _id) external view returns(uint);
 }

@@ -13,7 +13,7 @@ contract Credits is ERC5006, ERC5679, ContractMetadata, ERC165, Royalties {
         string memory metadataUri,
         address _rolesAddress,
         string memory contractMetadataURI,
-        uint256 royaltyBps,
+        uint royaltyBps,
         address royaltyReceiver
     )
         ERC1155(metadataUri)

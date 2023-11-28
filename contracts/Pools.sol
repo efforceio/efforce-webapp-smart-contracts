@@ -8,10 +8,10 @@ import "./helpers/IERC20.sol";
 import "./interfaces/IBank.sol";
 
 struct Pool {
-    uint256 stakingStartedAt;
-    uint256 allocated;
+    uint stakingStartedAt;
+    uint allocated;
     bool canceled;
-    uint256 stakingPeriod;
+    uint stakingPeriod;
 }
 
 contract Pools is BankWrapper, RolesModifier {

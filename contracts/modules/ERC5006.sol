@@ -7,23 +7,23 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 abstract contract ERC5006 is ERC1155 {
 
     struct UserRecord {
-        uint256 tokenId;
+        uint tokenId;
         address owner;
-        uint256 amount;
+        uint amount;
         address user;
-        uint256 expiry;
+        uint expiry;
     }
 
-    mapping(uint256 => UserRecord) private records;
-    mapping(address => mapping(uint256 => uint256)) private frozen;
-    mapping(address => mapping(uint256 => EnumerableSet.UintSet)) private usersToRecordsSet;
-    uint256 private currentRecord;
+    mapping(uint => UserRecord) private records;
+    mapping(address => mapping(uint => uint)) private frozen;
+    mapping(address => mapping(uint => EnumerableSet.UintSet)) private usersToRecordsSet;
+    uint private currentRecord;
 
     /*
         @notice Throws an error if the record is not expired.
         @param recordId The id of the target record.
     */
-    modifier expiredRecord(uint256 recordId) {
+    modifier expiredRecord(uint recordId) {
         require(records[recordId].expiry < block.timestamp, Errors.NOT_EXPIRED);
         _;
     }
@@ -41,15 +41,15 @@ abstract contract ERC5006 is ERC1155 {
     function createUserRecord(
         address owner,
         address user,
-        uint256 tokenId,
-        uint256 amount,
-        uint256 expiry
+        uint tokenId,
+        uint amount,
+        uint expiry
     )
         external
         ownerOrOperator(owner)
         accountEnabled(user)
         hasValue(owner, amount, tokenId)
-        returns(uint256)
+        returns(uint)
     {
         records[currentRecord] = UserRecord(
             tokenId,
@@ -75,12 +75,12 @@ abstract contract ERC5006 is ERC1155 {
         @dev Only of owners of the recordId can delete the record.
         @param recordId The id of the record to be deleted.
     */
-    function deleteUserRecord(uint256 recordId)
+    function deleteUserRecord(uint recordId)
         external
         ownerOrOperator(records[recordId].owner)
         expiredRecord(recordId)
     {
-        uint256 tokenId = records[recordId].tokenId;
+        uint tokenId = records[recordId].tokenId;
 
         frozen[records[recordId].owner][tokenId] -= records[recordId].amount;
         EnumerableSet.remove(usersToRecordsSet[records[recordId].user][tokenId], recordId);
@@ -94,10 +94,10 @@ abstract contract ERC5006 is ERC1155 {
         @param tokenId The target token id.
         @return The amount of tokens that the target account is user of.
     */
-    function usableBalanceOf(address account, uint256 tokenId)
+    function usableBalanceOf(address account, uint tokenId)
         external
         view
-        returns(uint256 usable)
+        returns(uint usable)
     {
         uint len = EnumerableSet.length(usersToRecordsSet[account][tokenId]);
         uint i = 0;

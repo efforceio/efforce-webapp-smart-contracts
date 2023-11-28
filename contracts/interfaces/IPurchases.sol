@@ -12,12 +12,12 @@ interface IPurchases {
         @param amount The amount of credits sold with given id.
     */
     event Purchase(
-        uint256 creditId,
-        uint256 indexed projectId,
+        uint creditId,
+        uint indexed projectId,
         address indexed seller,
         address indexed buyer,
-        uint256 price,
-        uint256 amount
+        uint price,
+        uint amount
     );
 
 }

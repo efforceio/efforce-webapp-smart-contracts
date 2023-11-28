@@ -8,7 +8,7 @@ import "./interfaces/IERC1155.sol";
 
 contract Refund is RolesModifier {
 
-    mapping(uint256=>uint256) private projectIdToRefund;
+    mapping(uint=>uint) private projectIdToRefund;
     address immutable public creditsAddress;
     address immutable public bankAddress;
 
@@ -19,22 +19,22 @@ contract Refund is RolesModifier {
         bankAddress = _bankAddress;
     }
 
-    function setRefund(uint256 projectId, uint256 refund)
+    function setRefund(uint projectId, uint refund)
         external
         adminOrOwner(msg.sender)
     {
         projectIdToRefund[projectId] = refund;
     }
 
-    function receiveRewards(uint256[] calldata creditIds)
+    function receiveRewards(uint[] calldata creditIds)
         external
     {
-        uint256 reward;
+        uint reward;
         uint len = creditIds.length;
-        uint256 i = 0;
+        uint i = 0;
         while (i < len) {
-            uint256 projectId = ICredits(creditsAddress).getVintage(creditIds[i]).projectId;
-            uint256 balance = IERC1155(creditsAddress).balanceOf(msg.sender, creditIds[i]);
+            uint projectId = ICredits(creditsAddress).getVintage(creditIds[i]).projectId;
+            uint balance = IERC1155(creditsAddress).balanceOf(msg.sender, creditIds[i]);
             reward += balance * projectIdToRefund[projectId];
             ICredits(creditsAddress).burn(msg.sender, creditIds[i], balance, "");
             unchecked {
@@ -46,14 +46,14 @@ contract Refund is RolesModifier {
         emit RewardReceived(msg.sender, creditIds);
     }
 
-    function getProjectReward(uint256 projectId)
+    function getProjectReward(uint projectId)
         external
         view
-        returns(uint256)
+        returns(uint)
     {
         return projectIdToRefund[projectId];
     }
 
-    event RewardReceived(address indexed receiver, uint256[] creditIds);
+    event RewardReceived(address indexed receiver, uint[] creditIds);
 
 }

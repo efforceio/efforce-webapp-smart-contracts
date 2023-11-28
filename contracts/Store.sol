@@ -33,7 +33,7 @@ contract Store is BankWrapper, RolesModifier {
         @param projectId The id of the vintage.
         @param state The query state.
     */
-    modifier availableCredits(uint256 vintageId, uint256 credits) {
+    modifier availableCredits(uint vintageId, uint credits) {
         require(
             ICredits(creditsContract).getVintage(vintageId).availableCredits >= credits,
             Errors.CREDITS_NOT_AVAILABLE
@@ -46,7 +46,7 @@ contract Store is BankWrapper, RolesModifier {
         @param vintageId The id of the vintage.
         @param state The query state.
     */
-    modifier isVintageState(uint256 vintageId, uint8 state) {
+    modifier isVintageState(uint vintageId, uint state) {
         require( ICredits(creditsContract).getVintage(vintageId).state == state, Errors.INCORRECT_VINTAGE_STATE);
         _;
     }
@@ -59,7 +59,7 @@ contract Store is BankWrapper, RolesModifier {
         @param vintageId The vintage id for which credits will be purchased.
         @param amount The amount of credits that will be purchased.
     */
-    function buyCredits(uint256 vintageId, uint256 amount)
+    function buyCredits(uint vintageId, uint256 amount)
         external
         availableCredits(vintageId, amount)
         accountEnabled(msg.sender)

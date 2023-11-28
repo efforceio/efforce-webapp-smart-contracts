@@ -6,13 +6,13 @@ import "../interfaces/IRoyalties.sol";
 
 abstract contract Royalties is RolesModifier, IRoyalties {
 
-    uint256 private royaltyBps;
+    uint private royaltyBps;
     address public receiver;
 
     /*
         @param _royaltyBps The percentage for royalties.
     */
-    constructor(uint256 _royaltyBps, address _receiver) {
+    constructor(uint _royaltyBps, address _receiver) {
         royaltyBps = _royaltyBps;
         receiver = _receiver;
     }
@@ -21,7 +21,7 @@ abstract contract Royalties is RolesModifier, IRoyalties {
         @notice Updates default royalty bps.
         @dev Can be invoked only by the contract owner.
     */
-    function setRoyaltyInfo(uint256 _royaltyBps)
+    function setRoyaltyInfo(uint _royaltyBps)
         external
         adminOrOwner(msg.sender)
     {
@@ -48,11 +48,11 @@ abstract contract Royalties is RolesModifier, IRoyalties {
         @param salePrice The sale price for the target token id.
         @return The address of the receiver and the royalty amount.
     */
-    function royaltyInfo(uint256, uint256 salePrice)
+    function royaltyInfo(uint, uint salePrice)
         external
         view
         override
-        returns(address, uint256)
+        returns(address, uint)
     {
         return (receiver, (salePrice * royaltyBps) / 10_000);
     }
@@ -61,7 +61,7 @@ abstract contract Royalties is RolesModifier, IRoyalties {
         @notice Emitted when the royalty bps is updated.
         @param royaltyBps The new royalty bps.
     */
-    event RoyaltiesUpdated(uint256 royaltyBps);
+    event RoyaltiesUpdated(uint royaltyBps);
 
     /*
         @notice Emitted when the royalty receiver is updated.

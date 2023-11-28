@@ -12,7 +12,7 @@ contract Token is ERC20Base {
         ERC20Base(msg.sender, _name, _symbol)
     {}
 
-    function mint(uint256 amount) external {
+    function mint(uint amount) external {
         mintTo(msg.sender, amount);
     }
 }

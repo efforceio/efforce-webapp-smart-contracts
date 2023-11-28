@@ -98,10 +98,15 @@ abstract contract ERC5006 is ERC1155 {
     {
         uint256 usable = 0;
         uint len = EnumerableSet.length(usersToRecordsSet[account][tokenId]);
-        for (uint256 i = 0; i < len; i++) {
+        uint i = 0;
+
+        while (i < len) {
             uint256 recordId = EnumerableSet.at(usersToRecordsSet[account][tokenId], i);
             if (records[recordId].expiry >= block.timestamp) {
                 usable += records[recordId].amount;
+            }
+            unchecked {
+                i++;
             }
         }
         return usable;

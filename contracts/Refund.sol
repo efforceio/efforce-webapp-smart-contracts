@@ -31,12 +31,17 @@ contract Refund is RolesModifier {
     {
         uint256 reward;
         uint len = creditIds.length;
-        for (uint256 i = 0; i < len; i++) {
+        uint256 i = 0;
+        while (i < len) {
             uint256 projectId = ICredits(creditsAddress).getVintage(creditIds[i]).projectId;
             uint256 balance = IERC1155(creditsAddress).balanceOf(msg.sender, creditIds[i]);
             reward += balance * projectIdToRefund[projectId];
             ICredits(creditsAddress).burn(msg.sender, creditIds[i], balance, "");
+            unchecked {
+                i++;
+            }
         }
+
         IBank(bankAddress).withdraw(msg.sender, reward);
         emit RewardReceived(msg.sender, creditIds);
     }

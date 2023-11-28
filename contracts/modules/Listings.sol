@@ -73,8 +73,10 @@ abstract contract Listings is IPurchases, BankWrapper {
     */
     function buyFromListingBatch(uint256[] calldata ids, uint256[] calldata quantities) external {
         uint len = ids.length;
-        for (uint256 i = 0; i < len; i++) {
-            _buyFromListing(ids[i], quantities[i]);
+        unchecked {
+            for (uint256 i = 0; i < len; i++) {
+                _buyFromListing(ids[i], quantities[i]);
+            }
         }
     }
 

@@ -103,9 +103,12 @@ abstract contract ERC1155 is Accounts, IERC1155, Vintages {
         external
     {
         require(_ids.length == _values.length, Errors.NOT_MATCHING_LENGTHS);
+        uint len = _ids.length;
 
-        for (uint256 i = 0; i < _ids.length; ++i) {
-            _doTransfer(_ids[i], _from, _values[i], _to);
+        unchecked {
+            for (uint256 i = 0; i < len; ++i) {
+                _doTransfer(_ids[i], _from, _values[i], _to);
+            }
         }
 
         if (Utils.isContract(_to)) {
@@ -183,13 +186,17 @@ abstract contract ERC1155 is Accounts, IERC1155, Vintages {
         view
         returns(uint256[] memory)
     {
-        require(_owners.length == _ids.length, Errors.NOT_MATCHING_LENGTHS);
+        uint256 len = _owners.length;
+        require(len == _ids.length, Errors.NOT_MATCHING_LENGTHS);
 
-        uint256[] memory balances_ = new uint256[](_owners.length);
+        uint256[] memory balances_ = new uint256[](len);
 
-        for (uint256 i = 0; i < _owners.length; ++i) {
-            balances_[i] = balances[_ids[i]][_owners[i]];
+        unchecked {
+            for (uint256 i = 0; i < len; ++i) {
+                balances_[i] = balances[_ids[i]][_owners[i]];
+            }
         }
+
 
         return balances_;
     }

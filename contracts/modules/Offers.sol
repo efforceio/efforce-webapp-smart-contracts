@@ -70,8 +70,10 @@ abstract contract Offers is IPurchases, BankWrapper {
     */
     function acceptOfferBatch(uint256[] calldata ids, uint256[] calldata amounts) external {
         uint len = ids.length;
-        for (uint256 i = 0; i < len; i++){
-            _acceptOffer(ids[i], amounts[i]);
+        unchecked {
+            for (uint256 i = 0; i < len; i++){
+                _acceptOffer(ids[i], amounts[i]);
+            }
         }
     }
 

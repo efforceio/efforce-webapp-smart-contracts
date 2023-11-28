@@ -62,7 +62,10 @@ abstract contract ERC5006 is ERC1155 {
         EnumerableSet.add(usersToRecordsSet[user][tokenId], currentRecord);
 
         emit CreateUserRecord(currentRecord, tokenId, amount, owner, user, expiry);
-        currentRecord++;
+
+        unchecked {
+            currentRecord++;
+        }
 
         return currentRecord;
     }
@@ -94,9 +97,8 @@ abstract contract ERC5006 is ERC1155 {
     function usableBalanceOf(address account, uint256 tokenId)
         external
         view
-        returns(uint256)
+        returns(uint256 usable)
     {
-        uint256 usable = 0;
         uint len = EnumerableSet.length(usersToRecordsSet[account][tokenId]);
         uint i = 0;
 

@@ -264,5 +264,5 @@ contract Pools is BankWrapper, RolesModifier {
             2 –> Pool funded for refund.
         @param amount The funded amount if state is 2, 0 otherwise.
     */
-    event PoolChangedState(uint256 indexed id, uint8 indexed state, uint256 amount);
+    event PoolChangedState(uint256 indexed id, uint256 indexed state, uint256 amount);
 }

@@ -122,7 +122,9 @@ abstract contract Offers is IPurchases, BankWrapper {
             msg.sender
         );
 
-        nOffers++;
+        unchecked {
+            nOffers++;
+        }
     }
 
     /*

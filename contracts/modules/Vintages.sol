@@ -59,7 +59,11 @@ abstract contract Vintages is Projects, ICredits {
         );
 
         emit VintageOpened(numberOfVintages, credits, price, projectId);
-        numberOfVintages++;
+
+        unchecked {
+            numberOfVintages++;
+        }
+
     }
 
 
@@ -70,7 +74,7 @@ abstract contract Vintages is Projects, ICredits {
         @param vintageId The id of the vintage that will be updated.
         @param newState The new state can be 1 (closed) or 2 (canceled).
     */
-    function updateVintageState(uint256 vintageId, uint8 newState)
+    function updateVintageState(uint256 vintageId, uint256 newState)
         external
         adminOrOwner(msg.sender)
         isVintageState(vintageId, 0)
@@ -129,7 +133,7 @@ abstract contract Vintages is Projects, ICredits {
         @param vintageId The target vintage id.
         @param action Set to 1 if the vintage is closed, 2 if canceled.
     */
-    event VintageAction(uint256 indexed vintageId, uint8 indexed action);
+    event VintageAction(uint256 indexed vintageId, uint256 indexed action);
 
     /*
         @notice Emitted when the number of total credits of a vintage is updated.

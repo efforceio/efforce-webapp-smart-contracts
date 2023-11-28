@@ -5,6 +5,7 @@ import "./modules/Offers.sol";
 import "./modules/Listings.sol";
 import "./modules/BankWrapper.sol";
 import "./helpers/IERC1155TokenReceiver.sol";
+import "./libraries/Constants.sol";
 
 contract Swap is Offers, Listings, IERC1155TokenReceiver {
 
@@ -31,7 +32,7 @@ contract Swap is Offers, Listings, IERC1155TokenReceiver {
         pure
         returns(bytes4)
     {
-        return bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"));
+        return Constants.ERC1155_ACCEPTED;
     }
 
     function onERC1155BatchReceived(address, address, uint256[] calldata, uint256[] calldata, bytes calldata)
@@ -40,7 +41,7 @@ contract Swap is Offers, Listings, IERC1155TokenReceiver {
         pure
         returns(bytes4)
     {
-        return bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"));
+        return Constants.ERC1155_BATCH_ACCEPTED;
     }
 
     function _positiveAmount(uint256 amount)

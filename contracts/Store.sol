@@ -127,7 +127,7 @@ contract Store is BankWrapper, RolesModifier {
         @param vintageId The id of the vintage.
         @param action Set to 1 for redeem, 2 for refund.
     */
-    event RefundOrRedeem(address indexed account, uint256 indexed vintageId, uint8 indexed action);
+    event RefundOrRedeem(address indexed account, uint256 indexed vintageId, uint256 indexed action);
 
     /*
         @notice Emitted when the account buys some credits.

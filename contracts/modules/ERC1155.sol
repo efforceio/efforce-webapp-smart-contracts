@@ -184,12 +184,12 @@ abstract contract ERC1155 is Accounts, IERC1155, Vintages {
     function balanceOfBatch(address[] calldata _owners, uint256[] calldata _ids)
         external
         view
-        returns(uint256[] memory)
+        returns(uint256[] memory balances_)
     {
         uint256 len = _owners.length;
         require(len == _ids.length, Errors.NOT_MATCHING_LENGTHS);
 
-        uint256[] memory balances_ = new uint256[](len);
+        balances_ = new uint256[](len);
 
         unchecked {
             for (uint256 i = 0; i < len; ++i) {

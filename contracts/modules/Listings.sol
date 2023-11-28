@@ -137,7 +137,9 @@ abstract contract Listings is IPurchases, BankWrapper {
             quantity
         );
 
-        nListings++;
+        unchecked {
+            nListings++;
+        }
     }
 
     /*

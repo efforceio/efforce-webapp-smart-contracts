@@ -7,7 +7,7 @@ interface ICredits {
         uint256 totalCredits;
         uint256 availableCredits;
         uint256 price;
-        uint8 state;
+        uint256 state;
         uint256 projectId;
     }
 

@@ -104,8 +104,9 @@ contract Store is BankWrapper, RolesModifier {
         uint256 totalPrice = ICredits(creditsContract).getVintage(vintageId).price * nCredits;
         IBank(bankContract).withdraw(msg.sender, totalPrice);
         ICredits(creditsContract).burn(msg.sender, vintageId, nCredits, "");
+        uint projectId = ICredits(creditsContract).getVintage(vintageId).projectId;
 
-        emit RefundOrRedeem(msg.sender, vintageId, 2);
+        emit RefundOrRedeem(msg.sender, vintageId, projectId);
     }
 
 
@@ -117,17 +118,18 @@ contract Store is BankWrapper, RolesModifier {
             ICredits(creditsContract).getVintage(vintageId).availableCredits - amount
         );
         ICredits(creditsContract).safeMint(receiver, vintageId, amount, "");
+        uint projectId = ICredits(creditsContract).getVintage(vintageId).projectId;
 
-        emit CreditsPurchased(vintageId, amount, receiver, receiver == msg.sender);
+        emit CreditsPurchased(vintageId, amount, receiver, receiver == msg.sender, projectId);
     }
 
     /*
         @notice Emitted when a refund or credits redeem is completed.
         @param account The target account.
         @param vintageId The id of the vintage.
-        @param action Set to 1 for redeem, 2 for refund.
+        @param projectId The id of the credits project.
     */
-    event RefundOrRedeem(address indexed account, uint256 indexed vintageId, uint256 indexed action);
+    event RefundOrRedeem(address account, uint256 indexed vintageId, uint256 indexed projectId);
 
     /*
         @notice Emitted when the account buys some credits.
@@ -135,6 +137,13 @@ contract Store is BankWrapper, RolesModifier {
         @param amount The amount of credits purchased.
         @param account The buyer.
         @param crypto Is set to true if the sender is making the payment, false otherwise.
+        @param projectId The id of the credits project.
     */
-    event CreditsPurchased(uint256 indexed id, uint256 amount, address indexed account, bool indexed crypto);
+    event CreditsPurchased(
+        uint256 indexed id,
+        uint256 amount,
+        address indexed account,
+        bool crypto,
+        uint256 indexed projectId
+    );
 }

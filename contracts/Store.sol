@@ -65,12 +65,7 @@ contract Store is BankWrapper, RolesModifier {
         accountEnabled(msg.sender)
         isVintageState(vintageId, 0)
     {
-        IERC20(tokenAddress).transferFrom(
-            msg.sender,
-            bankContract,
-            amount * ICredits(creditsContract).getVintage(vintageId).price
-        );
-        _buyCredits(vintageId, amount, msg.sender);
+        _buyCredits(vintageId, amount, msg.sender, true);
     }
 
     /*
@@ -88,7 +83,7 @@ contract Store is BankWrapper, RolesModifier {
         adminOrOwner(msg.sender)
         isVintageState(vintageId, 0)
     {
-        _buyCredits(vintageId, amount, receiver);
+        _buyCredits(vintageId, amount, receiver, false);
     }
 
     /*
@@ -110,17 +105,25 @@ contract Store is BankWrapper, RolesModifier {
     }
 
 
-    function _buyCredits(uint256 vintageId, uint256 amount, address receiver)
+    function _buyCredits(uint256 vintageId, uint256 amount, address receiver, bool crypto)
         internal
     {
+        ICredits.Vintage memory v = ICredits(creditsContract).getVintage(vintageId);
         ICredits(creditsContract).updateVintageAvailability(
             vintageId,
-            ICredits(creditsContract).getVintage(vintageId).availableCredits - amount
+            v.availableCredits - amount
         );
         ICredits(creditsContract).safeMint(receiver, vintageId, amount, "");
-        uint projectId = ICredits(creditsContract).getVintage(vintageId).projectId;
 
-        emit CreditsPurchased(vintageId, amount, receiver, receiver == msg.sender, projectId);
+        if (crypto) {
+            IERC20(tokenAddress).transferFrom(
+                msg.sender,
+                bankContract,
+                amount * v.price
+            );
+        }
+
+        emit CreditsPurchased(vintageId, amount, v.price, receiver, receiver == msg.sender, v.projectId);
     }
 
     /*
@@ -142,6 +145,7 @@ contract Store is BankWrapper, RolesModifier {
     event CreditsPurchased(
         uint256 indexed id,
         uint256 amount,
+        uint256 pricePerCredit,
         address indexed account,
         bool crypto,
         uint256 indexed projectId

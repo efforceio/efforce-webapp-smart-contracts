@@ -21,6 +21,11 @@ abstract contract Offers is IPurchases, BankWrapper {
 
     mapping (uint256 => Offer) private idToOffer;
     uint256 public nOffers;
+    address immutable private creditsContract;
+
+    constructor(address _creditsContract) {
+        creditsContract = _creditsContract;
+    }
 
     /*
         @notice Throws an error if the offerId is canceled.
@@ -91,7 +96,7 @@ abstract contract Offers is IPurchases, BankWrapper {
 
         emit OfferClosed(
             offerId,
-            ICredits(_getCreditsContract()).getVintage(idToOffer[offerId].tokenId).projectId,
+            ICredits(creditsContract).getVintage(idToOffer[offerId].tokenId).projectId,
             false
         );
     }
@@ -116,7 +121,7 @@ abstract contract Offers is IPurchases, BankWrapper {
         emit OfferCreated(
             nOffers,
             tokenId,
-            ICredits(_getCreditsContract()).getVintage(tokenId).projectId,
+            ICredits(creditsContract).getVintage(tokenId).projectId,
             price,
             quantity,
             msg.sender
@@ -166,7 +171,7 @@ abstract contract Offers is IPurchases, BankWrapper {
         }
         emit OfferUpdated(
             offerId,
-            ICredits(_getCreditsContract()).getVintage(idToOffer[offerId].tokenId).projectId,
+            ICredits(creditsContract).getVintage(idToOffer[offerId].tokenId).projectId,
             price,
             quantity
         );
@@ -186,12 +191,12 @@ abstract contract Offers is IPurchases, BankWrapper {
         private
     {
         uint256 total = idToOffer[offerId].price * amount;
-        (address royaltiesReceiver, uint256 royalties) = IRoyalties(_getCreditsContract()).royaltyInfo(
+        (address royaltiesReceiver, uint256 royalties) = IRoyalties(creditsContract).royaltyInfo(
             idToOffer[offerId].tokenId,
             total
         );
 
-        IERC1155(_getCreditsContract()).safeTransferFrom(
+        IERC1155(creditsContract).safeTransferFrom(
             msg.sender,
             idToOffer[offerId].offererAddress,
             idToOffer[offerId].tokenId,
@@ -207,21 +212,21 @@ abstract contract Offers is IPurchases, BankWrapper {
             idToOffer[offerId].closed = true;
             emit OfferClosed(
                 offerId,
-                ICredits(_getCreditsContract()).getVintage(idToOffer[offerId].tokenId).projectId,
+                ICredits(creditsContract).getVintage(idToOffer[offerId].tokenId).projectId,
                 true
             );
         }
 
         emit OfferUpdated(
             offerId,
-            ICredits(_getCreditsContract()).getVintage(idToOffer[offerId].tokenId).projectId,
+            ICredits(creditsContract).getVintage(idToOffer[offerId].tokenId).projectId,
             idToOffer[offerId].price,
             idToOffer[offerId].quantity
         );
 
         emit Purchase(
             idToOffer[offerId].tokenId,
-            ICredits(_getCreditsContract()).getVintage(idToOffer[offerId].tokenId).projectId,
+            ICredits(creditsContract).getVintage(idToOffer[offerId].tokenId).projectId,
             msg.sender,
             idToOffer[offerId].offererAddress,
             total,
@@ -229,7 +234,6 @@ abstract contract Offers is IPurchases, BankWrapper {
         );
     }
 
-    function _getCreditsContract() internal view virtual returns(address);
     function _positiveAmount(uint256 amount) internal pure virtual;
 
     /*

@@ -21,6 +21,11 @@ abstract contract Listings is IPurchases, BankWrapper {
 
     mapping(uint256 => Listing) private idToListing;
     uint256 public nListings;
+    address immutable private creditsContract;
+
+    constructor(address _creditsContract) {
+        creditsContract = _creditsContract;
+    }
 
 
     /*
@@ -90,7 +95,7 @@ abstract contract Listings is IPurchases, BankWrapper {
         isListingOwner(listingId, msg.sender)
     {
         idToListing[listingId].closed = true;
-        IERC1155(_getCreditsContract()).safeTransferFrom(
+        IERC1155(creditsContract).safeTransferFrom(
             address(this),
             msg.sender,
             idToListing[listingId].creditId,
@@ -99,7 +104,7 @@ abstract contract Listings is IPurchases, BankWrapper {
         );
         emit ListingClosed(
             listingId,
-            ICredits(_getCreditsContract()).getVintage(idToListing[listingId].creditId).projectId,
+            ICredits(creditsContract).getVintage(idToListing[listingId].creditId).projectId,
             false
         );
     }
@@ -113,7 +118,7 @@ abstract contract Listings is IPurchases, BankWrapper {
     */
     function createListing(uint256 creditId, uint256 pricePerToken, uint256 quantity) external {
         _positiveAmount(quantity);
-        IERC1155(_getCreditsContract()).safeTransferFrom(
+        IERC1155(creditsContract).safeTransferFrom(
             msg.sender,
             address(this),
             creditId,
@@ -131,7 +136,7 @@ abstract contract Listings is IPurchases, BankWrapper {
         emit CreateListing(
             nListings,
             msg.sender,
-            ICredits(_getCreditsContract()).getVintage(creditId).projectId,
+            ICredits(creditsContract).getVintage(creditId).projectId,
             creditId,
             pricePerToken,
             quantity
@@ -161,7 +166,7 @@ abstract contract Listings is IPurchases, BankWrapper {
         }
         if (idToListing[listingId].quantity != quantity) {
             if (idToListing[listingId].quantity > quantity) {
-                IERC1155(_getCreditsContract()).safeTransferFrom(
+                IERC1155(creditsContract).safeTransferFrom(
                     address(this),
                     msg.sender,
                     idToListing[listingId].creditId,
@@ -169,7 +174,7 @@ abstract contract Listings is IPurchases, BankWrapper {
                     ""
                 );
             } else {
-                IERC1155(_getCreditsContract()).safeTransferFrom(
+                IERC1155(creditsContract).safeTransferFrom(
                     msg.sender,
                     address(this),
                     idToListing[listingId].creditId,
@@ -181,7 +186,7 @@ abstract contract Listings is IPurchases, BankWrapper {
         }
         emit ListingUpdated(
             listingId,
-            ICredits(_getCreditsContract()).getVintage(idToListing[listingId].creditId).projectId,
+            ICredits(creditsContract).getVintage(idToListing[listingId].creditId).projectId,
             quantity,
             pricePerToken
         );
@@ -201,14 +206,14 @@ abstract contract Listings is IPurchases, BankWrapper {
         private
     {
         uint256 total = idToListing[listingId].pricePerToken * quantity;
-        (address royaltiesReceiver,uint256 royalties) = IRoyalties(_getCreditsContract()).royaltyInfo(
+        (address royaltiesReceiver,uint256 royalties) = IRoyalties(creditsContract).royaltyInfo(
             idToListing[listingId].creditId,
             total
         );
 
         IERC20(tokenAddress).transferFrom(msg.sender, idToListing[listingId].creatorAddress, total - royalties);
         IERC20(tokenAddress).transferFrom(msg.sender, royaltiesReceiver, royalties);
-        IERC1155(_getCreditsContract()).safeTransferFrom(
+        IERC1155(creditsContract).safeTransferFrom(
             address(this),
             msg.sender,
             idToListing[listingId].creditId,
@@ -222,20 +227,20 @@ abstract contract Listings is IPurchases, BankWrapper {
             idToListing[listingId].closed = true;
             emit ListingClosed(
                 listingId,
-                ICredits(_getCreditsContract()).getVintage(idToListing[listingId].creditId).projectId,
+                ICredits(creditsContract).getVintage(idToListing[listingId].creditId).projectId,
                 true
             );
         }
 
         emit ListingUpdated(
             listingId,
-            ICredits(_getCreditsContract()).getVintage(idToListing[listingId].creditId).projectId,
+            ICredits(creditsContract).getVintage(idToListing[listingId].creditId).projectId,
             idToListing[listingId].quantity,
             idToListing[listingId].pricePerToken
         );
         emit Purchase(
             idToListing[listingId].creditId,
-            ICredits(_getCreditsContract()).getVintage(idToListing[listingId].creditId).projectId,
+            ICredits(creditsContract).getVintage(idToListing[listingId].creditId).projectId,
             idToListing[listingId].creatorAddress,
             msg.sender,
             total,
@@ -243,7 +248,6 @@ abstract contract Listings is IPurchases, BankWrapper {
         );
     }
 
-    function _getCreditsContract() internal view virtual returns(address);
     function _positiveAmount(uint256 amount) internal pure virtual;
 
     /*

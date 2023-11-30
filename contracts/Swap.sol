@@ -9,22 +9,12 @@ import "./libraries/Constants.sol";
 
 contract Swap is Offers, Listings, IERC1155TokenReceiver {
 
-    address public immutable creditContract;
 
     constructor(address _creditContract, address _bankAddress)
         BankWrapper(_bankAddress)
-    {
-        creditContract = _creditContract;
-    }
-
-    function _getCreditsContract()
-        internal
-        override(Offers, Listings)
-        view
-        returns(address)
-    {
-        return creditContract;
-    }
+        Offers(_creditContract)
+        Listings(_creditContract)
+    {}
 
     function onERC1155Received(address, address, uint, uint, bytes calldata)
         external

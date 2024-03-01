@@ -150,12 +150,9 @@ contract Pools is BankWrapper, RolesModifier {
     */
     function stake(uint256 id, uint256 amount)
         external
-        isStakingPeriod(id)
     {
         IERC20(tokenAddress).transferFrom(msg.sender, bankContract, amount);
-        addressToPoolStaking[msg.sender][id] += amount;
-        poolToStaked[id] += amount;
-        emit Staking(msg.sender, msg.sender, id, amount, true);
+        _stake(id, amount, msg.sender);
     }
 
     /*
@@ -169,8 +166,14 @@ contract Pools is BankWrapper, RolesModifier {
     */
     function stakingFor(uint256 id, uint256 amount, address account)
         external
-        isStakingPeriod(id)
         adminOrOwner(msg.sender)
+    {
+        _stake(id, amount, account);
+    }
+
+    function _stake(uint256 id, uint256 amount, address account)
+        private
+        isStakingPeriod(id)
     {
         addressToPoolStaking[account][id] += amount;
         poolToStaked[id] += amount;
@@ -197,7 +200,6 @@ contract Pools is BankWrapper, RolesModifier {
             emit Staking(msg.sender, msg.sender, id, amountWithInterests, false);
         } else {
             IBank(bankContract).withdraw(msg.sender, amount);
-            poolToStaked[id] -= amount;
             emit Staking(msg.sender, msg.sender, id, amount, false);
         }
         addressToPoolStaking[msg.sender][id] = 0;

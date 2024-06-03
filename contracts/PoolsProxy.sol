@@ -14,21 +14,37 @@ struct Pool {
     uint stakingPeriod;
 }
 
-contract Pools is BankWrapper, RolesModifier {
+contract PoolsProxy is BankWrapper, RolesModifier {
     uint256 public numberOfPools;
 
     mapping(uint256=>Pool) private idToPool;
     mapping(address=>mapping(uint256=>uint256)) private addressToPoolStaking;
     mapping(uint256=>uint256) private poolToStaked;
+    address public implementation;
 
     /*
         @param _rolesContract The address of the roles smart contract.
         @param _tokenContract The erc20 token address to be staked and unstaked.
+        @param _implementation The address of the Pool's logic contract.
     */
-    constructor(address _rolesContract, address _bankContract)
+    constructor(address _rolesContract, address _bankContract, address _implementation)
         BankWrapper(_bankContract)
         RolesModifier(_rolesContract)
-    {}
+    {
+        implementation = _implementation;
+    }
+
+    /*
+        @notice Update the address of the implementation (logic) Pools contract.
+        @dev Can be called only by admins or contract owners.
+        @param _implementation The address of the new Pool's logic contract.
+    */
+    function setImplementation(address _implementation)
+        external
+        adminOrOwner(msg.sender)
+    {
+        implementation = _implementation;
+    }
 
     /*
         @notice Raise an error if the staking period already started.

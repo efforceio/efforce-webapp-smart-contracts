@@ -1,7 +1,28 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.21;
 
-contract Pools {
+import "../modules/BankWrapper.sol";
+import "../modules/RolesModifier.sol";
+import "../helpers/IERC20.sol";
+
+struct Pool {
+    uint stakingStartedAt;
+    uint allocated;
+    bool canceled;
+    uint stakingPeriod;
+}
+
+contract Pools is BankWrapper, RolesModifier {
+    uint256 public numberOfPools;
+    mapping(uint256=>Pool) private idToPool;
+    mapping(address=>mapping(uint256=>uint256)) private addressToPoolStaking;
+    mapping(uint256=>uint256) private poolToStaked;
+
+    constructor(address _rolesContract, address _bankContract)
+        RolesModifier(_rolesContract)
+        BankWrapper(_bankContract)
+    {}
+
     /*
         @notice Raise an error if the staking period already started.
         @param id The id of the target pool.

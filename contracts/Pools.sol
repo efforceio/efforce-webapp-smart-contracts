@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.21;
 
-import "../modules/BankWrapper.sol";
-import "../modules/RolesModifier.sol";
-import "../helpers/IERC20.sol";
+import "./modules/BankWrapper.sol";
+import "./modules/RolesModifier.sol";
+import "./helpers/IERC20.sol";
 
 struct Pool {
     uint stakingStartedAt;

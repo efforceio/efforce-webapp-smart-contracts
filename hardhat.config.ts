@@ -1,11 +1,10 @@
 import { config as dotEnvConfig } from "dotenv";
 dotEnvConfig();
-import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 
-const config: HardhatUserConfig = {
 require('@openzeppelin/hardhat-upgrades');
 
+const config = {
   defaultNetwork: "hardhat",
   solidity: {
     version: "0.8.23",

@@ -1,14 +1,14 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Pools, Roles, Token, Bank } from "../typechain-types";
 import { ethers } from "hardhat";
 import { expect } from "chai";
 import { time } from '@nomicfoundation/hardhat-network-helpers';
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("Pools test", () => {
     let
-        owner: SignerWithAddress,
-        admin: SignerWithAddress,
-        user: SignerWithAddress,
+        owner: HardhatEthersSigner,
+        admin: HardhatEthersSigner,
+        user: HardhatEthersSigner,
         bank: Bank,
         pools: Pools,
         roles: Roles,
@@ -30,11 +30,11 @@ describe("Pools test", () => {
         token = await Token.deploy("Token", "TKN");
 
         const Bank = await ethers.getContractFactory("Bank");
-        bank = await Bank.deploy(token.address, roles.address);
+        bank = await Bank.deploy(token.getAddress(), roles.getAddress());
 
         const Pools = await ethers.getContractFactory("Pools");
-        pools = await Pools.deploy(roles.address, bank.address);
-        await roles.setAdmin(pools.address, true);
+        pools = await Pools.deploy(roles.getAddress(), bank.getAddress());
+        await roles.setAdmin(pools.getAddress(), true);
     });
 
     describe("Create pool", () => {
@@ -67,7 +67,7 @@ describe("Pools test", () => {
     describe("Stacking, unstaking, and cancel", () => {
         it("Stacks funds", async () => {
             await token.mintTo(user.address, stakedAdmin);
-            token.connect(user).approve(pools.address, stakedAdmin);
+            token.connect(user).approve(pools.getAddress(), stakedAdmin);
 
             await expect(pools.connect(user).stake(0, stakedAdmin / 2))
                 .emit(pools, "Staking").withArgs(
@@ -82,7 +82,7 @@ describe("Pools test", () => {
 
             expect(await pools.getStakedAmountForAccount(0, user.address)).equal(stakedAdmin);
             expect(await pools.getStakedAmount(0)).equal(stakedAdmin);
-            expect(await token.balanceOf(bank.address)).equal(stakedAdmin);
+            expect(await token.balanceOf(bank.getAddress())).equal(stakedAdmin);
         });
         it("Stacks funds for", async () => {
             await expect(pools.connect(user).stakingFor(0, stakedAdmin / 2, user.address)).reverted;
@@ -97,7 +97,7 @@ describe("Pools test", () => {
 
             expect(await pools.getStakedAmountForAccount(0, admin.address)).equal(stakedAdmin / 2);
             expect(await pools.getStakedAmount(0)).equal(stakedAdmin + stakedAdmin / 2);
-            await token.mintTo(bank.address, stakedAdmin / 2);
+            await token.mintTo(bank.getAddress(), stakedAdmin / 2);
         });
         it("Cannot unstack during pool funding", async () => {
             await expect(pools.connect(user).unstake(0)).reverted;
@@ -122,7 +122,7 @@ describe("Pools test", () => {
             await expect(pools.connect(user).unstake(0)).reverted;
         });
         it("Allocates funds", async () => {
-            await token.mintTo(bank.address, stakedAdmin * 100);
+            await token.mintTo(bank.getAddress(), stakedAdmin * 100);
 
             await expect(pools.connect(user).setDistributionForPool(0, stakedAdmin * 100)).reverted;
             await expect(pools.connect(admin).setDistributionForPool(0, stakedAdmin * 100))

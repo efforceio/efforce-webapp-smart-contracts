@@ -4,6 +4,8 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 
 const config: HardhatUserConfig = {
+require('@openzeppelin/hardhat-upgrades');
+
   defaultNetwork: "hardhat",
   solidity: {
     version: "0.8.23",

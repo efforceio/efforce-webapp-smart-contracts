@@ -12,7 +12,7 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "4.9.3",
+    "@openzeppelin/contracts": "5.0.2",
     "@thirdweb-dev/contracts": "^3.8.0",
     "child_process": "^1.0.2",
     "dotenv": "^16.3.1"

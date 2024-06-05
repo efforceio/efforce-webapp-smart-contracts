@@ -12,9 +12,12 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
+    "@nomicfoundation/hardhat-ethers": "^3.0.6",
     "@openzeppelin/contracts": "4.9.3",
+    "@openzeppelin/hardhat-upgrades": "^3.1.1",
     "@thirdweb-dev/contracts": "^3.8.0",
     "child_process": "^1.0.2",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "ethers": "^6.13.0"
   }
 }

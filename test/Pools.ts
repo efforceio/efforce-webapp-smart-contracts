@@ -12,6 +12,7 @@ describe("Pools test", () => {
         bank: Bank,
         bankAddress: string,
         pools: Pools,
+        poolsAddress: string,
         roles: Roles,
         rolesAddress: string,
         nPools = 0,
@@ -39,8 +40,10 @@ describe("Pools test", () => {
         const Pools = await ethers.getContractFactory("Pools");
         pools = await upgrades.deployProxy(Pools, []) as unknown as Pools;
         await pools.waitForDeployment();
+        poolsAddress = await pools.getAddress();
+
         await pools.initializer(rolesAddress, bankAddress);
-        await roles.setAdmin(pools.getAddress(), true);
+        await roles.setAdmin(poolsAddress, true);
     });
 
     describe("Create pool", () => {
@@ -73,7 +76,7 @@ describe("Pools test", () => {
     describe("Stacking, unstaking, and cancel", () => {
         it("Stacks funds", async () => {
             await token.mintTo(user.address, stakedAdmin);
-            token.connect(user).approve(pools.getAddress(), stakedAdmin);
+            token.connect(user).approve(poolsAddress, stakedAdmin);
 
             await expect(pools.connect(user).stake(0, stakedAdmin / 2))
                 .emit(pools, "Staking").withArgs(
@@ -88,7 +91,7 @@ describe("Pools test", () => {
 
             expect(await pools.getStakedAmountForAccount(0, user.address)).equal(stakedAdmin);
             expect(await pools.getStakedAmount(0)).equal(stakedAdmin);
-            expect(await token.balanceOf(bank.getAddress())).equal(stakedAdmin);
+            expect(await token.balanceOf(bankAddress)).equal(stakedAdmin);
         });
         it("Stacks funds for", async () => {
             await expect(pools.connect(user).stakingFor(0, stakedAdmin / 2, user.address)).reverted;
@@ -103,7 +106,7 @@ describe("Pools test", () => {
 
             expect(await pools.getStakedAmountForAccount(0, admin.address)).equal(stakedAdmin / 2);
             expect(await pools.getStakedAmount(0)).equal(stakedAdmin + stakedAdmin / 2);
-            await token.mintTo(bank.getAddress(), stakedAdmin / 2);
+            await token.mintTo(bankAddress, stakedAdmin / 2);
         });
         it("Cannot unstack during pool funding", async () => {
             await expect(pools.connect(user).unstake(0)).reverted;
@@ -128,7 +131,7 @@ describe("Pools test", () => {
             await expect(pools.connect(user).unstake(0)).reverted;
         });
         it("Allocates funds", async () => {
-            await token.mintTo(bank.getAddress(), stakedAdmin * 100);
+            await token.mintTo(bankAddress, stakedAdmin * 100);
 
             await expect(pools.connect(user).setDistributionForPool(0, stakedAdmin * 100)).reverted;
             await expect(pools.connect(admin).setDistributionForPool(0, stakedAdmin * 100))

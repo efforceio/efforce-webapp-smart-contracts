@@ -1,4 +1,4 @@
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import hre from "hardhat";
 import fs from 'fs';
 import dotenv from 'dotenv';
@@ -43,10 +43,9 @@ async function main() {
 
     console.log("Start deployment…");
 
-    const pools = await Pools.deploy(
-        rolesAddress,
-        bankAddress
-    );
+    const pools = await upgrades.deployProxy(Pools, []) as unknown as PoolsType;
+    await pools.waitForDeployment();
+    await pools.initializer(rolesAddress, bankAddress);
 
     const poolsAddress = await pools.getAddress();
     envConfig[envName] = poolsAddress;
@@ -67,8 +66,6 @@ async function main() {
     console.log(`Granting admin role to contract...`);
 
     const Roles = await ethers.getContractFactory("Roles");
-    const roles = Roles.attach(rolesAddress);
-    await roles.setAdmin(pools.address, true);
     const roles = Roles.attach(rolesAddress) as RolesType;
     await roles.setAdmin(poolsAddress, true);
 

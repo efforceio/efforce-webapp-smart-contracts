@@ -1,7 +1,8 @@
 import { ethers } from "hardhat";
 import hre from "hardhat";
-const fs = require('fs');
-const dotenv = require('dotenv');
+import fs from 'fs';
+import dotenv from 'dotenv';
+import { Pools as PoolsType, Roles as RolesType } from "../typechain-types";
 
 async function main() {
 

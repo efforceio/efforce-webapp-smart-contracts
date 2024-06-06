@@ -1,5 +1,5 @@
 import { Pools, Roles, Token, Bank } from "../typechain-types";
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import { expect } from "chai";
 import { time } from '@nomicfoundation/hardhat-network-helpers';
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
@@ -10,8 +10,10 @@ describe("Pools test", () => {
         admin: HardhatEthersSigner,
         user: HardhatEthersSigner,
         bank: Bank,
+        bankAddress: string,
         pools: Pools,
         roles: Roles,
+        rolesAddress: string,
         nPools = 0,
         token: Token;
     const
@@ -23,6 +25,7 @@ describe("Pools test", () => {
 
         const Roles = await ethers.getContractFactory("Roles");
         roles = await Roles.deploy(owner.address);
+        rolesAddress = await roles.getAddress();
 
         await roles.setAdmin(admin.address, true);
 
@@ -31,6 +34,7 @@ describe("Pools test", () => {
 
         const Bank = await ethers.getContractFactory("Bank");
         bank = await Bank.deploy(token.getAddress(), roles.getAddress());
+        bankAddress = await bank.getAddress();
 
         const Pools = await ethers.getContractFactory("Pools");
         pools = await Pools.deploy(roles.getAddress(), bank.getAddress());

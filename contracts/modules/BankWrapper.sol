@@ -4,10 +4,10 @@ pragma solidity ^0.8.21;
 import "../interfaces/IBank.sol";
 
 contract BankWrapper {
-    address internal immutable tokenAddress;
-    address public immutable bankContract;
+    address internal tokenAddress;
+    address public bankContract;
 
-    constructor(address bankAddress) {
+    function bankWrapperInitializer(address bankAddress) internal {
         tokenAddress = IBank(bankAddress).tokenAddress();
         bankContract = bankAddress;
     }

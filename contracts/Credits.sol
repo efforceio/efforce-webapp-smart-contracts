@@ -17,8 +17,9 @@ contract Credits is ERC5006, ERC5679, ContractMetadata, ERC165, Royalties {
         address royaltyReceiver
     )
         ERC1155(metadataUri)
-        RolesModifier(_rolesAddress)
         ContractMetadata(contractMetadataURI)
         Royalties(royaltyBps, royaltyReceiver)
-    {}
+    {
+        rolesModifierInitializer(_rolesAddress);
+    }
 }

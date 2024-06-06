@@ -11,10 +11,11 @@ contract Swap is Offers, Listings, IERC1155TokenReceiver {
 
 
     constructor(address _creditContract, address _bankAddress)
-        BankWrapper(_bankAddress)
         Offers(_creditContract)
         Listings(_creditContract)
-    {}
+    {
+        bankWrapperInitializer(_bankAddress);
+    }
 
     function onERC1155Received(address, address, uint, uint, bytes calldata)
         external

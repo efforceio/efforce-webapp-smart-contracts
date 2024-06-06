@@ -5,9 +5,9 @@ import "../interfaces/IRoles.sol";
 import "../libraries/Errors.sol";
 
 contract RolesModifier {
-    address immutable public rolesAddress;
+    address public rolesAddress;
 
-    constructor(address _rolesAddress) {
+    function rolesModifierInitializer(address _rolesAddress) internal {
         rolesAddress = _rolesAddress;
     }
 

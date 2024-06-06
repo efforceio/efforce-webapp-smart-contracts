@@ -12,10 +12,9 @@ contract Store is BankWrapper, RolesModifier {
 
     address public immutable creditsContract;
 
-    constructor(address _credits, address bankAddress, address rolesAddress)
-        BankWrapper(bankAddress)
-        RolesModifier(rolesAddress)
-    {
+    constructor(address _credits, address bankAddress, address rolesAddress) {
+        bankWrapperInitializer(bankAddress);
+        rolesModifierInitializer(rolesAddress);
         creditsContract = _credits;
     }
 

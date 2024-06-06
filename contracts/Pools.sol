@@ -18,10 +18,12 @@ contract Pools is BankWrapper, RolesModifier {
     mapping(address=>mapping(uint256=>uint256)) private addressToPoolStaking;
     mapping(uint256=>uint256) private poolToStaked;
 
-    constructor(address _rolesContract, address _bankContract)
-        RolesModifier(_rolesContract)
-        BankWrapper(_bankContract)
-    {}
+
+    function initializer(address _rolesContract, address _bankContract) external {
+        require(rolesAddress == address(0) && bankContract == address(0), Errors.NOT_ALLOWED);
+        rolesModifierInitializer(_rolesContract);
+        bankWrapperInitializer(_bankContract);
+    }
 
     /*
         @notice Raise an error if the staking period already started.

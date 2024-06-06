@@ -37,7 +37,9 @@ describe("Pools test", () => {
         bankAddress = await bank.getAddress();
 
         const Pools = await ethers.getContractFactory("Pools");
-        pools = await Pools.deploy(roles.getAddress(), bank.getAddress());
+        pools = await upgrades.deployProxy(Pools, []) as unknown as Pools;
+        await pools.waitForDeployment();
+        await pools.initializer(rolesAddress, bankAddress);
         await roles.setAdmin(pools.getAddress(), true);
     });
 

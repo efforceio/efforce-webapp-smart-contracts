@@ -183,4 +183,19 @@ describe("Pools test", () => {
             expect(ba).equal(Math.floor(bb + sc));
         });
     });
+
+    describe("Upgrades", () => {
+        it("Smart contract can be upgraded", async () => {
+            const nPoolsBeforeUpgrade = await pools.numberOfPools();
+
+            const Pools = await ethers.getContractFactory("Pools");
+            const poolsUpgraded = await upgrades.upgradeProxy(poolsAddress, Pools);
+            const poolsUpgradedAddress = await poolsUpgraded.getAddress();
+
+            const nPoolsAfterUpgrade = await pools.numberOfPools();
+
+            expect(nPoolsAfterUpgrade).to.equal(nPoolsBeforeUpgrade);
+            expect(poolsAddress).to.equal(poolsUpgradedAddress);
+        });
+    });
 });

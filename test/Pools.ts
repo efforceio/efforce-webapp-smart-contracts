@@ -16,6 +16,7 @@ describe("Pools test", () => {
         roles: Roles,
         rolesAddress: string,
         nPools = 0,
+        poolsUpgraded: Pools,
         token: Token;
     const
         lockingPeriod = 1,
@@ -185,17 +186,21 @@ describe("Pools test", () => {
     });
 
     describe("Upgrades", () => {
+
         it("Smart contract can be upgraded", async () => {
             const nPoolsBeforeUpgrade = await pools.numberOfPools();
 
             const Pools = await ethers.getContractFactory("Pools");
-            const poolsUpgraded = await upgrades.upgradeProxy(poolsAddress, Pools);
+            poolsUpgraded = await upgrades.upgradeProxy(poolsAddress, Pools) as unknown as Pools;
             const poolsUpgradedAddress = await poolsUpgraded.getAddress();
 
             const nPoolsAfterUpgrade = await pools.numberOfPools();
 
             expect(nPoolsAfterUpgrade).to.equal(nPoolsBeforeUpgrade);
             expect(poolsAddress).to.equal(poolsUpgradedAddress);
+        });
+        it("Cannot call init function after upgrade", async () => {
+            await expect(poolsUpgraded.initializer(rolesAddress, bankAddress)).reverted;
         });
     });
 });

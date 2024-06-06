@@ -83,8 +83,8 @@ contract Pools is BankWrapper, RolesModifier {
         @param stakingPeriod The locking period expressed in seconds.
     */
     function createPool(uint256 stakingPeriod)
-    external
-    adminOrOwner(msg.sender)
+        external
+        adminOrOwner(msg.sender)
     {
         idToPool[numberOfPools] = Pool(0, 0, false, stakingPeriod);
         emit PoolCreated(numberOfPools, stakingPeriod);

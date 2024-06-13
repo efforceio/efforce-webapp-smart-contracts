@@ -168,7 +168,7 @@ contract Pools is BankWrapper, RolesModifier {
         @param amount The amount to be staked in the pool.
         @param account The account that will benefit from the staking.
     */
-    function stakingFor(uint256 id, uint256 amount, address account)
+    function stakeFor(uint256 id, uint256 amount, address account)
     external
     adminOrOwner(msg.sender)
     {
@@ -226,7 +226,7 @@ contract Pools is BankWrapper, RolesModifier {
         @param account The target account.
         @return The amount staked for the target pool and account.
     */
-    function getStakedAmountForAccount(uint256 id, address account)
+    function getStakedAmountForPoolAndAccount(uint256 id, address account)
     external
     view
     returns(uint256)
@@ -238,7 +238,7 @@ contract Pools is BankWrapper, RolesModifier {
         @param id The id of the target pool.
         @return The total amount staked for the target pool.
     */
-    function getStakedAmount(uint256 id)
+    function getStakedAmountForPool(uint256 id)
     external
     view
     returns(uint256)

@@ -90,13 +90,13 @@ describe("Pools test", () => {
             await expect(pools.connect(user).stake(0, stakedAdmin / 2)).not.reverted;
             await expect(pools.connect(user).stake(0, stakedAdmin / 2)).reverted;
 
-            expect(await pools.getStakedAmountForAccount(0, user.address)).equal(stakedAdmin);
-            expect(await pools.getStakedAmount(0)).equal(stakedAdmin);
+            expect(await pools.getStakedAmountForPoolAndAccount(0, user.address)).equal(stakedAdmin);
+            expect(await pools.getStakedAmountForPool(0)).equal(stakedAdmin);
             expect(await token.balanceOf(bankAddress)).equal(stakedAdmin);
         });
         it("Stacks funds for", async () => {
-            await expect(pools.connect(user).stakingFor(0, stakedAdmin / 2, user.address)).reverted;
-            await expect(pools.stakingFor(0, stakedAdmin / 2, admin.address))
+            await expect(pools.connect(user).stakeFor(0, stakedAdmin / 2, user.address)).reverted;
+            await expect(pools.stakeFor(0, stakedAdmin / 2, admin.address))
                 .emit(pools, "Staking").withArgs(
                     admin.address,
                     owner.address,
@@ -105,8 +105,8 @@ describe("Pools test", () => {
                     true
                 );
 
-            expect(await pools.getStakedAmountForAccount(0, admin.address)).equal(stakedAdmin / 2);
-            expect(await pools.getStakedAmount(0)).equal(stakedAdmin + stakedAdmin / 2);
+            expect(await pools.getStakedAmountForPoolAndAccount(0, admin.address)).equal(stakedAdmin / 2);
+            expect(await pools.getStakedAmountForPool(0)).equal(stakedAdmin + stakedAdmin / 2);
             await token.mintTo(bankAddress, stakedAdmin / 2);
         });
         it("Cannot unstack during pool funding", async () => {
@@ -140,7 +140,7 @@ describe("Pools test", () => {
             await expect(pools.setDistributionForPool(0, stakedAdmin * 100)).reverted;
         });
         it("Cancels pool", async () => {
-            await pools.stakingFor(2, stakedAdmin, admin.address);
+            await pools.stakeFor(2, stakedAdmin, admin.address);
 
             await expect(pools.connect(user).cancelPool(2)).reverted;
             await expect(pools.connect(admin).cancelPool(2))
@@ -153,8 +153,8 @@ describe("Pools test", () => {
         it("Unstakes funds", async () => {
             const b1 = Number(await token.balanceOf(admin.address));
             const b2 = Number(await token.balanceOf(user.address));
-            const s1 = Number(await pools.getStakedAmountForAccount(0, admin.address));
-            const s2 = Number(await pools.getStakedAmountForAccount(0, user.address));
+            const s1 = Number(await pools.getStakedAmountForPoolAndAccount(0, admin.address));
+            const s2 = Number(await pools.getStakedAmountForPoolAndAccount(0, user.address));
             const a = Number((await pools.getPool(0)).allocated);
             const e1 = s1 / (s1 + s2) * a;
             const e2 = s2 / (s1 + s2) * a;
@@ -176,7 +176,7 @@ describe("Pools test", () => {
             expect(b2a).equal(Math.floor(e2 + b2));
 
             const bb =  Number(await token.balanceOf(admin.address));
-            const sc = Number(await pools.getStakedAmountForAccount(2, admin.address));
+            const sc = Number(await pools.getStakedAmountForPoolAndAccount(2, admin.address));
 
             await expect(pools.connect(admin).unstake(2)).not.reverted;
 

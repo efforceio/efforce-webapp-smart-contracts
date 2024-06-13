@@ -25,10 +25,14 @@ contract Pools is BankWrapper, RolesModifier {
         @param _rolesContract The address of the roles smart contract.
         @param _bankContract The address of the bank smart contract.
     */
-    function initializer(address _rolesContract, address _bankContract) external {
+    function initializer(address _rolesAddress, address _bankContract) external {
         require(rolesAddress == address(0) && bankContract == address(0), Errors.NOT_ALLOWED);
         rolesModifierInitializer(_rolesContract);
         bankWrapperInitializer(_bankContract);
+
+        rolesAddress = _rolesAddress;
+        tokenAddress = IBank(_bankContract).tokenAddress();
+        bankContract = _bankContract;
     }
 
     /*

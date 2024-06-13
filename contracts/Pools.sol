@@ -21,7 +21,7 @@ contract Pools is BankWrapper, RolesModifier {
 
     /*
         @notice Sets the address for the Role and Bank contracts.
-        @dev This function can be called only once.
+        @dev This function throws an error if the addresses are already initialized
         @param _rolesContract The address of the roles smart contract.
         @param _bankContract The address of the bank smart contract.
     */

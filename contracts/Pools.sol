@@ -27,8 +27,7 @@ contract Pools is BankWrapper, RolesModifier {
     */
     function initializer(address _rolesAddress, address _bankContract) external {
         require(rolesAddress == address(0) && bankContract == address(0), Errors.NOT_ALLOWED);
-        rolesModifierInitializer(_rolesContract);
-        bankWrapperInitializer(_bankContract);
+        require(_rolesAddress != address(0) && _bankContract != address(0), Errors.IS_ZERO_ADDRESS);
 
         rolesAddress = _rolesAddress;
         tokenAddress = IBank(_bankContract).tokenAddress();

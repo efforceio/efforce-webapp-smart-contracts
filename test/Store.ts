@@ -68,10 +68,11 @@ describe("Store test", () => {
         await credits.openVintage(1, amount, price);
 
         await expect(store.buyCredits(0, 1)).reverted;
+        const credit = await credits.getVintage(0);
 
         await expect(store.connect(account1).buyCredits(0, 1))
             .emit(store, "CreditsPurchased")
-            .withArgs(0, 1, account1.address, true)
+            .withArgs(0, 1, credit.price, account1.address, true, credit.projectId);
 
         expect((await credits.getVintage(0)).availableCredits).equal(amount - 1);
         expect(await credits.balanceOf(account1.address, 0)).equal(1);
@@ -81,10 +82,11 @@ describe("Store test", () => {
 
     it("Buys credits for", async () => {
         await expect(store.connect(account2).buyCreditsFor(1, 1, owner.address)).reverted;
+        const credit = await credits.getVintage(1);
 
         await expect(store.buyCreditsFor(1, 1, account1.address))
             .emit(store, "CreditsPurchased")
-            .withArgs(1, 1, account1.address, false)
+            .withArgs(1, 1, credit.price, account1.address, false, credit.projectId);
 
         expect((await credits.getVintage(1)).availableCredits).equal(amount - 1);
         expect(await credits.balanceOf(account1.address, 1)).equal(1);
@@ -93,9 +95,11 @@ describe("Store test", () => {
     });
 
     it("Buys and close vintage", async () => {
+        const credit = await credits.getVintage(1);
+
         await expect(store.connect(account1).buyCredits(1, amount - 1))
             .emit(store, "CreditsPurchased")
-            .withArgs(1, amount - 1, account1.address, true)
+            .withArgs(1, amount - 1, credit.price, account1.address, true, credit.projectId)
             .emit(credits, "VintageAction")
             .withArgs(1, 1);
         expect((await credits.getVintage(1)).state).equal(1);
@@ -108,9 +112,11 @@ describe("Store test", () => {
 
         await expect(credits.safeTransferFrom(account2.address, account1.address, 2, 1, [])).reverted;
 
+        const credit = await credits.getVintage(2);
+
         await expect(store.connect(account2).refundCredits(2))
             .emit(store, "RefundOrRedeem")
-            .withArgs(account2.address, 2, 2)
+            .withArgs(account2.address, 2, credit.projectId)
             .emit(token, "Transfer")
             .withArgs(bank.address, account2.address, 1);
 

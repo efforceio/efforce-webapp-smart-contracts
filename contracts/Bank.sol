@@ -11,9 +11,8 @@ contract Bank is RolesModifier {
     /*
         @param _tokenAddress The address of the ERC20 token.
     */
-    constructor(address _tokenAddress, address _rolesAddress)
-        RolesModifier(_rolesAddress)
-    {
+    constructor(address _tokenAddress, address _rolesAddress) {
+        rolesAddress = _rolesAddress;
         tokenAddress = _tokenAddress;
     }
 

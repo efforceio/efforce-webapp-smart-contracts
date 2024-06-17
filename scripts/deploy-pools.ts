@@ -1,7 +1,8 @@
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import hre from "hardhat";
-const fs = require('fs');
-const dotenv = require('dotenv');
+import fs from 'fs';
+import dotenv from 'dotenv';
+import { Pools as PoolsType, Roles as RolesType } from "../typechain-types";
 
 async function main() {
 
@@ -42,27 +43,31 @@ async function main() {
 
     console.log("Start deployment…");
 
-    const pools = await Pools.deploy(
-        rolesAddress,
-        bankAddress
-    );
+    const pools = await upgrades.deployProxy(Pools, []) as unknown as PoolsType;
+    await pools.waitForDeployment();
+    await pools.initializer(rolesAddress, bankAddress);
 
-    await pools.deployed();
-
-    envConfig[envName] = pools.address;
+    const poolsAddress = await pools.getAddress();
+    envConfig[envName] = poolsAddress;
     fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
-    console.log(`Pools deployed to ${pools.address}`);
+    console.log(`Pools deployed to ${poolsAddress}`);
     console.log(`Awaiting 10 confirmations…`);
 
-    await pools.deployTransaction.wait(10);
+    const deployTransaction = pools.deploymentTransaction();
+
+    if (deployTransaction !== null) {
+        await deployTransaction.wait(10);
+    } else {
+        throw "Deployment transaction is null";
+    }
     console.log(`Done.`);
 
     console.log(`Granting admin role to contract...`);
 
     const Roles = await ethers.getContractFactory("Roles");
-    const roles = Roles.attach(rolesAddress);
-    await roles.setAdmin(pools.address, true);
+    const roles = Roles.attach(rolesAddress) as RolesType;
+    await roles.setAdmin(poolsAddress, true);
 
     console.log(`Done.`);
 
@@ -73,7 +78,7 @@ async function main() {
         try {
             console.log(`Done.`);
             await hre.run("verify:verify", {
-                address: pools.address,
+                address: poolsAddress,
                 constructorArguments: [
                     rolesAddress,
                     bankAddress

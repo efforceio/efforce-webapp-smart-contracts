@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.21;
 
-import "./libraries/Errors.sol";
 import "./modules/BankWrapper.sol";
 import "./modules/RolesModifier.sol";
 import "./helpers/IERC20.sol";
-import "./interfaces/IBank.sol";
 
 struct Pool {
     uint stakingStartedAt;
@@ -16,19 +14,25 @@ struct Pool {
 
 contract Pools is BankWrapper, RolesModifier {
     uint256 public numberOfPools;
-
     mapping(uint256=>Pool) private idToPool;
     mapping(address=>mapping(uint256=>uint256)) private addressToPoolStaking;
     mapping(uint256=>uint256) private poolToStaked;
 
+
     /*
+        @notice Sets the address for the Role and Bank contracts.
+        @dev This function throws an error if the addresses are already initialized
         @param _rolesContract The address of the roles smart contract.
-        @param _tokenContract The erc20 token address to be staked and unstaked.
+        @param _bankContract The address of the bank smart contract.
     */
-    constructor(address _rolesContract, address _bankContract)
-        BankWrapper(_bankContract)
-        RolesModifier(_rolesContract)
-    {}
+    function initializer(address _rolesAddress, address _bankContract) external {
+        require(rolesAddress == address(0) && bankContract == address(0), Errors.NOT_ALLOWED);
+        require(_rolesAddress != address(0) && _bankContract != address(0), Errors.IS_ZERO_ADDRESS);
+
+        rolesAddress = _rolesAddress;
+        tokenAddress = IBank(_bankContract).tokenAddress();
+        bankContract = _bankContract;
+    }
 
     /*
         @notice Raise an error if the staking period already started.
@@ -68,7 +72,7 @@ contract Pools is BankWrapper, RolesModifier {
         require(
             idToPool[id].canceled ||
             block.timestamp >= idToPool[id].stakingStartedAt + idToPool[id].stakingPeriod &&
-                idToPool[id].allocated > 0,
+            idToPool[id].allocated > 0,
             Errors.FUNDS_LOCKED
         );
         _;
@@ -103,9 +107,9 @@ contract Pools is BankWrapper, RolesModifier {
         @param id The id of the target pool.
     */
     function startStakingPeriod(uint256 id)
-        external
-        adminOrOwner(msg.sender)
-        canStartStaking(id)
+    external
+    adminOrOwner(msg.sender)
+    canStartStaking(id)
     {
         idToPool[id].stakingStartedAt = block.timestamp;
         emit PoolChangedState(id, 0, 0);
@@ -118,9 +122,9 @@ contract Pools is BankWrapper, RolesModifier {
         @param id The target pool id.
     */
     function cancelPool(uint256 id)
-        external
-        adminOrOwner(msg.sender)
-        canCancel(id)
+    external
+    adminOrOwner(msg.sender)
+    canCancel(id)
     {
         idToPool[id].canceled = true;
         emit PoolChangedState(id, 1, 0);
@@ -133,9 +137,9 @@ contract Pools is BankWrapper, RolesModifier {
         @param distribution The refund amount allocated for the pool.
     */
     function setDistributionForPool(uint256 id, uint256 allocated)
-        external
-        adminOrOwner(msg.sender)
-        poolNotAllocated(id)
+    external
+    adminOrOwner(msg.sender)
+    poolNotAllocated(id)
     {
         idToPool[id].allocated = allocated;
         emit PoolChangedState(id, 2, allocated);
@@ -149,7 +153,7 @@ contract Pools is BankWrapper, RolesModifier {
         @param amount The amount to be staked in the pool.
     */
     function stake(uint256 id, uint256 amount)
-        external
+    external
     {
         IERC20(tokenAddress).transferFrom(msg.sender, bankContract, amount);
         _stake(id, amount, msg.sender);
@@ -164,16 +168,16 @@ contract Pools is BankWrapper, RolesModifier {
         @param amount The amount to be staked in the pool.
         @param account The account that will benefit from the staking.
     */
-    function stakingFor(uint256 id, uint256 amount, address account)
-        external
-        adminOrOwner(msg.sender)
+    function stakeFor(uint256 id, uint256 amount, address account)
+    external
+    adminOrOwner(msg.sender)
     {
         _stake(id, amount, account);
     }
 
     function _stake(uint256 id, uint256 amount, address account)
-        private
-        isStakingPeriod(id)
+    private
+    isStakingPeriod(id)
     {
         addressToPoolStaking[account][id] += amount;
         poolToStaked[id] += amount;
@@ -188,8 +192,8 @@ contract Pools is BankWrapper, RolesModifier {
         @param id The id of the target pool.
     */
     function unstake(uint256 id)
-        external
-        isUnstakingPeriod(id)
+    external
+    isUnstakingPeriod(id)
     {
         uint256 amount = addressToPoolStaking[msg.sender][id];
         if (idToPool[id].stakingStartedAt > 0) {
@@ -210,9 +214,9 @@ contract Pools is BankWrapper, RolesModifier {
         @return The pool details as Pool struct.
     */
     function getPool(uint256 id)
-        external
-        view
-        returns(Pool memory)
+    external
+    view
+    returns(Pool memory)
     {
         return idToPool[id];
     }
@@ -222,10 +226,10 @@ contract Pools is BankWrapper, RolesModifier {
         @param account The target account.
         @return The amount staked for the target pool and account.
     */
-    function getStakedAmountForAccount(uint256 id, address account)
-        external
-        view
-        returns(uint256)
+    function getStakedAmountForPoolAndAccount(uint256 id, address account)
+    external
+    view
+    returns(uint256)
     {
         return addressToPoolStaking[account][id];
     }
@@ -234,10 +238,10 @@ contract Pools is BankWrapper, RolesModifier {
         @param id The id of the target pool.
         @return The total amount staked for the target pool.
     */
-    function getStakedAmount(uint256 id)
-        external
-        view
-        returns(uint256)
+    function getStakedAmountForPool(uint256 id)
+    external
+    view
+    returns(uint256)
     {
         return poolToStaked[id];
     }

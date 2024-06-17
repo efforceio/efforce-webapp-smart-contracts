@@ -12,9 +12,8 @@ contract Refund is RolesModifier {
     address immutable public creditsAddress;
     address immutable public bankAddress;
 
-    constructor(address rolesAddress, address _creditsAddress, address _bankAddress)
-        RolesModifier(rolesAddress)
-    {
+    constructor(address _rolesAddress, address _creditsAddress, address _bankAddress) {
+        rolesAddress = _rolesAddress;
         creditsAddress = _creditsAddress;
         bankAddress = _bankAddress;
     }

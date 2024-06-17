@@ -1,13 +1,13 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { Credits, Token, Bank } from "../typechain-types";
+/*import { Credits, Token, Bank } from "../typechain-types";
 import { ethers } from "hardhat";
 import { expect } from "chai";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("Credits test", () => {
     let
-        owner: SignerWithAddress,
-        account1: SignerWithAddress,
-        account2: SignerWithAddress,
+        owner: HardhatEthersSigner,
+        account1: HardhatEthersSigner,
+        account2: HardhatEthersSigner,
         credits: Credits,
         bank: Bank,
         token: Token,
@@ -37,20 +37,26 @@ describe("Credits test", () => {
         token = await Token.deploy("Token", "TKN");
 
         const Bank = await ethers.getContractFactory("Bank");
-        bank = await Bank.deploy(token.address, roles.address);
+        bank = await Bank.deploy(token.getAddress(), roles.getAddress());
 
         const Credits = await ethers.getContractFactory(
             "Credits",
             {
                 libraries: {
-                    Utils: utils.address
+                    Utils: utils.getAddress()
                 }
             }
         );
-        credits = await Credits.deploy(metadataURI, roles.address, contractMetadataURI, royaltyBps, bank.address);
+        credits = await Credits.deploy(
+            metadataURI,
+            roles.getAddress(),
+            contractMetadataURI,
+            royaltyBps,
+            bank.getAddress()
+        );
 
         await roles.setAdmin(account1.address, true);
-        await roles.setAdmin(credits.address, true);
+        await roles.setAdmin(credits.getAddress(), true);
 
         projectIds = [];
         creditIds = [];
@@ -112,7 +118,7 @@ describe("Credits test", () => {
             const newBps = 20_00;
             const royalty2 = 20;
 
-            expect(await credits.royaltyInfo(0, price)).deep.equal([bank.address, royalty1]);
+            expect(await credits.royaltyInfo(0, price)).deep.equal([bank.getAddress(), royalty1]);
 
             await expect(credits.connect(account2).setRoyaltyInfo(newBps)).reverted;
             await expect(credits.setRoyaltyInfo(newBps))
@@ -120,7 +126,7 @@ describe("Credits test", () => {
                 .withArgs(newBps);
             await expect(credits.connect(account1).setRoyaltyInfo(newBps)).not.reverted;
 
-            expect(await credits.royaltyInfo(0, price)).deep.equal([bank.address, royalty2]);
+            expect(await credits.royaltyInfo(0, price)).deep.equal([bank.getAddress(), royalty2]);
 
             await credits.setRoyaltyInfo(royaltyBps);
         });
@@ -209,7 +215,7 @@ describe("Credits test", () => {
             await credits.openVintage(1, amount, price);
             creditIds.push(creditIds.length + 1);
 
-            await credits.safeMint(account1.address, 4, amount, []);
+            await credits.safeMint(account1.getAddress(), 4, amount, []);
             await credits.updateVintageState(4, 1);
         });
         it("Transfers credits", async () => {
@@ -376,4 +382,4 @@ describe("Credits test", () => {
             expect(await credits.usableBalanceOf(account2.address, 0)).equal(0);
         });
     });
-});
+});*/

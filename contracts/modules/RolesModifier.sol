@@ -5,11 +5,7 @@ import "../interfaces/IRoles.sol";
 import "../libraries/Errors.sol";
 
 contract RolesModifier {
-    address immutable public rolesAddress;
-
-    constructor(address _rolesAddress) {
-        rolesAddress = _rolesAddress;
-    }
+    address public rolesAddress;
 
     modifier adminOrOwner(address account) {
         require(

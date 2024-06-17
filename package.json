@@ -7,14 +7,15 @@
     "compile": "hardhat compile"
   },
   "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
-    "hardhat": "^2.18.0",
-    "typescript": "^5.2.2"
+    "@nomicfoundation/hardhat-toolbox": "5.0.0",
+    "@openzeppelin/hardhat-upgrades": "^3.1.1",
+    "hardhat": "2.22.5",
+    "typescript": "5.4.5"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "4.9.3",
-    "@thirdweb-dev/contracts": "^3.8.0",
+    "@openzeppelin/contracts": "5.0.2",
+    "@thirdweb-dev/contracts": "3.15.0",
     "child_process": "^1.0.2",
-    "dotenv": "^16.3.1"
+    "dotenv": "16.4.5"
   }
 }

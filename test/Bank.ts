@@ -1,13 +1,13 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Roles, Bank, Token } from "../typechain-types";
 import { ethers } from "hardhat";
 import { expect } from "chai";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("Bank test", () => {
     let
-        owner: SignerWithAddress,
-        account1: SignerWithAddress,
-        account2: SignerWithAddress,
+        owner: HardhatEthersSigner,
+        account1: HardhatEthersSigner,
+        account2: HardhatEthersSigner,
         roles: Roles,
         token: Token,
         bank: Bank;
@@ -23,9 +23,9 @@ describe("Bank test", () => {
         token = await Token.deploy("Token", "TKN");
 
         const Bank = await ethers.getContractFactory("Bank");
-        bank = await Bank.deploy(token.address, roles.address);
+        bank = await Bank.deploy(token.getAddress(), roles.getAddress());
 
-        token.mintTo(bank.address, 100);
+        token.mintTo(bank.getAddress(), 100);
     });
 
     it("Withdraws funds", async () => {
@@ -35,6 +35,6 @@ describe("Bank test", () => {
             .emit(bank, "Withdrawal")
             .withArgs(account2.address, 10);
 
-        expect(await token.balanceOf(bank.address)).equal(90);
+        expect(await token.balanceOf(bank.getAddress())).equal(90);
     });
 });

@@ -42,4 +42,7 @@ library Errors {
     //Marketplace
     string constant public NOT_ENOUGHT_TOKENS = "800";
     string constant public NOT_ACTIVE = "801";
+
+    //Locking
+    string constant public NO_VALID_LOCK = "900";
 }

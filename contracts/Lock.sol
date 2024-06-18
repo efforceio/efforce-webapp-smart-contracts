@@ -27,6 +27,11 @@ contract Locking is BankWrapper {
         _;
     }
 
+    modifier lockOpen(address account) {
+        require(idToLock[addressToLock[account]].endTimestamp == 0, Errors.NO_VALID_LOCK);
+        _;
+    }
+
     /*
         @notice Sets the address for the Bank contracts.
         @dev This function throws an error if the bank address is already initialized.
@@ -62,6 +67,7 @@ contract Locking is BankWrapper {
     function unlock()
         public
         hasLock(msg.sender)
+        lockOpen(msg.sender)
     {
         uint lockId = addressToLock[msg.sender];
         idToLock[lockId].endTimestamp = block.timestamp;

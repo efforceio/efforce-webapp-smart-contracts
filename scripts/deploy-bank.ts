@@ -1,6 +1,6 @@
 import hre, { ethers } from "hardhat";
-const fs = require('fs');
-const dotenv = require('dotenv');
+import fs from 'fs';
+import dotenv from 'dotenv';
 
 async function main() {
     let
@@ -41,18 +41,23 @@ async function main() {
     console.log("Start deployment…");
 
     const bank = await Bank.deploy(usdcAddress, rolesAddress);
+    await bank.waitForDeployment();
 
-    await bank.deployed();
-
-    envConfig[envName] = bank.address;
+    const bankAddress = await bank.getAddress();
+    envConfig[envName] = bankAddress;
     fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
-    console.log(`Bank deployed to ${bank.address}`);
+    console.log(`Bank deployed to ${bankAddress}`);
     console.log(`Awaiting 10 confirmations…`);
 
-    await bank.deployTransaction.wait(10);
-
+    const deployTransaction = bank.deploymentTransaction();
+    if (deployTransaction !== null) {
+        await deployTransaction.wait(10);
+    } else {
+        throw "Deployment transaction is null";
+    }
     console.log(`Done.`);
+
     console.log("Verifying in etherscan…");
     console.log("Waiting 2 min. for registration…");
 
@@ -60,7 +65,7 @@ async function main() {
         try {
             console.log(`Done.`);
             await hre.run("verify:verify", {
-                address: bank.address,
+                address: bankAddress,
                 constructorArguments: [usdcAddress, rolesAddress],
                 network: process.env.HARDHAT_NETWORK
             });

@@ -27,15 +27,22 @@ async function main() {
 
     const utils = await Utils.deploy();
 
-    await utils.deployed();
+    await utils.waitForDeployment();
 
-    envConfig[envName] = utils.address;
+    const utilsAddress = await utils.getAddress();
+    envConfig[envName] = utilsAddress;
     fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
-    console.log(`Utils deployed to ${utils.address}`);
+    console.log(`Utils deployed to ${utilsAddress}`);
     console.log(`Awaiting 10 confirmations…`);
 
-    await utils.deployTransaction.wait(10);
+    const deployTransaction = utils.deploymentTransaction();
+    if (deployTransaction !== null) {
+        await deployTransaction.wait(10);
+    } else {
+        throw "Deployment transaction is null";
+    }
+    console.log(`Done.`);
 
     console.log(`Done.`);
     console.log("Verifying in etherscan…");
@@ -45,7 +52,7 @@ async function main() {
         try {
             console.log(`Done.`);
             await hre.run("verify:verify", {
-                address: utils.address,
+                address: utilsAddress,
                 constructorArguments: [],
                 network: process.env.HARDHAT_NETWORK
             });

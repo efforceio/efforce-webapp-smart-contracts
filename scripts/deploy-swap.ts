@@ -1,7 +1,8 @@
 import { ethers } from "hardhat";
 import hre from "hardhat";
-const fs = require('fs');
-const dotenv = require('dotenv');
+import fs from 'fs';
+import dotenv from 'dotenv';
+import { Credits as CreditsType, Roles as RolesType } from "../typechain-types";
 
 async function main() {
 
@@ -63,22 +64,28 @@ async function main() {
         bankAddress
     );
 
-    await swap.deployed();
+    await swap.waitForDeployment();
 
-    envConfig[envName] = swap.address;
+    const swapAddress = await swap.getAddress();
+    envConfig[envName] = swapAddress;
     fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
-    console.log(`Swap deployed to ${swap.address}`);
+    console.log(`Swap deployed to ${swapAddress}`);
     console.log(`Awaiting 10 confirmations…`);
 
-    await swap.deployTransaction.wait(10);
+    const deployTransaction = swap.deploymentTransaction();
+    if (deployTransaction !== null) {
+        await deployTransaction.wait(10);
+    } else {
+        throw "Deployment transaction is null";
+    }
     console.log(`Done.`);
 
     console.log(`Granting admin role to contract...`);
 
     const Roles = await ethers.getContractFactory("Roles");
-    const roles = Roles.attach(rolesAddress);
-    let res = await roles.setAdmin(swap.address, true);
+    const roles = Roles.attach(rolesAddress) as RolesType;
+    let res = await roles.setAdmin(swapAddress, true);
     await res.wait(10);
 
     const Credits = await ethers.getContractFactory("Credits", {
@@ -86,14 +93,14 @@ async function main() {
             Utils: utilsAddress
         }
     });
-    const credits = Credits.attach(creditsAddress, );
+    const credits = Credits.attach(creditsAddress) as CreditsType;
 
     console.log(`Allowing swap to receive credits...`);
-    res = await credits.updateAccount(swap.address, true);
+    res = await credits.updateAccount(swapAddress, true);
     await res.wait(10);
 
     console.log(`Allowing swap to manage credits...`);
-    res = await credits.setContractOperator(swap.address, true);
+    res = await credits.setContractOperator(swapAddress, true);
     await res.wait(10);
 
     console.log(`Done.`);
@@ -105,7 +112,7 @@ async function main() {
         try {
             console.log(`Done.`);
             await hre.run("verify:verify", {
-                address: swap.address,
+                address: swapAddress,
                 constructorArguments: [
                     creditsAddress,
                     bankAddress

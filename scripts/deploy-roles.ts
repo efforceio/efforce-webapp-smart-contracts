@@ -37,17 +37,25 @@ async function main() {
 
     const roles = await Roles.deploy(address);
 
-    await roles.deployed();
+    await roles.waitForDeployment();
 
-    envConfig[envName] = roles.address;
+    const rolesAddress = await roles.getAddress();
+    envConfig[envName] = rolesAddress;
     fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
-    console.log(`Roles deployed to ${roles.address}`);
+    console.log(`Roles deployed to ${rolesAddress}`);
     console.log(`Awaiting 10 confirmations…`);
 
-    await roles.deployTransaction.wait(10);
 
+    const deployTransaction = roles.deploymentTransaction();
+
+    if (deployTransaction !== null) {
+        await deployTransaction.wait(10);
+    } else {
+        throw "Deployment transaction is null";
+    }
     console.log(`Done.`);
+
     console.log("Verifying in etherscan…");
     console.log("Waiting 2 min. for registration…");
 
@@ -55,7 +63,7 @@ async function main() {
         try {
             console.log(`Done.`);
             await hre.run("verify:verify", {
-                address: roles.address,
+                address: rolesAddress,
                 constructorArguments: [address],
                 network: process.env.HARDHAT_NETWORK
             });

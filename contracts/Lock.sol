@@ -57,7 +57,7 @@ contract Locking is BankWrapper {
         unchecked {
             totalLocked += amount;
         }
-        emit FundsLocked(lastId, msg.sender, amount, block.timestamp);
+        emit FundsLocked(lastId, msg.sender, amount);
     }
 
     /*
@@ -75,7 +75,7 @@ contract Locking is BankWrapper {
         unchecked {
             totalLocked -= idToLock[lockId].amount;
         }
-        emit FundsUnlocked(lockId, msg.sender, block.timestamp);
+        emit FundsUnlocked(lockId, msg.sender);
     }
 
     /*
@@ -113,7 +113,7 @@ contract Locking is BankWrapper {
         @param amount The amount of tokens locked.
         @parma startTimestamp The timestamp when the lock started.
     */
-    event FundsLocked(uint indexed id, address indexed account, uint amount, uint startTimestamp);
+    event FundsLocked(uint indexed id, address indexed account, uint amount);
 
     /*
         @notice Emitted when an account unlocks funds.
@@ -121,5 +121,5 @@ contract Locking is BankWrapper {
         @param account The account that unlocked the funds.
         @parma endTimestamp The timestamp when the lock ended.
     */
-    event FundsUnlocked(uint indexed id, address indexed account, uint endTimestamp);
+    event FundsUnlocked(uint indexed id, address indexed account);
 }

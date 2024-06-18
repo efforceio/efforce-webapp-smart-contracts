@@ -269,6 +269,7 @@ abstract contract Listings is IPurchases, BankWrapper {
 
     /*
         @notice Emitted when a new listing is created.
+        @param id The id of che listing.
         @param owner The owner of the new listing.
         @param projectId The project id of the vintages (credits).
         @param creditId The id of the credits that are listed.

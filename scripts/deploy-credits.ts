@@ -1,6 +1,7 @@
 import hre, { ethers } from "hardhat";
-const fs = require('fs');
-const dotenv = require('dotenv');
+import fs from 'fs';
+import dotenv from 'dotenv';
+import { Roles as RolesType } from "../typechain-types";
 
 async function main() {
     let
@@ -60,22 +61,29 @@ async function main() {
         bank
     );
 
-    await credits.deployed();
+    await credits.waitForDeployment();
 
-    envConfig[envName] = credits.address;
+    const creditsAddress = await credits.getAddress();
+    envConfig[envName] = creditsAddress;
     fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
-    console.log(`Credits deployed to ${credits.address}`);
+    console.log(`Credits deployed to ${creditsAddress}`);
     console.log(`Awaiting 10 confirmations…`);
 
-    await credits.deployTransaction.wait(10);
+    const deployTransaction = credits.deploymentTransaction();
+
+    if (deployTransaction !== null) {
+        await deployTransaction.wait(10);
+    } else {
+        throw "Deployment transaction is null";
+    }
     console.log(`Done.`);
 
     console.log(`Granting admin role to contract...`);
 
     const Roles = await ethers.getContractFactory("Roles");
-    const rolesContract = Roles.attach(roles);
-    await rolesContract.setAdmin(credits.address, true);
+    const rolesContract = Roles.attach(roles) as RolesType;
+    await rolesContract.setAdmin(creditsAddress, true);
     console.log(`Done.`);
 
     console.log("Verifying in etherscan…");
@@ -85,7 +93,7 @@ async function main() {
         try {
             console.log(`Done.`);
             await hre.run("verify:verify", {
-                address: credits.address,
+                address: creditsAddress,
                 constructorArguments: [
                     metadata,
                     roles,

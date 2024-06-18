@@ -1,7 +1,8 @@
 import { ethers } from "hardhat";
 import hre from "hardhat";
-const fs = require('fs');
-const dotenv = require('dotenv');
+import fs from 'fs';
+import dotenv from 'dotenv';
+import { Roles as RolesType, Credits as CreditsType } from "../typechain-types";
 
 async function main() {
 
@@ -60,22 +61,29 @@ async function main() {
         rolesAddress
     );
 
-    await store.deployed();
+    await store.waitForDeployment();
 
-    envConfig[envName] = store.address;
+    const storeAddress = await store.getAddress();
+    envConfig[envName] = storeAddress;
     fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
-    console.log(`Store deployed to ${store.address}`);
+    console.log(`Store deployed to ${storeAddress}`);
     console.log(`Awaiting 10 confirmations…`);
 
-    await store.deployTransaction.wait(10);
+    const deployTransaction = store.deploymentTransaction();
+
+    if (deployTransaction !== null) {
+        await deployTransaction.wait(10);
+    } else {
+        throw "Deployment transaction is null";
+    }
     console.log(`Done.`);
 
     console.log(`Granting admin role to contract...`);
 
     const Roles = await ethers.getContractFactory("Roles");
-    const roles = Roles.attach(rolesAddress);
-    let res = await roles.setAdmin(store.address, true);
+    const roles = Roles.attach(rolesAddress) as RolesType;
+    let res = await roles.setAdmin(storeAddress, true);
     await res.wait(10);
 
     console.log(`Done.`);
@@ -87,8 +95,8 @@ async function main() {
             Utils: utilsAddress
         }
     });
-    const credits = Credits.attach(creditsAddress);
-    res = await credits.setContractOperator(store.address, true);
+    const credits = Credits.attach(creditsAddress) as CreditsType;
+    res = await credits.setContractOperator(storeAddress, true);
     await res.wait(10);
 
     console.log(`Done.`);
@@ -100,7 +108,7 @@ async function main() {
         try {
             console.log(`Done.`);
             await hre.run("verify:verify", {
-                address: store.address,
+                address: storeAddress,
                 constructorArguments: [
                     creditsAddress,
                     bankAddress,

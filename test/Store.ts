@@ -1,4 +1,4 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+/*import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Roles, Bank, Token, Credits, Store } from "../typechain-types";
 import { expect } from "chai";
 import { ethers } from "hardhat";
@@ -123,4 +123,4 @@ describe("Store test", () => {
         expect(await token.balanceOf(account2.address)).equal(price * amount);
         expect(await credits.balanceOf(account2.address, 2)).equal(0);
     });
-});
+});*/

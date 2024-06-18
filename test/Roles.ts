@@ -1,13 +1,13 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Roles } from "../typechain-types";
 import { ethers } from "hardhat";
 import { expect } from "chai";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("Roles test", () => {
     let
-        owner: SignerWithAddress,
-        account1: SignerWithAddress,
-        account2: SignerWithAddress,
+        owner: HardhatEthersSigner,
+        account1: HardhatEthersSigner,
+        account2: HardhatEthersSigner,
         roles: Roles;
 
     before("Initialization", async () => {

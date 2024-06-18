@@ -62,9 +62,12 @@ describe("Swap test", () => {
         it("Creates listing", async () => {
             await expect(swap.connect(account2).createListing(0, 1, 1)).reverted;
 
+            const nListings = await swap.nListings();
+            const credit = await credits.getVintage(0);
+
             await expect(swap.connect(account1).createListing(0, 1, 100))
                 .emit(swap, "CreateListing")
-                .withArgs(account1.address, 0, 1, 100)
+                .withArgs(nListings, account1.address, credit.projectId, 0, 1, 100)
                 .emit(credits, "TransferSingle")
                 .withArgs(swap.address, account1.address, swap.address, 0, 100);
         });
@@ -74,12 +77,13 @@ describe("Swap test", () => {
             await expect(swap.connect(account1).buyFromListing(0, 1)).reverted;
 
             await credits.connect(account1).setApprovalForAll(swap.address, true);
+            const credit = await credits.getVintage(0);
 
             await expect(swap.connect(account2).buyFromListing(0, 1))
                 .emit(swap, "Purchase")
-                .withArgs(0, account1.address, account2.address, 1, 1)
+                .withArgs(0, credit.projectId, account1.address, account2.address, 1, 1)
                 .emit(swap, "ListingUpdated")
-                .withArgs(0, 99, 1)
+                .withArgs(0, credit.projectId, 99, 1)
                 .emit(token, "Transfer")
                 .withArgs(account2.address, account1.address, 1)
                 .emit(token, "Transfer")
@@ -87,15 +91,15 @@ describe("Swap test", () => {
 
             await expect(swap.connect(account2).buyFromListing(0, 99))
                 .emit(swap, "Purchase")
-                .withArgs(0, account1.address, account2.address, 99, 99)
+                .withArgs(0, credit.projectId, account1.address, account2.address, 99, 99)
                 .emit(swap, "ListingUpdated")
-                .withArgs(0, 0, 1)
+                .withArgs(0, credit.projectId, 0, 1)
                 .emit(token, "Transfer")
                 .withArgs(account2.address, account1.address, 90)
                 .emit(token, "Transfer")
                 .withArgs(account2.address, bank.address, 9)
                 .emit(swap, "ListingClosed")
-                .withArgs(0, true);
+                .withArgs(0, credit.projectId, true);
 
             expect(await credits.balanceOf(account2.address, 0)).equal(100);
             expect(await token.balanceOf(account1.address)).equal(91);
@@ -107,10 +111,11 @@ describe("Swap test", () => {
             await swap.connect(account1).createListing(1, 1, 100);
 
             await expect(swap.connect(account2).updateListing(1, 2, 90)).reverted;
+            const credit = await credits.getVintage(1);
 
             await expect(swap.connect(account1).updateListing(1, 2, 90))
                 .emit(swap, "ListingUpdated")
-                .withArgs(1, 90, 2)
+                .withArgs(1, credit.projectId, 90, 2)
                 .emit(credits, "TransferSingle")
                 .withArgs(swap.address, swap.address, account1.address, 1, 10);
 
@@ -120,7 +125,7 @@ describe("Swap test", () => {
 
             await expect(swap.connect(account1).updateListing(1, 1, 100))
                 .emit(swap, "ListingUpdated")
-                .withArgs(1, 100, 1)
+                .withArgs(1, credit.projectId, 100, 1)
                 .emit(credits, "TransferSingle")
                 .withArgs(swap.address, account1.address, swap.address, 1, 10);
 
@@ -130,10 +135,11 @@ describe("Swap test", () => {
         });
         it("Closes listing", async () => {
             await expect(swap.connect(account2).closeListing(1)).reverted;
+            const credit = await credits.getVintage(1);
 
             await expect(swap.connect(account1).closeListing(1))
                 .emit(swap, "ListingClosed")
-                .withArgs(1, false)
+                .withArgs(1, credit.projectId, false)
                 .emit(credits, "TransferSingle")
                 .withArgs(swap.address, swap.address, account1.address, 1, 100);
 
@@ -148,6 +154,8 @@ describe("Swap test", () => {
 
             await token.mintTo(account2.address, 2);
             await token.connect(account2).approve(swap.address, 2);
+
+            const credit = await credits.getVintage(1);
 
             await expect(swap.connect(account2).buyFromListingBatch([2, 3], [1, 1]))
                 .emit(swap, "Purchase")

@@ -30,3 +30,6 @@ if (!envConfig[`STORE${addEnv}`]) {
 if (!envConfig[`SWAP${addEnv}`]) {
     execSync(`hardhat run scripts/deploy-swap.ts --network ${addScript}`, {stdio: 'inherit'});
 }
+if (!envConfig[`LOCKING${addEnv}`]) {
+    execSync(`hardhat run scripts/deploy-locking.ts --network ${addScript}`, {stdio: 'inherit'});
+}

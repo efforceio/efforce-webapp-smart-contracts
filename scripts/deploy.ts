@@ -6,6 +6,7 @@ const envPath = '.env';
 const envConfig = dotenv.parse(fs.readFileSync(envPath));
 
 const addScript = process.argv[3];
+
 let addEnv = `_${addScript.toUpperCase()}`;
 
 if (!envConfig[`UTILS${addEnv}`]) {
@@ -20,7 +21,7 @@ if (!envConfig[`BANK${addEnv}`]) {
 if (!envConfig[`POOLS${addEnv}`]) {
     execSync(`hardhat run scripts/deploy-pools.ts --network ${addScript}`, {stdio: 'inherit'});
 }
-if (!envConfig[`CREDITS${addEnv}`]) {
+/*if (!envConfig[`CREDITS${addEnv}`]) {
     execSync(`hardhat run scripts/deploy-credits.ts --network ${addScript}`, {stdio: 'inherit'});
 }
 if (!envConfig[`STORE${addEnv}`]) {
@@ -28,7 +29,7 @@ if (!envConfig[`STORE${addEnv}`]) {
 }
 if (!envConfig[`SWAP${addEnv}`]) {
     execSync(`hardhat run scripts/deploy-swap.ts --network ${addScript}`, {stdio: 'inherit'});
-}
+}*/
 if (!envConfig[`LOCKING${addEnv}`]) {
     execSync(`hardhat run scripts/deploy-locking.ts --network ${addScript}`, {stdio: 'inherit'});
 }

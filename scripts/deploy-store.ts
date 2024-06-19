@@ -47,6 +47,7 @@ async function main() {
     fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
     console.log(`Store deployed to ${storeAddress}`);
+
     console.log(`Awaiting 10 confirmations…`);
 
     const deployTransaction = store.deploymentTransaction();
@@ -99,7 +100,6 @@ async function main() {
             console.error(e);
         }
     }, 120000);
-
 }
 
 main().catch((error) => {

@@ -18,8 +18,6 @@ async function main() {
     const rolesAddress = envConfig[`ROLES_${network}`];
     const tokenAddress = envConfig[`TOKEN_${network}`];
 
-    const isLocal = process.env.HARDHAT_NETWORK === 'hardhat';
-
     console.log("--- DEPLOYING BANK ---");
 
     const Bank = await ethers.getContractFactory("Bank");
@@ -34,33 +32,32 @@ async function main() {
     fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
     console.log(`Bank deployed to ${bankAddress}`);
+
     console.log(`Awaiting 10 confirmations…`);
 
-    if (!isLocal) {
-        const deployTransaction = bank.deploymentTransaction();
-        if (deployTransaction !== null) {
-            await deployTransaction.wait(10);
-        } else {
-            throw "Deployment transaction is null";
-        }
-        console.log(`Done.`);
-
-        console.log("Verifying in etherscan…");
-        console.log("Waiting 2 min. for registration…");
-
-        setTimeout(async function () {
-            try {
-                console.log(`Done.`);
-                await hre.run("verify:verify", {
-                    address: bankAddress,
-                    constructorArguments: [tokenAddress, rolesAddress],
-                    network: process.env.HARDHAT_NETWORK
-                });
-            } catch (e) {
-                console.error(e);
-            }
-        }, 120000);
+    const deployTransaction = bank.deploymentTransaction();
+    if (deployTransaction !== null) {
+        await deployTransaction.wait(10);
+    } else {
+        throw "Deployment transaction is null";
     }
+    console.log(`Done.`);
+
+    console.log("Verifying in etherscan…");
+    console.log("Waiting 2 min. for registration…");
+
+    setTimeout(async function () {
+        try {
+            console.log(`Done.`);
+            await hre.run("verify:verify", {
+                address: bankAddress,
+                constructorArguments: [tokenAddress, rolesAddress],
+                network: process.env.HARDHAT_NETWORK
+            });
+        } catch (e) {
+            console.error(e);
+        }
+    }, 120000);
 }
 
 main().catch((error) => {

@@ -1,9 +1,8 @@
 {
   "name": "efforce-marketplace",
   "scripts": {
-    "deploy": "node scripts/deploy.ts",
+    "deploy": "node scripts/deploy.ts --network mainnet",
     "deploy-testnet": "node scripts/deploy.ts --network testnet",
-    "deploy-hardaht": "node scripts/deploy.ts --network hardhat",
     "test": "npx hardhat test",
     "compile": "hardhat compile"
   },

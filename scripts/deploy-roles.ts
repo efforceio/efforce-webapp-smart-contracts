@@ -27,8 +27,8 @@ async function main() {
     fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
     console.log(`Roles deployed to ${rolesAddress}`);
-    console.log(`Awaiting 10 confirmations…`);
 
+    console.log(`Awaiting 10 confirmations…`);
 
     const deployTransaction = roles.deploymentTransaction();
 

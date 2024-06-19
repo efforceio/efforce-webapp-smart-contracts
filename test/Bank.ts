@@ -1,5 +1,5 @@
 import { Roles, Bank, Token } from "../typechain-types";
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import { expect } from "chai";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
@@ -17,7 +17,9 @@ describe("Bank test", () => {
         [owner, account1, account2] = await ethers.getSigners();
 
         const Roles = await ethers.getContractFactory("Roles");
-        roles = await Roles.deploy(owner.address);
+        roles = await upgrades.deployProxy(Roles, []) as unknown as Roles;
+        await roles.waitForDeployment();
+        await roles.initializer(owner.address);
         await roles.setAdmin(account1.address, true);
 
         const Token = await ethers.getContractFactory("Token");

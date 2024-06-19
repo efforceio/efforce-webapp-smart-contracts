@@ -24,7 +24,9 @@ describe("Locking tests", () => {
 
     before('Create complementary contracts', async () => {
         const Roles = await ethers.getContractFactory("Roles");
-        roles = await Roles.deploy(owner.address);
+        roles = await upgrades.deployProxy(Roles, []) as unknown as Roles;
+        await roles.waitForDeployment();
+        await roles.initializer(owner.address);
 
         const Token = await ethers.getContractFactory("Token");
         token = await Token.deploy("Token", "TKN");

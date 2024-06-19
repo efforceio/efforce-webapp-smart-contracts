@@ -26,7 +26,8 @@ describe("Pools test", () => {
         [owner, admin, user] = await ethers.getSigners();
 
         const Roles = await ethers.getContractFactory("Roles");
-        roles = await Roles.deploy(owner.address);
+        roles = await upgrades.deployProxy(Roles,  []) as unknown as Roles;
+        await roles.initializer(owner.address);
         rolesAddress = await roles.getAddress();
 
         await roles.setAdmin(admin.address, true);

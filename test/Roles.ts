@@ -1,5 +1,5 @@
 import { Roles } from "../typechain-types";
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import { expect } from "chai";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
@@ -14,7 +14,9 @@ describe("Roles test", () => {
         [owner, account1, account2] = await ethers.getSigners();
 
         const Roles = await ethers.getContractFactory("Roles");
-        roles = await Roles.deploy(owner.address);
+        roles = await upgrades.deployProxy(Roles, []) as unknown as Roles;
+        await roles.waitForDeployment();
+        await roles.initializer(owner.address);
     });
 
     it("Check owner", async () => {

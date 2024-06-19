@@ -1,4 +1,4 @@
-import hre, { ethers } from "hardhat";
+import hre, { ethers, upgrades } from "hardhat";
 import dotenv from "dotenv";
 import fs from "fs";
 
@@ -18,9 +18,9 @@ async function main() {
 
     const Roles = await ethers.getContractFactory("Roles");
 
-    const roles = await Roles.deploy(address);
-
+    const roles = await upgrades.deployProxy(Roles,  []);
     await roles.waitForDeployment();
+    await roles.initializer(address);
 
     const rolesAddress = await roles.getAddress();
     envConfig[envName] = rolesAddress;

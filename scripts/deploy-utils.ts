@@ -5,7 +5,6 @@ import fs from "fs";
 async function main() {
     const envPath = '.env';
     const envName = `UTILS_${process.env.HARDHAT_NETWORK!.toUpperCase()}`;
-    const isLocal = process.env.HARDHAT_NETWORK === 'hardhat';
 
     console.log("--- DEPLOYING UTILS ---");
 
@@ -24,33 +23,31 @@ async function main() {
 
     console.log(`Utils deployed to ${utilsAddress}`);
 
-    if (!isLocal) {
-        console.log(`Awaiting 10 confirmations…`);
+    console.log(`Awaiting 10 confirmations…`);
 
-        const deployTransaction = utils.deploymentTransaction();
-        if (deployTransaction !== null) {
-            await deployTransaction.wait(10);
-        } else {
-            throw "Deployment transaction is null";
-        }
-        console.log(`Done.`);
-
-        console.log("Verifying in etherscan…");
-        console.log("Waiting 2 min. for registration…");
-
-        setTimeout(async function () {
-            try {
-                console.log(`Done.`);
-                await hre.run("verify:verify", {
-                    address: utilsAddress,
-                    constructorArguments: [],
-                    network: process.env.HARDHAT_NETWORK
-                });
-            } catch (e) {
-                console.error(e);
-            }
-        }, 120000);
+    const deployTransaction = utils.deploymentTransaction();
+    if (deployTransaction !== null) {
+        await deployTransaction.wait(10);
+    } else {
+        throw "Deployment transaction is null";
     }
+    console.log(`Done.`);
+
+    console.log("Verifying in etherscan…");
+    console.log("Waiting 2 min. for registration…");
+
+    setTimeout(async function () {
+        try {
+            console.log(`Done.`);
+            await hre.run("verify:verify", {
+                address: utilsAddress,
+                constructorArguments: [],
+                network: process.env.HARDHAT_NETWORK
+            });
+        } catch (e) {
+            console.error(e);
+        }
+    }, 120000);
 }
 
 main().catch((error) => {

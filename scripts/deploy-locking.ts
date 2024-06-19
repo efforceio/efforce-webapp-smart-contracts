@@ -17,8 +17,12 @@ async function main() {
     if (!envConfig[`BANK_${network}`]) {
         throw "Bank address not specified";
     }
+    if (!envConfig[`WOZX_${network}`]) {
+        throw "Wozx token address not specified";
+    }
     const rolesAddress = envConfig[`ROLES_${network}`];
-    const wozxBankAddress =  envConfig[`WOZX_${network}`];
+    const bankAddress =  envConfig[`BANK_${network}`];
+    const wozxAddress = envConfig[`WOZX_${network}`];
 
     console.log("--- DEPLOYING LOCKING ---");
 
@@ -28,13 +32,14 @@ async function main() {
 
     const locking = await upgrades.deployProxy(Locking, []) as unknown as LockingType;
     await locking.waitForDeployment();
-    await locking.initializer(wozxBankAddress);
+    await locking.initializer(bankAddress, wozxAddress);
 
     const lockingAddress = await locking.getAddress();
     envConfig[envName] = lockingAddress;
     fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
     console.log(`Locking deployed to ${lockingAddress}`);
+
     console.log(`Awaiting 10 confirmations…`);
 
     const deployTransaction = locking.deploymentTransaction();
@@ -63,8 +68,8 @@ async function main() {
             await hre.run("verify:verify", {
                 address: lockingAddress,
                 constructorArguments: [
-                    rolesAddress,
-                    wozxBankAddress
+                    bankAddress,
+                    wozxAddress
                 ],
                 network: process.env.HARDHAT_NETWORK
             });
@@ -72,7 +77,6 @@ async function main() {
             console.error(e);
         }
     }, 120000);
-
 }
 
 main().catch((error) => {

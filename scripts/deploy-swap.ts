@@ -46,6 +46,7 @@ async function main() {
     fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
     console.log(`Swap deployed to ${swapAddress}`);
+
     console.log(`Awaiting 10 confirmations…`);
 
     const deployTransaction = swap.deploymentTransaction();
@@ -54,6 +55,7 @@ async function main() {
     } else {
         throw "Deployment transaction is null";
     }
+
     console.log(`Done.`);
 
     console.log(`Granting admin role to contract...`);
@@ -98,7 +100,6 @@ async function main() {
             console.error(e);
         }
     }, 120000);
-
 }
 
 main().catch((error) => {

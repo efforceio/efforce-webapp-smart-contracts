@@ -28,6 +28,8 @@ async function main() {
 
     const pools = await upgrades.deployProxy(Pools, []) as unknown as PoolsType;
     await pools.waitForDeployment();
+
+    console.log(rolesAddress, bankAddress)
     await pools.initializer(rolesAddress, bankAddress);
 
     const poolsAddress = await pools.getAddress();
@@ -35,6 +37,7 @@ async function main() {
     fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
     console.log(`Pools deployed to ${poolsAddress}`);
+
     console.log(`Awaiting 10 confirmations…`);
 
     const deployTransaction = pools.deploymentTransaction();
@@ -72,7 +75,6 @@ async function main() {
             console.error(e);
         }
     }, 120000);
-
 }
 
 main().catch((error) => {

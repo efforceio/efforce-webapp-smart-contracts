@@ -53,6 +53,7 @@ async function main() {
     fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
     console.log(`Credits deployed to ${creditsAddress}`);
+
     console.log(`Awaiting 10 confirmations…`);
 
     const deployTransaction = credits.deploymentTransaction();
@@ -62,6 +63,7 @@ async function main() {
     } else {
         throw "Deployment transaction is null";
     }
+
     console.log(`Done.`);
 
     console.log(`Granting admin role to contract...`);

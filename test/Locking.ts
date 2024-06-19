@@ -11,6 +11,7 @@ describe("Locking tests", () => {
         locking: Locking,
         lockingAddress: string,
         token: Token,
+        tokenAddress: string,
         bank: Bank,
         bankAddress: string,
         roles: Roles;
@@ -27,6 +28,7 @@ describe("Locking tests", () => {
 
         const Token = await ethers.getContractFactory("Token");
         token = await Token.deploy("Token", "TKN");
+        tokenAddress = await token.getAddress();
 
         const Bank = await ethers.getContractFactory("Bank");
         bank = await Bank.deploy(token.getAddress(), roles.getAddress());
@@ -39,7 +41,7 @@ describe("Locking tests", () => {
         await locking.waitForDeployment();
         lockingAddress = await locking.getAddress();
 
-        await locking.initializer(bankAddress);
+        await locking.initializer(bankAddress, tokenAddress);
         await roles.setAdmin(lockingAddress, true);
     });
 

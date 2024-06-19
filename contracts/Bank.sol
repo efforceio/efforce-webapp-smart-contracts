@@ -6,12 +6,15 @@ import "./modules/RolesModifier.sol";
 
 contract Bank is RolesModifier {
 
-    address public immutable tokenAddress;
+    address public tokenAddress;
 
     /*
         @param _tokenAddress The address of the ERC20 token.
+        @param _rolesAddress The address of the roles smart contract.
     */
-    constructor(address _tokenAddress, address _rolesAddress) {
+    function initializer(address _tokenAddress, address _rolesAddress) external {
+        require(_tokenAddress != address(0) && _rolesAddress != address(0), Errors.IS_ZERO_ADDRESS);
+        require(tokenAddress == address(0) && rolesAddress == address(0), Errors.NOT_ALLOWED);
         rolesAddress = _rolesAddress;
         tokenAddress = _tokenAddress;
     }

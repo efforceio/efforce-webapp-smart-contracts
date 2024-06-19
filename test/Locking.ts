@@ -14,7 +14,8 @@ describe("Locking tests", () => {
         tokenAddress: string,
         bank: Bank,
         bankAddress: string,
-        roles: Roles;
+        roles: Roles,
+        rolesAddress: string;
 
     const amount = 100;
 
@@ -27,13 +28,16 @@ describe("Locking tests", () => {
         roles = await upgrades.deployProxy(Roles, []) as unknown as Roles;
         await roles.waitForDeployment();
         await roles.initializer(owner.address);
+        rolesAddress = await roles.getAddress();
 
         const Token = await ethers.getContractFactory("Token");
         token = await Token.deploy("Token", "TKN");
         tokenAddress = await token.getAddress();
 
         const Bank = await ethers.getContractFactory("Bank");
-        bank = await Bank.deploy(token.getAddress(), roles.getAddress());
+        bank = await upgrades.deployProxy(Bank, []) as unknown as Bank;
+        await bank.waitForDeployment();
+        bank.initializer(tokenAddress, rolesAddress);
         bankAddress = await bank.getAddress();
     });
 

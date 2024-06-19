@@ -9,9 +9,9 @@ const addScript = process.argv[3];
 
 let addEnv = `_${addScript.toUpperCase()}`;
 
-if (!envConfig[`UTILS${addEnv}`]) {
+/*if (!envConfig[`UTILS${addEnv}`]) {
     execSync(`hardhat run scripts/deploy-utils.ts --network ${addScript}`, {stdio: 'inherit'});
-}
+}*/
 if (!envConfig[`ROLES${addEnv}`]) {
     execSync(`hardhat run scripts/deploy-roles.ts --network ${addScript}`, {stdio: 'inherit'});
 }

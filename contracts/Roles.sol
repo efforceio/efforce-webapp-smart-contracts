@@ -9,7 +9,9 @@ contract Roles is IRoles {
     address private owner;
     mapping(address => bool) private addressToAdmin;
 
-    constructor(address _owner) {
+    function initializer(address _owner) external {
+        require(_owner != address(0), Errors.IS_ZERO_ADDRESS);
+        require(owner == address(0), Errors.NOT_ALLOWED);
         owner = _owner;
     }
 

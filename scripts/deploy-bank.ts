@@ -3,44 +3,30 @@ import fs from 'fs';
 import dotenv from 'dotenv';
 
 async function main() {
-    let
-        rolesAddress = "",
-        envName = "",
-        usdcAddress = "";
-
     const envPath = '.env';
     const envConfig = dotenv.parse(fs.readFileSync(envPath));
 
-    console.log("--- DEPLOYING BANK ---");
+    const network = process.env.HARDHAT_NETWORK!.toUpperCase();
+    const envName = `BANK_${network}`;
 
-    switch (process.env.HARDHAT_NETWORK) {
-        case 'polygon_mumbai':
-            if (!envConfig["ROLES_MUMBAI"] || !envConfig["USDC_MUMBAI"]) {
-                throw "Roles address or USDC address not set";
-            } else {
-                rolesAddress = envConfig["ROLES_MUMBAI"];
-                usdcAddress = envConfig["USDC_MUMBAI"];
-                envName = "BANK_MUMBAI";
-            }
-            break;
-        case 'polygon':
-            if (!envConfig["ROLES"] || !envConfig["USDC"]) {
-                throw "Roles address or USDC address not set";
-            } else {
-                rolesAddress = envConfig["ROLES"];
-                usdcAddress = envConfig["USDC"];
-                envName = "BANK";
-            }
-            break;
-        default:
-            throw "Network not supported";
+    if (!envConfig[`ROLES_${network}`]) {
+        throw "Role address not specified";
     }
+    if (!envConfig[`TOKEN_${network}`]) {
+        throw "Token address not specified";
+    }
+    const rolesAddress = envConfig[`ROLES_${network}`];
+    const tokenAddress = envConfig[`TOKEN_${network}`];
+
+    const isLocal = process.env.HARDHAT_NETWORK === 'hardhat';
+
+    console.log("--- DEPLOYING BANK ---");
 
     const Bank = await ethers.getContractFactory("Bank");
 
     console.log("Start deployment…");
 
-    const bank = await Bank.deploy(usdcAddress, rolesAddress);
+    const bank = await Bank.deploy(tokenAddress, rolesAddress);
     await bank.waitForDeployment();
 
     const bankAddress = await bank.getAddress();
@@ -50,29 +36,31 @@ async function main() {
     console.log(`Bank deployed to ${bankAddress}`);
     console.log(`Awaiting 10 confirmations…`);
 
-    const deployTransaction = bank.deploymentTransaction();
-    if (deployTransaction !== null) {
-        await deployTransaction.wait(10);
-    } else {
-        throw "Deployment transaction is null";
-    }
-    console.log(`Done.`);
-
-    console.log("Verifying in etherscan…");
-    console.log("Waiting 2 min. for registration…");
-
-    setTimeout(async function () {
-        try {
-            console.log(`Done.`);
-            await hre.run("verify:verify", {
-                address: bankAddress,
-                constructorArguments: [usdcAddress, rolesAddress],
-                network: process.env.HARDHAT_NETWORK
-            });
-        } catch (e) {
-            console.error(e);
+    if (!isLocal) {
+        const deployTransaction = bank.deploymentTransaction();
+        if (deployTransaction !== null) {
+            await deployTransaction.wait(10);
+        } else {
+            throw "Deployment transaction is null";
         }
-    }, 120000);
+        console.log(`Done.`);
+
+        console.log("Verifying in etherscan…");
+        console.log("Waiting 2 min. for registration…");
+
+        setTimeout(async function () {
+            try {
+                console.log(`Done.`);
+                await hre.run("verify:verify", {
+                    address: bankAddress,
+                    constructorArguments: [tokenAddress, rolesAddress],
+                    network: process.env.HARDHAT_NETWORK
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }, 120000);
+    }
 }
 
 main().catch((error) => {

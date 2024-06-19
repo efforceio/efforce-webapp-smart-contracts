@@ -6,54 +6,29 @@ import { Credits as CreditsType, Roles as RolesType } from "../typechain-types";
 
 async function main() {
 
-    let
-        creditsAddress = "",
-        rolesAddress = "",
-        bankAddress = "",
-        utilsAddress = "",
-        envName = "";
-
     const envPath = '.env';
+    const envConfig = dotenv.parse(fs.readFileSync(envPath));
+    const network = process.env.HARDHAT_NETWORK!.toUpperCase();
+    const envName = `SWAP_${network}`;
+
+    if (!envConfig[`CREDITS_${network}`]) {
+        throw "Credits address not specified";
+    }
+    if (!envConfig[`ROLES_${network}`]) {
+        throw "Roles address not specified";
+    }
+    if (!envConfig[`BANK_${network}`]) {
+        throw "Bank address not specified";
+    }
+    if (!envConfig[`UTILS_${network}`]) {
+        throw "Utils address not specified";
+    }
+    const creditsAddress = envConfig[`CREDITS_${network}`];
+    const rolesAddress = envConfig[`CREDITS_${network}`];
+    const bankAddress = envConfig[`BANK_${network}`];
+    const utilsAddress = envConfig[`UTILS_${network}`];
 
     console.log("--- DEPLOYING SWAP ---");
-    const envConfig = dotenv.parse(fs.readFileSync(envPath));
-
-    switch (process.env.HARDHAT_NETWORK) {
-        case 'polygon_mumbai':
-            if (
-                !envConfig["CREDITS_MUMBAI"] ||
-                !envConfig["BANK_MUMBAI"] ||
-                !envConfig["ROLES_MUMBAI"] ||
-                !envConfig["UTILS_MUMBAI"]
-            ) {
-                throw "Credits address, Bank address, Roles address, or Utils address not set";
-            } else {
-                creditsAddress = envConfig["CREDITS_MUMBAI"];
-                bankAddress = envConfig["BANK_MUMBAI"];
-                envName = "SWAP_MUMBAI";
-                rolesAddress = envConfig["ROLES_MUMBAI"];
-                utilsAddress = envConfig["UTILS_MUMBAI"];
-            }
-            break;
-        case 'polygon':
-            if (
-                !envConfig["CREDITS"] ||
-                !envConfig["BANK"] ||
-                !envConfig["ROLES"] ||
-                !envConfig["UTLS"]
-            ) {
-                throw "Credits address, Bank address, Roles address, or Utils address not set";
-            } else {
-                creditsAddress = envConfig["CREDITS"];
-                bankAddress = envConfig["BANK"];
-                envName = "SWAP";
-                rolesAddress = envConfig["ROLES"];
-                utilsAddress = envConfig["UTILS"];
-            }
-            break;
-        default:
-            throw "Network not supported";
-    }
 
     const Swap = await ethers.getContractFactory("Swap");
 

@@ -6,38 +6,21 @@ import { Locking as LockingType, Roles as RolesType } from "../typechain-types";
 
 async function main() {
 
-    let
-        rolesAddress = "",
-        wozxBankAddress = "",
-        envName = "";
-
     const envPath = '.env';
-
-    console.log("--- DEPLOYING LOCKING ---");
+    const network = process.env.HARDHAT_NETWORK!.toUpperCase();
+    let envName = `LOCKING_${network}`;
     const envConfig = dotenv.parse(fs.readFileSync(envPath));
 
-    switch (process.env.HARDHAT_NETWORK) {
-        case 'polygon_mumbai':
-            if (!envConfig["ROLES_MUMBAI"] || !envConfig["WOZX_BANK_MUMBAI"]) {
-                throw "Roles address or WOZX Bank address not set";
-            } else {
-                rolesAddress = envConfig["ROLES_MUMBAI"];
-                wozxBankAddress = envConfig["WOZX_BANK_MUMBAI"];
-                envName = "LOCKING_MUMBAI";
-            }
-            break;
-        case 'polygon':
-            if (!envConfig["ROLES"] || !envConfig["WOZX_BANK"]) {
-                throw "Roles address or Bank address not set";
-            } else {
-                rolesAddress = envConfig["ROLES"];
-                wozxBankAddress = envConfig["WOZX_BANK"];
-                envName = "LOCKING";
-            }
-            break;
-        default:
-            throw "Network not supported";
+    if (!envConfig[`ROLES_${network}`]) {
+        throw "Roles address not specified";
     }
+    if (!envConfig[`BANK_${network}`]) {
+        throw "Bank address not specified";
+    }
+    const rolesAddress = envConfig[`ROLES_${network}`];
+    const wozxBankAddress =  envConfig[`WOZX_${network}`];
+
+    console.log("--- DEPLOYING LOCKING ---");
 
     const Locking = await ethers.getContractFactory("Locking");
 

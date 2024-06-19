@@ -5,9 +5,8 @@ const dotenv = require('dotenv');
 const envPath = '.env';
 const envConfig = dotenv.parse(fs.readFileSync(envPath));
 
-const env = process.argv[3];
-const addScript = env === 'testnet' ? 'polygon_mumbai' : '';
-const addEnv = env === 'testnet' ? '_MUMBAI' : '';
+const addScript = process.argv[3];
+let addEnv = `_${addScript.toUpperCase()}`;
 
 if (!envConfig[`UTILS${addEnv}`]) {
     execSync(`hardhat run scripts/deploy-utils.ts --network ${addScript}`, {stdio: 'inherit'});

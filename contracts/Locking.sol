@@ -36,11 +36,14 @@ contract Locking is BankWrapper {
         @notice Sets the address for the Bank contracts.
         @dev This function throws an error if the bank address is already initialized.
         @param _bankContract The address of the bank smart contract.
+        @param _tokenAddress The address of the ERC20 token that can be locked.
     */
-    function initializer(address _bankContract) public {
+    function initializer(address _bankContract, address _tokenAddress) public {
         require(_bankContract != address(0), Errors.IS_ZERO_ADDRESS);
+        require(_tokenAddress != address(0), Errors.IS_ZERO_ADDRESS);
+        require(tokenAddress == address(0), bankContract == address(0), Errors.NOT_ALLOWED());
 
-        tokenAddress = IBank(_bankContract).tokenAddress();
+        tokenAddress = _tokenAddress;
         bankContract = _bankContract;
     }
 
@@ -71,7 +74,7 @@ contract Locking is BankWrapper {
     {
         uint lockId = addressToLock[msg.sender];
         idToLock[lockId].endTimestamp = block.timestamp;
-        IBank(bankContract).withdraw(msg.sender, idToLock[lockId].amount);
+        IBank(bankContract).withdraw(msg.sender, idToLock[lockId].amount, tokenAddress);
         unchecked {
             totalLocked -= idToLock[lockId].amount;
         }

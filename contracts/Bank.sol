@@ -17,17 +17,32 @@ contract Bank is RolesModifier {
     }
 
     /*
-        @notice Transfers the amount of ERC20 tokens from the smart contract to the recipient address.
+        @notice Transfers the amount of ERC20 tokens from the `tokenAddress` smart contract to the recipient address.
         @dev Can be invoked only by the contract owner or admins.
         @param recipient The address that will receive the ERC20 tokens.
         @param amount The amount of ERC20 tokens that will be transferred.
     */
-    function withdraw(address recipient, uint256 amount)
-        external
+    function withdraw(address recipient, uint256 amount) external {
+        _withdraw(recipient, amount, tokenAddress);
+    }
+
+    /*
+        @notice Transfers the amount of ERC20 tokens from the `tokenAddress` smart contract to the recipient address.
+        @dev Can be invoked only by the contract owner or admins.
+        @param recipient The address that will receive the ERC20 tokens.
+        @param amount The amount of ERC20 tokens that will be transferred.
+        @param _tokenAddress The address of the ERC20 smart contract.
+    */
+    function withdraw(address recipient, uint256 amount, address _tokenAddress) external {
+        _withdraw(recipient, amount, _tokenAddress);
+    }
+
+    function _withdraw(address recipient, uint256 amount, address _tokenAddress)
+        internal
         adminOrOwner(msg.sender)
     {
-        IERC20(tokenAddress).transfer(recipient, amount);
-        emit Withdrawal(recipient, amount);
+        IERC20(_tokenAddress).transfer(recipient, amount);
+        emit Withdrawal(recipient, amount, _tokenAddress);
     }
 
     /*
@@ -36,5 +51,5 @@ contract Bank is RolesModifier {
         @param amount The amount of ERC20 token which are transferred.
         @param tokenAddress The address of the ERC20 token.
     */
-    event Withdrawal(address indexed recipient, uint256 amount);
+    event Withdrawal(address indexed recipient, uint256 amount, address indexed tokenAddress);
 }

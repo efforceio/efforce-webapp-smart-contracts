@@ -10,6 +10,7 @@ describe("Bank test", () => {
         account2: HardhatEthersSigner,
         roles: Roles,
         token: Token,
+        tokenAddress: string,
         bank: Bank;
 
     before("Initialization", async () => {
@@ -21,20 +22,35 @@ describe("Bank test", () => {
 
         const Token = await ethers.getContractFactory("Token");
         token = await Token.deploy("Token", "TKN");
+        tokenAddress = await token.getAddress();
 
         const Bank = await ethers.getContractFactory("Bank");
         bank = await Bank.deploy(token.getAddress(), roles.getAddress());
 
-        token.mintTo(bank.getAddress(), 100);
+        await token.mintTo(bank.getAddress(), 100);
     });
 
     it("Withdraws funds", async () => {
-        await expect(bank.connect(account2).withdraw(account2.address, 10)).reverted;
+        await expect(bank.connect(account2)['withdraw(address,uint256)'](account2.address, 10)).reverted;
 
-        await expect(bank.withdraw(account2.address, 10))
+        await expect(bank['withdraw(address,uint256)'](account2.address, 10))
             .emit(bank, "Withdrawal")
-            .withArgs(account2.address, 10);
+            .withArgs(account2.address, 10, tokenAddress);
 
         expect(await token.balanceOf(bank.getAddress())).equal(90);
+    });
+
+    it("Withdraws funds for other tokens", async () => {
+        await expect(bank.connect(account2)['withdraw(address,uint256,address)'](
+            account2.address,
+            10,
+            tokenAddress)
+        ).reverted;
+
+        await expect(bank['withdraw(address,uint256,address)'](account2.address, 10, tokenAddress))
+            .emit(bank, "Withdrawal")
+            .withArgs(account2.address, 10, tokenAddress);
+
+        expect(await token.balanceOf(bank.getAddress())).equal(80);
     });
 });

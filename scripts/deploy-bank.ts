@@ -1,6 +1,7 @@
-import hre, { ethers } from "hardhat";
+import hre, { ethers, upgrades } from "hardhat";
 import fs from 'fs';
 import dotenv from 'dotenv';
+import { Bank } from "../typechain-types";
 
 async function main() {
     const envPath = '.env';
@@ -24,8 +25,9 @@ async function main() {
 
     console.log("Start deployment…");
 
-    const bank = await Bank.deploy(tokenAddress, rolesAddress);
+    const bank = await upgrades.deployProxy(Bank, []) as unknown as Bank;
     await bank.waitForDeployment();
+    bank.initializer(tokenAddress, rolesAddress);
 
     const bankAddress = await bank.getAddress();
     envConfig[envName] = bankAddress;

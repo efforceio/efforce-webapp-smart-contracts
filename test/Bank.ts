@@ -9,6 +9,7 @@ describe("Bank test", () => {
         account1: HardhatEthersSigner,
         account2: HardhatEthersSigner,
         roles: Roles,
+        rolesAddress: string,
         token: Token,
         tokenAddress: string,
         bank: Bank;
@@ -21,13 +22,17 @@ describe("Bank test", () => {
         await roles.waitForDeployment();
         await roles.initializer(owner.address);
         await roles.setAdmin(account1.address, true);
+        rolesAddress = await roles.getAddress();
+
 
         const Token = await ethers.getContractFactory("Token");
         token = await Token.deploy("Token", "TKN");
         tokenAddress = await token.getAddress();
 
         const Bank = await ethers.getContractFactory("Bank");
-        bank = await Bank.deploy(token.getAddress(), roles.getAddress());
+        bank = await upgrades.deployProxy(Bank, []) as unknown as Bank;
+        await bank.waitForDeployment();
+        bank.initializer(tokenAddress, rolesAddress);
 
         await token.mintTo(bank.getAddress(), 100);
     });

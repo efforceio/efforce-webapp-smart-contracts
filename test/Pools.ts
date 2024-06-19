@@ -17,7 +17,8 @@ describe("Pools test", () => {
         rolesAddress: string,
         nPools = 0,
         poolsUpgraded: Pools,
-        token: Token;
+        token: Token,
+        tokenAddress: string;
     const
         lockingPeriod = 1,
         stakedAdmin = 2;
@@ -34,9 +35,12 @@ describe("Pools test", () => {
 
         const Token = await ethers.getContractFactory("Token");
         token = await Token.deploy("Token", "TKN");
+        tokenAddress = await token.getAddress();
 
         const Bank = await ethers.getContractFactory("Bank");
-        bank = await Bank.deploy(token.getAddress(), roles.getAddress());
+        bank = await upgrades.deployProxy(Bank, []) as unknown as Bank;
+        await bank.waitForDeployment();
+        await bank.initializer(tokenAddress, rolesAddress);
         bankAddress = await bank.getAddress();
 
         const Pools = await ethers.getContractFactory("Pools");

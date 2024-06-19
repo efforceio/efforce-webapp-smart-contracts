@@ -4,49 +4,34 @@ import dotenv from 'dotenv';
 import { Roles as RolesType } from "../typechain-types";
 
 async function main() {
-    let
-        utils = "",
-        roles = "",
-        envName = "",
-        bank = "";
     const
         metadata = "metadata.json",
         envPath = '.env';
 
     const envConfig = dotenv.parse(fs.readFileSync(envPath));
+    const network = process.env.HARDHAT_NETWORK!.toUpperCase();
+    let envName = `CREDITS_${network}`;
+
+    if (!envConfig[`UTILS_${network}`]) {
+        throw "Utils address not specified";
+    }
+    if (!envConfig[`ROLES_${network}`]) {
+        throw "Roles address not specified";
+    }
+    if (!envConfig[`BANK_${network}`]) {
+        throw "Bank address not specified";
+    }
+    const utilsAddress = envConfig[`UTILS_${network}`];
+    const rolesAddress = envConfig[`ROLES_${network}`];
+    const bankAddress = envConfig[`BANK_${network}`];
 
     console.log("--- DEPLOYING CREDITS ---");
-
-    switch (process.env.HARDHAT_NETWORK) {
-        case 'polygon_mumbai':
-            if (!envConfig["UTILS_MUMBAI"] || !envConfig["ROLES_MUMBAI"] || !envConfig["BANK_MUMBAI"]) {
-                throw "Utils address, Roles address, or Bank address not set.";
-            } else {
-                utils = envConfig["UTILS_MUMBAI"];
-                roles = envConfig["ROLES_MUMBAI"];
-                bank = envConfig["BANK_MUMBAI"];
-                envName = "CREDITS_MUMBAI";
-            }
-            break;
-        case 'polygon':
-            if (!envConfig["UTILS"] || !envConfig["ROLES"] || !envConfig["BANK"]) {
-                throw "Utils address, Roles address, or Bank address not set.";
-            } else {
-                utils = envConfig["UTILS"];
-                roles = envConfig["ROLES"];
-                bank = envConfig["BANK"];
-                envName = "CREDITS";
-            }
-            break;
-        default:
-            throw "Network not supported";
-    }
 
     const Credits = await ethers.getContractFactory(
         "Credits",
         {
             libraries: {
-                Utils: utils
+                Utils: utilsAddress
             }
         }
     );
@@ -55,10 +40,10 @@ async function main() {
 
     const credits = await Credits.deploy(
         metadata,
-        roles,
+        rolesAddress,
         metadata,
         10_00,
-        bank
+        bankAddress
     );
 
     await credits.waitForDeployment();
@@ -82,7 +67,7 @@ async function main() {
     console.log(`Granting admin role to contract...`);
 
     const Roles = await ethers.getContractFactory("Roles");
-    const rolesContract = Roles.attach(roles) as RolesType;
+    const rolesContract = Roles.attach(rolesAddress) as RolesType;
     await rolesContract.setAdmin(creditsAddress, true);
     console.log(`Done.`);
 
@@ -96,14 +81,14 @@ async function main() {
                 address: creditsAddress,
                 constructorArguments: [
                     metadata,
-                    roles,
+                    rolesAddress,
                     metadata,
                     10_00,
-                    bank
+                    bankAddress
                 ],
                 network: process.env.HARDHAT_NETWORK,
                 libraries: {
-                    Utils: utils
+                    Utils: utilsAddress
                 }
             });
         } catch (e) {

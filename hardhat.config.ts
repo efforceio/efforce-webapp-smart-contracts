@@ -18,11 +18,11 @@ const config: HardhatUserConfig = {
   },
   networks: {
     hardhat: {},
-    polygon_mumbai: {
+    testnet: {
       url: "https://mumbai.rpc.thirdweb.com",
       accounts: [process.env.PRIVATE_KEY || ""]
     },
-    polygon: {
+    mainnet: {
       url: "https://polygon.rpc.thirdweb.com",
       accounts: [process.env.PRIVATE_KEY || ""]
     }

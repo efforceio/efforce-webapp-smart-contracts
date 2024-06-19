@@ -6,50 +6,29 @@ import { Roles as RolesType, Credits as CreditsType } from "../typechain-types";
 
 async function main() {
 
-    let
-        rolesAddress = "",
-        creditsAddress = "",
-        bankAddress = "",
-        utilsAddress = "",
-        envName = "";
-
     const envPath = '.env';
+    const envConfig = dotenv.parse(fs.readFileSync(envPath));
+    const network = process.env.HARDHAT_NETWORK!.toUpperCase();
+    const envName = `STORE_${network}`;
+
+    if (!envConfig[`ROLES_${network}`]) {
+        throw "Roles address not specified";
+    }
+    if (!envConfig[`BANK_${network}`]) {
+        throw "Bank address not specified";
+    }
+    if (!envConfig[`CREDITS_${network}`]) {
+        throw "Credits address not specified";
+    }
+    if (!envConfig[`UTILS_${network}`]) {
+        throw "Utils address not specified";
+    }
+    const rolesAddress = envConfig[`ROLES_${network}`];
+    const bankAddress = envConfig[`BANK_${network}`];
+    const creditsAddress = envConfig[`CREDITS_${network}`];
+    const utilsAddress = envConfig[`UTILS_${network}`];
 
     console.log("--- DEPLOYING STORE ---");
-
-    const envConfig = dotenv.parse(fs.readFileSync(envPath));
-
-    switch (process.env.HARDHAT_NETWORK) {
-        case 'polygon_mumbai':
-            if (
-                !envConfig["ROLES_MUMBAI"] ||
-                !envConfig["BANK_MUMBAI"] ||
-                !envConfig["CREDITS_MUMBAI"] ||
-                !envConfig["UTILS_MUMBAI"]
-            ) {
-                throw "Roles address, Bank address, or Credits address not set";
-            } else {
-                rolesAddress = envConfig["ROLES_MUMBAI"];
-                bankAddress = envConfig["BANK_MUMBAI"];
-                creditsAddress = envConfig["CREDITS_MUMBAI"];
-                utilsAddress = envConfig["UTILS_MUMBAI"];
-                envName = "STORE_MUMBAI";
-            }
-            break;
-        case 'polygon':
-            if (!envConfig["ROLES"] || !envConfig["BANK"] || !envConfig["CREDITS"] || !envConfig["UTILS"]) {
-                throw "Roles address, Bank address, or Credits address not set";
-            } else {
-                rolesAddress = envConfig["ROLES"];
-                bankAddress = envConfig["BANK"];
-                creditsAddress = envConfig["CREDITS"];
-                utilsAddress = envConfig["UTILS"];
-                envName = "STORE";
-            }
-            break;
-        default:
-            throw "Network not supported";
-    }
 
     const Store = await ethers.getContractFactory("Store");
 

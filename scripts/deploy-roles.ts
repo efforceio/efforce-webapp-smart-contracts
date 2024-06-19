@@ -3,35 +3,18 @@ import dotenv from "dotenv";
 import fs from "fs";
 
 async function main() {
-    let
-        address = "",
-        envName = "";
-    const envPath = '.env';
 
     console.log("--- DEPLOYING ROLES ---");
 
+    const envPath = '.env';
     const envConfig = dotenv.parse(fs.readFileSync(envPath));
+    const network = process.env.HARDHAT_NETWORK!.toUpperCase();
+    const envName = `ROLES_${network}`;
 
-    switch (process.env.HARDHAT_NETWORK) {
-        case 'polygon_mumbai':
-            if (!envConfig["OWNER_MUMBAI"]) {
-                throw "Owner address not set";
-            } else {
-                address = envConfig["OWNER_MUMBAI"];
-                envName = "ROLES_MUMBAI";
-            }
-            break;
-        case 'polygon':
-            if (!envConfig["OWNER"]) {
-                throw "Owner address not set";
-            } else {
-                address = envConfig["OWNER"];
-                envName = "ROLES";
-            }
-            break;
-        default:
-            throw "Network not supported";
+    if (!envConfig[`OWNER_${network}`]) {
+        throw "Owner address not specified";
     }
+    const address = envConfig[`OWNER_${network}`];
 
     const Roles = await ethers.getContractFactory("Roles");
 

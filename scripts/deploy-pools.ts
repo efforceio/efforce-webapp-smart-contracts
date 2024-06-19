@@ -6,38 +6,21 @@ import { Pools as PoolsType, Roles as RolesType } from "../typechain-types";
 
 async function main() {
 
-    let
-        rolesAddress = "",
-        bankAddress = "",
-        envName = "";
-
     const envPath = '.env';
+    const envConfig = dotenv.parse(fs.readFileSync(envPath));
+    const network = process.env.HARDHAT_NETWORK!.toUpperCase();
+    const envName = `POOLS_${network}`;
+
+    if (!envConfig[`ROLES_${network}`]) {
+        throw "Roles address not specified";
+    }
+    if (!envConfig[`BANK_${network}`]) {
+        throw "Bank address not specified";
+    }
+    const bankAddress =  envConfig[`BANK_${network}`];
+    const rolesAddress = envConfig[`ROLES_${network}`];
 
     console.log("--- DEPLOYING POOLS ---");
-    const envConfig = dotenv.parse(fs.readFileSync(envPath));
-
-    switch (process.env.HARDHAT_NETWORK) {
-        case 'polygon_mumbai':
-            if (!envConfig["ROLES_MUMBAI"] || !envConfig["BANK_MUMBAI"]) {
-                throw "Roles address or Bank address not set";
-            } else {
-                rolesAddress = envConfig["ROLES_MUMBAI"];
-                bankAddress = envConfig["BANK_MUMBAI"];
-                envName = "POOLS_MUMBAI";
-            }
-            break;
-        case 'polygon':
-            if (!envConfig["ROLES"] || !envConfig["BANK"]) {
-                throw "Roles address or Bank address not set";
-            } else {
-                rolesAddress = envConfig["ROLES"];
-                bankAddress = envConfig["BANK"];
-                envName = "POOLS";
-            }
-            break;
-        default:
-            throw "Network not supported";
-    }
 
     const Pools = await ethers.getContractFactory("Pools");
 

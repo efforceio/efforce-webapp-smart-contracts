@@ -41,7 +41,7 @@ contract Locking is BankWrapper {
     function initializer(address _bankContract, address _tokenAddress) public {
         require(_bankContract != address(0), Errors.IS_ZERO_ADDRESS);
         require(_tokenAddress != address(0), Errors.IS_ZERO_ADDRESS);
-        require(tokenAddress == address(0), bankContract == address(0), Errors.NOT_ALLOWED());
+        require(tokenAddress == address(0) && bankContract == address(0), Errors.NOT_ALLOWED);
 
         tokenAddress = _tokenAddress;
         bankContract = _bankContract;

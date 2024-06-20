@@ -67,10 +67,7 @@ async function main() {
             console.log(`Done.`);
             await hre.run("verify:verify", {
                 address: lockingAddress,
-                constructorArguments: [
-                    bankAddress,
-                    wozxAddress
-                ],
+                constructorArguments: [],
                 network: process.env.HARDHAT_NETWORK
             });
         } catch (e) {

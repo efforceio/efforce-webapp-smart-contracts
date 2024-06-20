@@ -3,6 +3,7 @@ dotEnvConfig();
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@openzeppelin/hardhat-upgrades";
+import "@nomicfoundation/hardhat-verify";
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
@@ -19,17 +20,17 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {},
     testnet: {
-      url: "https://mumbai.rpc.thirdweb.com",
+      url: "https://80002.rpc.thirdweb.com",
       accounts: [process.env.PRIVATE_KEY || ""]
     },
     mainnet: {
-      url: "https://polygon.rpc.thirdweb.com",
+      url: "https://137.rpc.thirdweb.com",
       accounts: [process.env.PRIVATE_KEY || ""]
     }
   },
   etherscan: {
     apiKey: {
-      polygonMumbai: process.env.POLYSCAN_API_KEY || "",
+      polygonAmoy: process.env.POLYGON_AMOY_API_KEY || "",
     }
   }
 };

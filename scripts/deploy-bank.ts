@@ -53,7 +53,7 @@ async function main() {
             console.log(`Done.`);
             await hre.run("verify:verify", {
                 address: bankAddress,
-                constructorArguments: [tokenAddress, rolesAddress],
+                constructorArguments: [],
                 network: process.env.HARDHAT_NETWORK
             });
         } catch (e) {

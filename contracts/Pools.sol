@@ -17,6 +17,7 @@ contract Pools is BankWrapper, RolesModifier {
     mapping(uint256=>Pool) private idToPool;
     mapping(address=>mapping(uint256=>uint256)) private addressToPoolStaking;
     mapping(uint256=>uint256) private poolToStaked;
+    mapping (uint poolId => mapping(address account => address delegated)) private poolToDelegation;
 
 
     /*
@@ -83,6 +84,14 @@ contract Pools is BankWrapper, RolesModifier {
     */
     modifier poolNotAllocated(uint256 id) {
         require(idToPool[id].allocated == 0, Errors.NOT_ALLOCATED);
+        _;
+    }
+
+    /*
+        @notice Will raise an error if the pool already has a delegation for given delegator.
+    */
+    modifier noPreviousDelegations(uint poolId, address delegator) {
+        require(poolToDelegation[poolId][delegator] == address(0), Errors.NOT_ALLOWED);
         _;
     }
 
@@ -210,6 +219,20 @@ contract Pools is BankWrapper, RolesModifier {
     }
 
     /*
+        @notice Delegate fee discount for account.
+        @dev Can be called only if no previous delegation was set for pool with given id.
+        @param poolId The id of the target pool.
+        @param account The account to be delegated.
+    */
+    function delegate(uint poolId, address account)
+        external
+        noPreviousDelegations(poolId, msg.sender)
+    {
+        poolToDelegation[poolId][msg.sender] = account;
+        emit DelegationAdded(poolId, msg.sender, account);
+    }
+
+    /*
         @param id The id of the target pool.
         @return The pool details as Pool struct.
     */
@@ -271,4 +294,12 @@ contract Pools is BankWrapper, RolesModifier {
         @param amount The funded amount if state is 2, 0 otherwise.
     */
     event PoolChangedState(uint256 indexed id, uint256 indexed state, uint256 amount);
+
+    /*
+        @notice Emitted when a new delegation is created.
+        @param poolId The id of the target pool.
+        @param delegator The user that created the delegation.
+        @param delegated The user that benefits of the delegation.
+    */
+    event DelegationAdded(uint indexed poolId, address indexed delegator, address indexed delegated);
 }

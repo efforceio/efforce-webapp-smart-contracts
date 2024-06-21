@@ -90,8 +90,9 @@ contract Pools is BankWrapper, RolesModifier {
     /*
         @notice Will raise an error if the pool already has a delegation for given delegator.
     */
-    modifier noPreviousDelegations(uint poolId, address delegator) {
+    modifier canDelegate(uint poolId, address delegator, address delegated) {
         require(poolToDelegation[poolId][delegator] == address(0), Errors.NOT_ALLOWED);
+        require(delegator != delegated, Errors.SAME_ADDRESS);
         _;
     }
 
@@ -234,7 +235,7 @@ contract Pools is BankWrapper, RolesModifier {
     */
     function delegate(uint poolId, address account)
         external
-        noPreviousDelegations(poolId, msg.sender)
+        canDelegate(poolId, msg.sender)
     {
         poolToDelegation[poolId][msg.sender] = account;
         emit DelegationAdded(poolId, msg.sender, account);

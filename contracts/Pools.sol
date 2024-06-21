@@ -235,7 +235,7 @@ contract Pools is BankWrapper, RolesModifier {
     */
     function delegate(uint poolId, address account)
         external
-        canDelegate(poolId, msg.sender)
+        canDelegate(poolId, msg.sender, account)
     {
         poolToDelegation[poolId][msg.sender] = account;
         emit DelegationAdded(poolId, msg.sender, account);

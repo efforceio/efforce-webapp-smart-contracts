@@ -96,6 +96,14 @@ contract Pools is BankWrapper, RolesModifier {
     }
 
     /*
+        @notice Will raise an error if the delegator address has no active delegations for given pool.
+    */
+    modifier hasDelegation(uint poolId, address delegator) {
+        require(poolToDelegation[poolId][delegator] != address(0), Errors.NOT_EXISTS);
+        _;
+    }
+
+    /*
         @notice Create a new pool.
         @dev Can be called only by admins or contract owners.
         @param stakingPeriod The locking period expressed in seconds.
@@ -267,6 +275,21 @@ contract Pools is BankWrapper, RolesModifier {
     returns(uint256)
     {
         return poolToStaked[id];
+    }
+
+    /*
+        @notice Return the delegated account for given delegator and pool.
+        @dev Fails if the delegator has not delegations for the given pool.
+        @param poolId The id of the pool.
+        @param delegator The address of the delegator.
+    */
+    function getDelegation(uint poolId, address delegator)
+        external
+        view
+        hasDelegation(poolId, delegator)
+        returns(address)
+    {
+        return poolToDelegation[poolId][delegator];
     }
 
     /*

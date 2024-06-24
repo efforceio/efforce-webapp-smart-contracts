@@ -28,6 +28,11 @@ contract Locking is BankWrapper, ILocking {
         _;
     }
 
+    modifier canLock(address account) {
+        require(addressToLock[account] == 0 || idToLock[addressToLock[account]].endTimestamp > 0, Errors.NO_VALID_LOCK);
+        _;
+    }
+
     /*
         @notice Sets the address for the Bank contracts.
         @dev This function throws an error if the bank address is already initialized.
@@ -47,7 +52,10 @@ contract Locking is BankWrapper, ILocking {
         @notice Transfers the amount to the bank contract and create a lock object.
         @param amount The amount of tokens to be locked.
     */
-    function lock(uint amount) external {
+    function lock(uint amount)
+        external
+        canLock(msg.sender)
+    {
         IERC20(tokenAddress).transferFrom(msg.sender, bankContract, amount);
 
         lastId++;

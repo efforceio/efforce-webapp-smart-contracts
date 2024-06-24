@@ -23,9 +23,9 @@ contract Pools is BankWrapper, RolesModifier {
     mapping (address delegated => address delegator) private delegatedToDelegator;
     address public lockingContract;
 
-    uint[] private lockingSteps = [250_000_000_000_000_000_000_000, 500_000_000_000_000_000_000_000];
-    uint[] private discounts = [10, 15];
-    uint private constant baseFee = 20;
+    uint[2] private lockingSteps;
+    uint[2] private discounts;
+    uint private baseFee;
 
     /*
         @notice Sets the address for the Role and Bank contracts.
@@ -47,6 +47,10 @@ contract Pools is BankWrapper, RolesModifier {
         tokenAddress = IBank(_bankContract).tokenAddress();
         bankContract = _bankContract;
         lockingContract = _lockingContract;
+
+        lockingSteps = [250_000_000_000_000_000_000_000, 500_000_000_000_000_000_000_000];
+        discounts = [10, 15];
+        baseFee = 20;
     }
 
     /*

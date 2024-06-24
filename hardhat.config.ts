@@ -21,7 +21,9 @@ const config: HardhatUserConfig = {
     hardhat: {},
     testnet: {
       url: "https://80002.rpc.thirdweb.com",
-      accounts: [process.env.PRIVATE_KEY || ""]
+      accounts: [process.env.PRIVATE_KEY || ""],
+      gas: 5000000,
+      gasPrice:  50000000000,
     },
     mainnet: {
       url: "https://137.rpc.thirdweb.com",

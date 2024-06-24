@@ -39,6 +39,7 @@ library Errors {
     string constant public FUNDS_LOCKED = "702";
     string constant public NOT_ALLOCATED = "702";
     string constant public SAME_ADDRESS = "703";
+    string constant public NO_CONTRIBUTION = "704";
 
     //Marketplace
     string constant public NOT_ENOUGHT_TOKENS = "800";

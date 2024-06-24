@@ -14,15 +14,16 @@ struct Pool {
 }
 
 contract Pools is BankWrapper, RolesModifier {
-    uint256 public numberOfPools;
-    mapping(uint256=>Pool) private idToPool;
-    mapping(address=>mapping(uint256=>uint256)) private addressToPoolStaking;
-    mapping(uint256=>uint256) private poolToStaked;
+    uint public numberOfPools;
+    mapping(uint=>Pool) private idToPool;
+    mapping(address account => mapping(uint poolId => uint stacked)) private addressToPoolStaking;
+    mapping(address account => mapping(uint poolId => bool withdrawn)) private addressToPoolWithdrawn;
+    mapping(uint=>uint) private poolToStaked;
     mapping (uint poolId => mapping(address account => address delegated)) private poolToDelegation;
     mapping (address delegated => address delegator) private delegatedToDelegator;
     address public lockingContract;
 
-    uint[] private lockingSteps = [2500000000000000000000000000000000, 5000000000000000000000000000000000];
+    uint[] private lockingSteps = [250_000_000_000_000_000_000_000, 500_000_000_000_000_000_000_000];
     uint[] private discounts = [10, 15];
     uint private constant baseFee = 20;
 
@@ -125,6 +126,14 @@ contract Pools is BankWrapper, RolesModifier {
     }
 
     /*
+        @notice Will raise an error if the account already withdrawn funds.
+    */
+    modifier hasNotWithdrawn(uint poolId, address account) {
+        require(!addressToPoolWithdrawn[account][poolId], Errors.NOT_ALLOWED);
+        _;
+    }
+
+    /*
         @notice Create a new pool.
         @dev Can be called only by admins or contract owners.
         @param stakingPeriod The locking period expressed in seconds.
@@ -217,7 +226,7 @@ contract Pools is BankWrapper, RolesModifier {
     {
         addressToPoolStaking[account][id] += amount;
         poolToStaked[id] += amount;
-        emit Staking(account, msg.sender, id, amount, true);
+        emit Staking(account, msg.sender, id, amount);
     }
 
     /*
@@ -225,34 +234,53 @@ contract Pools is BankWrapper, RolesModifier {
             If the unstake is done after the staking period ended, it will return the staked amount plus interests,
             otherwise it will return the exact amount that was staked.
         @dev Can be called if the pool is canceled, the staking period ended or is not started.
+        @dev Raises an error if the user already withdrawn the reward.
         @param id The id of the target pool.
     */
     function unstake(uint256 id)
         external
         isUnstakingPeriod(id, false)
+        hasNotWithdrawn(id, msg.sender)
     {
-        uint256 amount = addressToPoolStaking[msg.sender][id];
         if (idToPool[id].stakingStartedAt > 0) {
-            uint256 distribution = (
-                addressToPoolStaking[msg.sender][id] * idToPool[id].allocated
-            ) / poolToStaked[id];
-
-            uint netDistribution = getNetDistributionForPoolAndAccount(id, msg.sender, distribution);
+            uint grossDistribution = getGrossDistribution(msg.sender, id);
+            uint netDistribution = getNetDistributionForPoolAndAccount(id, msg.sender, grossDistribution);
             IBank(bankContract).withdraw(msg.sender, netDistribution);
-            emit Staking(msg.sender, msg.sender, id, netDistribution, false);
+            emit Unstaking(msg.sender, id, netDistribution);
         } else {
+            uint amount = addressToPoolStaking[msg.sender][id];
             IBank(bankContract).withdraw(msg.sender, amount);
-            emit Staking(msg.sender, msg.sender, id, amount, false);
+            emit Unstaking(msg.sender, id, amount);
         }
-        addressToPoolStaking[msg.sender][id] = 0;
+        addressToPoolWithdrawn[msg.sender][id] = true;
     }
 
-    function withdrawDelegationRewards(uint id)
-        external
-        view
-        isUnstakingPeriod(id, true)
-    {
 
+    /*
+        @notice Withdraw discount rewards for delegations.
+        @param poolId The id of the pool.
+    */
+    function withdrawDelegationRewards(uint poolId)
+        external
+        isUnstakingPeriod(poolId, true)
+    {
+        Lock memory accountLock = ILocking(lockingContract).getLastLockForAccount(msg.sender);
+
+        require(
+            accountLock.startTimestamp <= idToPool[poolId].stakingStartedAt &&
+            accountLock.endTimestamp == 0 &&
+            delegatedToDelegator[msg.sender] == address(0) &&
+            poolToDelegation[poolId][msg.sender] != address(0),
+            Errors.NOT_ALLOWED
+        );
+
+        uint distribution = getGrossDistribution(poolToDelegation[poolId][msg.sender], poolId);
+        uint discount = getDiscount(accountLock, distribution, poolId, true);
+
+        require(discount > 0, Errors.NO_CONTRIBUTION);
+
+        IBank(bankContract).withdraw(msg.sender, discount);
+        emit WithdrawDiscount(msg.sender, poolId, discount);
     }
 
     /*
@@ -280,16 +308,10 @@ contract Pools is BankWrapper, RolesModifier {
 
         // If the input account was delegated
         if (delegatedToDelegator[account] != address(0)) {
-            try ILocking(lockingContract).getLastLockForAccount(delegatedToDelegator[account]) returns (Lock memory delegatorLock) {
-                // If the delegator has an active lock that started before the staking period and is still open
-                if (delegatorLock.startTimestamp <= idToPool[poolId].stakingStartedAt && delegatorLock.endTimestamp == 0) {
-                    if (delegatorLock.amount >= lockingSteps[0] && delegatorLock.amount < lockingSteps[1]) {
-                        discount = (distribution * discounts[0] / 100) / 2;
-                    }
-                    if (delegatorLock.amount > lockingSteps[1]) {
-                        discount = (distribution * discounts[1] / 100) / 2;
-                    }
-                }
+            try ILocking(lockingContract).getLastLockForAccount(delegatedToDelegator[account]) returns (
+                Lock memory delegatorLock
+            ) {
+                discount = getDiscount(delegatorLock, distribution, poolId, true);
             } catch {}
         }
 
@@ -297,20 +319,44 @@ contract Pools is BankWrapper, RolesModifier {
         try ILocking(lockingContract).getLastLockForAccount(account) returns (Lock memory accountLock) {
             // Apply the discount if the account has an active lock and it has no delegations.
             if (
-                accountLock.startTimestamp <= idToPool[poolId].stakingStartedAt &&
-                accountLock.endTimestamp == 0 &&
                 poolToDelegation[poolId][account] == address(0)
             ) {
-                if (accountLock.amount >= lockingSteps[0] && accountLock.amount < lockingSteps[1]) {
-                    discount = distribution * discounts[0] / 100;
-                }
-                if (accountLock.amount > lockingSteps[1]) {
-                    discount = distribution * discounts[1] / 100;
-                }
+                discount = getDiscount(accountLock, distribution, poolId, false);
             }
         } catch {}
 
         return baseReward + discount;
+    }
+
+    function getGrossDistribution(address account, uint poolId) internal view returns(uint) {
+        return (
+            addressToPoolStaking[account][poolId] * idToPool[poolId].allocated
+        ) / poolToStaked[poolId];
+    }
+
+    function getDiscount(Lock memory lock, uint grossDistribution, uint poolId, bool isHalf)
+        internal
+        view
+        returns(uint)
+    {
+        uint discount = 0;
+        if (
+            lock.startTimestamp <= idToPool[poolId].stakingStartedAt &&
+            lock.endTimestamp == 0
+        ) {
+            if (lock.amount >= lockingSteps[0] && lock.amount < lockingSteps[1]) {
+                discount = (grossDistribution * discounts[0] / 100);
+            }
+            if (lock.amount > lockingSteps[1]) {
+                discount = (grossDistribution * discounts[1] / 100);
+            }
+
+            if (isHalf) {
+                discount /= 2;
+            }
+        }
+
+        return discount;
     }
 
     /*
@@ -370,9 +416,16 @@ contract Pools is BankWrapper, RolesModifier {
         @param account The target account.
         @param id The id of the target pool.
         @param amount The amount that is staked or unstaked.
-        @param isStaking If the target account is staking funds, it is set to true, otherwise false.
     */
-    event Staking(address indexed account, address sender, uint256 indexed id, uint256 amount, bool indexed isStaking);
+    event Staking(address indexed account, address sender, uint256 indexed id, uint256 amount);
+
+    /*
+        @notice Emitted when an account stakes or unstakes some funds in a pool.
+        @param sender The target account.
+        @param id The id of the target pool.
+        @param amount The amount that is staked or unstaked.
+    */
+    event Unstaking(address indexed sender, uint256 indexed id, uint256 amount);
 
     /*
         @notice Emitted when a new pool is created.
@@ -398,4 +451,12 @@ contract Pools is BankWrapper, RolesModifier {
         @param delegated The user that benefits of the delegation.
     */
     event DelegationAdded(uint indexed poolId, address indexed delegator, address indexed delegated);
+
+    /*
+        @notice Emitted when a discount is withdrawn.
+        @param account The address that will receive the funds.
+        @param poolId The id of the pool.
+        @param amount The amount that is issued.
+    */
+    event WithdrawDiscount(address indexed account, uint indexed poolId, uint amount);
 }

@@ -24,6 +24,12 @@ if (!envConfig[`BANK${addEnv}`]) {
     console.log(`BANK already deployed at: ${envConfig[`BANK${addEnv}`]}`);
     console.log('---');
 }
+if (!envConfig[`LOCKING${addEnv}`]) {
+    execSync(`hardhat run scripts/deploy-locking.ts --network ${addScript}`, {stdio: 'inherit'});
+} else {
+    console.log(`LOCKING already deployed at: ${envConfig[`LOCKING${addEnv}`]}`);
+    console.log('---');
+}
 if (!envConfig[`POOLS${addEnv}`]) {
     execSync(`hardhat run scripts/deploy-pools.ts --network ${addScript}`, {stdio: 'inherit'});
 } else {
@@ -39,9 +45,3 @@ if (!envConfig[`STORE${addEnv}`]) {
 if (!envConfig[`SWAP${addEnv}`]) {
     execSync(`hardhat run scripts/deploy-swap.ts --network ${addScript}`, {stdio: 'inherit'});
 }*/
-if (!envConfig[`LOCKING${addEnv}`]) {
-    execSync(`hardhat run scripts/deploy-locking.ts --network ${addScript}`, {stdio: 'inherit'});
-} else {
-    console.log(`LOCKING already deployed at: ${envConfig[`LOCKING${addEnv}`]}`);
-    console.log('---');
-}

@@ -17,8 +17,12 @@ async function main() {
     if (!envConfig[`BANK_${network}`]) {
         throw "Bank address not specified";
     }
+    if (!envConfig[`LOCKING_${network}`]) {
+        throw "Locking address not specified";
+    }
     const bankAddress =  envConfig[`BANK_${network}`];
     const rolesAddress = envConfig[`ROLES_${network}`];
+    const lockingAddress = envConfig[`LOCKING_${network}`];
 
     console.log("--- DEPLOYING POOLS ---");
 
@@ -29,8 +33,7 @@ async function main() {
     const pools = await upgrades.deployProxy(Pools, []) as unknown as PoolsType;
     await pools.waitForDeployment();
 
-    console.log(rolesAddress, bankAddress)
-    await pools.initializer(rolesAddress, bankAddress);
+    await pools.initializer(rolesAddress, bankAddress, lockingAddress);
 
     const poolsAddress = await pools.getAddress();
     envConfig[envName] = poolsAddress;

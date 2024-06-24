@@ -4,14 +4,10 @@ import "./modules/BankWrapper.sol";
 import "./libraries/Errors.sol";
 import "./helpers/IERC20.sol";
 import "./interfaces/IBank.sol";
+import "./interfaces/ILocking.sol";
 
-struct Lock {
-    uint startTimestamp;
-    uint endTimestamp;
-    uint amount;
-}
 
-contract Locking is BankWrapper {
+contract Locking is BankWrapper, ILocking {
     mapping(uint id => Lock) private idToLock;
     mapping(address => uint lastLockId) private addressToLock;
     uint private lastId;
@@ -38,7 +34,7 @@ contract Locking is BankWrapper {
         @param _bankContract The address of the bank smart contract.
         @param _tokenAddress The address of the ERC20 token that can be locked.
     */
-    function initializer(address _bankContract, address _tokenAddress) public {
+    function initializer(address _bankContract, address _tokenAddress) external {
         require(_bankContract != address(0), Errors.IS_ZERO_ADDRESS);
         require(_tokenAddress != address(0), Errors.IS_ZERO_ADDRESS);
         require(tokenAddress == address(0) && bankContract == address(0), Errors.NOT_ALLOWED);
@@ -51,7 +47,7 @@ contract Locking is BankWrapper {
         @notice Transfers the amount to the bank contract and create a lock object.
         @param amount The amount of tokens to be locked.
     */
-    function lock(uint amount) public {
+    function lock(uint amount) external {
         IERC20(tokenAddress).transferFrom(msg.sender, bankContract, amount);
 
         lastId++;
@@ -68,7 +64,7 @@ contract Locking is BankWrapper {
         @dev The Lock contract address must be an admin for the bank contract.
     */
     function unlock()
-        public
+        external
         hasLock(msg.sender)
         lockOpen(msg.sender)
     {
@@ -87,7 +83,7 @@ contract Locking is BankWrapper {
         @return The lock details.
     */
     function getLock(uint id)
-        public
+        external
         view
         lockExists(id)
         returns(Lock memory)
@@ -101,7 +97,7 @@ contract Locking is BankWrapper {
         @return The lock details.
     */
     function getLastLockForAccount(address account)
-        public
+        external
         view
         hasLock(account)
         returns(Lock memory)

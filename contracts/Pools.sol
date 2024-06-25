@@ -18,9 +18,10 @@ contract Pools is BankWrapper, RolesModifier {
     mapping(uint=>Pool) private idToPool;
     mapping(address account => mapping(uint poolId => uint stacked)) private addressToPoolStaking;
     mapping(address account => mapping(uint poolId => bool withdrawn)) private addressToPoolWithdrawn;
+    mapping(address account => mapping(uint poolId => bool withdrawn)) private addressToDiscountWithdrawn;
     mapping(uint=>uint) private poolToStaked;
     mapping (uint poolId => mapping(address account => address delegated)) private poolToDelegation;
-    mapping (address delegated => address delegator) private delegatedToDelegator;
+    mapping (uint poolId => mapping(address delegated => address delegator)) private poolToDelegator;
     address public lockingContract;
 
     uint[2] private lockingSteps;
@@ -82,6 +83,16 @@ contract Pools is BankWrapper, RolesModifier {
     }
 
     /*
+        @notice Raises an error if the user already withdrawn the reward for the pool.
+        @param account The account's address.
+        @param poolId The id of the pool.
+    */
+    modifier canWithdrawDiscount(address account, uint poolId) {
+        require(!addressToDiscountWithdrawn[account][poolId], Errors.NOT_ALLOWED);
+        _;
+    }
+
+    /*
         @notice Will not raise an error if one of the following conditions are met:
             the pool is canceled;
             the staking period ended and funds are allocated;
@@ -117,7 +128,7 @@ contract Pools is BankWrapper, RolesModifier {
         require(poolToDelegation[poolId][delegator] == address(0), Errors.NOT_ALLOWED);
         require(poolToDelegation[poolId][delegated] == address(0), Errors.NOT_ALLOWED);
         require(delegator != delegated, Errors.SAME_ADDRESS);
-        require(delegatedToDelegator[delegated] == address(0), Errors.NOT_ALLOWED);
+        require(poolToDelegator[poolId][delegated] == address(0), Errors.NOT_ALLOWED);
         _;
     }
 
@@ -267,19 +278,21 @@ contract Pools is BankWrapper, RolesModifier {
     function withdrawDelegationRewards(uint poolId)
         external
         isUnstakingPeriod(poolId, true)
+        canWithdrawDiscount(msg.sender, poolId)
     {
         Lock memory accountLock = ILocking(lockingContract).getLastLockForAccount(msg.sender);
 
         require(
             accountLock.startTimestamp <= idToPool[poolId].stakingStartedAt &&
             accountLock.endTimestamp == 0 &&
-            delegatedToDelegator[msg.sender] == address(0) &&
+            poolToDelegator[poolId][msg.sender] == address(0) &&
             poolToDelegation[poolId][msg.sender] != address(0),
             Errors.NOT_ALLOWED
         );
 
         uint distribution = getGrossDistribution(poolToDelegation[poolId][msg.sender], poolId);
         uint discount = getDiscount(accountLock, distribution, poolId, true);
+        addressToDiscountWithdrawn[msg.sender][poolId] = true;
 
         require(discount > 0, Errors.NO_CONTRIBUTION);
 
@@ -298,6 +311,8 @@ contract Pools is BankWrapper, RolesModifier {
         canDelegate(poolId, msg.sender, account)
     {
         poolToDelegation[poolId][msg.sender] = account;
+        poolToDelegator[poolId][account] = msg.sender;
+
         emit DelegationAdded(poolId, msg.sender, account);
     }
 
@@ -311,8 +326,8 @@ contract Pools is BankWrapper, RolesModifier {
 
 
         // If the input account was delegated
-        if (delegatedToDelegator[account] != address(0)) {
-            try ILocking(lockingContract).getLastLockForAccount(delegatedToDelegator[account]) returns (
+        if (poolToDelegator[poolId][account] != address(0)) {
+            try ILocking(lockingContract).getLastLockForAccount(poolToDelegator[poolId][account]) returns (
                 Lock memory delegatorLock
             ) {
                 discount = getDiscount(delegatorLock, distribution, poolId, true);

@@ -172,13 +172,13 @@ describe("Pools test", () => {
             const stacked1 = await pools.getStakedAmountForPoolAndAccount(0, admin.address);
             const stacked2 = await pools.getStakedAmountForPoolAndAccount(0, user.address);
 
-            // total allocation for pool (gross and net)
+            // total allocation for pool (gross)
             const allocatedGross = (await pools.getPool(0)).allocated;
-            const allocatedNet = allocatedGross * BigInt((100 - efforceFee)) / BigInt(100);
 
             // expected rewards
-            const reward1 = stacked1 * allocatedNet / (stacked1 + stacked2) ;
-            const reward2 = stacked2 * allocatedNet / (stacked1 + stacked2);
+            const feePerc = BigInt(100) - BigInt(efforceFee);
+            const reward1 = stacked1 * allocatedGross / (stacked1 + stacked2) * feePerc / BigInt(100);
+            const reward2 = stacked2 * allocatedGross / (stacked1 + stacked2) * feePerc / BigInt(100);
 
             await expect(pools.connect(admin).unstake(0))
                 .emit(pools, "Unstaking").withArgs(

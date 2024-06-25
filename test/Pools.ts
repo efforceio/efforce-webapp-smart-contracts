@@ -1,4 +1,4 @@
-import { Pools, Roles, Token, Bank } from "../typechain-types";
+import { Pools, Roles, Token, Bank, Locking } from "../typechain-types";
 import { ethers, upgrades } from "hardhat";
 import { expect } from "chai";
 import { time } from '@nomicfoundation/hardhat-network-helpers';
@@ -18,10 +18,13 @@ describe("Pools test", () => {
         nPools = 0,
         poolsUpgraded: Pools,
         token: Token,
-        tokenAddress: string;
+        tokenAddress: string,
+        locking: Locking,
+        lockingAddress: string;
     const
         lockingPeriod = 1,
-        stakedAdmin = 2;
+        stakedAdmin = 2,
+        efforceFee = 20;
 
     before("Initialization", async function() {
         [owner, admin, user] = await ethers.getSigners();
@@ -43,12 +46,19 @@ describe("Pools test", () => {
         await bank.initializer(tokenAddress, rolesAddress);
         bankAddress = await bank.getAddress();
 
+        const Locking = await ethers.getContractFactory("Locking");
+        locking = await upgrades.deployProxy(Locking, []) as unknown as Locking;
+        await locking.waitForDeployment();
+        lockingAddress = await locking.getAddress();
+
+        await locking.initializer(bankAddress, tokenAddress);
+
         const Pools = await ethers.getContractFactory("Pools");
         pools = await upgrades.deployProxy(Pools, []) as unknown as Pools;
         await pools.waitForDeployment();
         poolsAddress = await pools.getAddress();
 
-        await pools.initializer(rolesAddress, bankAddress);
+        await pools.initializer(rolesAddress, bankAddress, lockingAddress);
         await roles.setAdmin(poolsAddress, true);
     });
 
@@ -89,8 +99,7 @@ describe("Pools test", () => {
                     user.address,
                     user.address,
                     0,
-                    stakedAdmin / 2,
-                    true
+                    stakedAdmin / 2
                 );
             await expect(pools.connect(user).stake(0, stakedAdmin / 2)).not.reverted;
             await expect(pools.connect(user).stake(0, stakedAdmin / 2)).reverted;
@@ -106,8 +115,7 @@ describe("Pools test", () => {
                     admin.address,
                     owner.address,
                     0,
-                    stakedAdmin / 2,
-                    true
+                    stakedAdmin / 2
                 );
 
             expect(await pools.getStakedAmountForPoolAndAccount(0, admin.address)).equal(stakedAdmin / 2);
@@ -155,38 +163,44 @@ describe("Pools test", () => {
             const pool = await pools.getPool(2);
             expect(pool.canceled).true;
         });
-        it("Unstakes funds", async () => {
-            const b1 = Number(await token.balanceOf(admin.address));
-            const b2 = Number(await token.balanceOf(user.address));
-            const s1 = Number(await pools.getStakedAmountForPoolAndAccount(0, admin.address));
-            const s2 = Number(await pools.getStakedAmountForPoolAndAccount(0, user.address));
-            const a = Number((await pools.getPool(0)).allocated);
-            const e1 = s1 / (s1 + s2) * a;
-            const e2 = s2 / (s1 + s2) * a;
+        it("Unstack funds", async () => {
+            // initial balances
+            const balance1Start = await token.balanceOf(admin.address);
+            const balance2Start = await token.balanceOf(user.address);
+
+            // stacked
+            const stacked1 = await pools.getStakedAmountForPoolAndAccount(0, admin.address);
+            const stacked2 = await pools.getStakedAmountForPoolAndAccount(0, user.address);
+
+            // total allocation for pool (gross and net)
+            const allocatedGross = (await pools.getPool(0)).allocated;
+            const allocatedNet = allocatedGross * BigInt((100 - efforceFee)) / BigInt(100);
+
+            // expected rewards
+            const reward1 = stacked1 * allocatedNet / (stacked1 + stacked2) ;
+            const reward2 = stacked2 * allocatedNet / (stacked1 + stacked2);
 
             await expect(pools.connect(admin).unstake(0))
-                .emit(pools, "Staking").withArgs(
-                    admin.address,
+                .emit(pools, "Unstaking").withArgs(
                     admin.address,
                     0,
-                    Math.floor(e1),
-                    false
+                    reward1,
                 );
             await expect(pools.connect(user).unstake(0)).not.reverted;
 
-            const b1a = Number(await token.balanceOf(admin.address));
-            const b2a = Number(await token.balanceOf(user.address));
+            const balance1End = await token.balanceOf(admin.address);
+            const balance2End = await token.balanceOf(user.address);
 
-            expect(b1a).equal(Math.floor(e1 + b1));
-            expect(b2a).equal(Math.floor(e2 + b2));
+            expect(balance1End).equal(reward1 + balance1Start);
+            expect(balance2End).equal(reward2 + balance2Start);
 
-            const bb =  Number(await token.balanceOf(admin.address));
-            const sc = Number(await pools.getStakedAmountForPoolAndAccount(2, admin.address));
+            const balanceAdminStart =  Number(await token.balanceOf(admin.address));
+            const stackedAdmin = Number(await pools.getStakedAmountForPoolAndAccount(2, admin.address));
 
             await expect(pools.connect(admin).unstake(2)).not.reverted;
 
-            const ba =  Number(await token.balanceOf(admin.address));
-            expect(ba).equal(Math.floor(bb + sc));
+            const balanceAdminEnd =  Number(await token.balanceOf(admin.address));
+            expect(balanceAdminEnd).equal(Math.floor(balanceAdminStart + stackedAdmin));
         });
     });
 
@@ -205,7 +219,7 @@ describe("Pools test", () => {
             expect(poolsAddress).to.equal(poolsUpgradedAddress);
         });
         it("Cannot call init function after upgrade", async () => {
-            await expect(poolsUpgraded.initializer(rolesAddress, bankAddress)).reverted;
+            await expect(poolsUpgraded.initializer(rolesAddress, bankAddress, lockingAddress)).reverted;
         });
     });
 });

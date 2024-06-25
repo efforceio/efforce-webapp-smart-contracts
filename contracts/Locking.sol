@@ -40,8 +40,7 @@ contract Locking is BankWrapper, ILocking {
         @param _tokenAddress The address of the ERC20 token that can be locked.
     */
     function initializer(address _bankContract, address _tokenAddress) external {
-        require(_bankContract != address(0), Errors.IS_ZERO_ADDRESS);
-        require(_tokenAddress != address(0), Errors.IS_ZERO_ADDRESS);
+        require(_bankContract != address(0) && _tokenAddress != address(0), Errors.IS_ZERO_ADDRESS);
         require(tokenAddress == address(0) && bankContract == address(0), Errors.NOT_ALLOWED);
 
         tokenAddress = _tokenAddress;

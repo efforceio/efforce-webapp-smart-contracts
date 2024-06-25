@@ -186,6 +186,8 @@ describe("Pools test", () => {
                     0,
                     reward1,
                 );
+            // Cannot unstake twice.
+            await expect(pools.connect(admin).unstake(0)).reverted;
             await expect(pools.connect(user).unstake(0)).not.reverted;
 
             const balance1End = await token.balanceOf(admin.address);
@@ -202,6 +204,129 @@ describe("Pools test", () => {
             const balanceAdminEnd =  Number(await token.balanceOf(admin.address));
             expect(balanceAdminEnd).equal(Math.floor(balanceAdminStart + stackedAdmin));
         });
+    });
+
+    describe("Locking", () => {
+
+        before("Lock funds", async () => {
+            const amount = 250_000_000_000_000_000_000_000n;
+            await token.mintTo(user.address, amount);
+            await token.connect(user).approve(lockingAddress, amount);
+            await locking.connect(user).lock(amount);
+            await token.mintTo(user.address, 100);
+        });
+
+        it("Gets discount for locking", async () => {
+            await pools.createPool(lockingPeriod);
+            const poolId = nPools;
+            nPools++;
+            await token.connect(user).approve(poolsAddress, 100);
+            await pools.connect(user).stake(poolId, 100);
+            await pools.startStakingPeriod(poolId);
+
+            setTimeout(() => null, lockingPeriod * 1000);
+
+            const allocated = BigInt(200);
+            await pools.setDistributionForPool(poolId, allocated);
+
+            const expectedReward = allocated * (BigInt(100) - BigInt(efforceFee)) / BigInt(100) + BigInt(10) * allocated / BigInt(100);
+
+
+            await expect(pools.connect(user).unstake(poolId))
+                .emit(pools, "Unstaking")
+                .withArgs(user.address, poolId, expectedReward);
+        });
+
+        it("Delegates for pool", async () => {
+            await pools.createPool(lockingPeriod);
+            const poolId = nPools;
+            nPools++;
+
+            await token.mintTo(admin.address, 100);
+            await token.connect(admin).approve(poolsAddress, 100);
+            await pools.connect(admin).stake(poolId, 100);
+            await pools.startStakingPeriod(poolId);
+
+            await expect(pools.connect(user).delegate(poolId, admin.address))
+                .emit(pools, "DelegationAdded")
+                .withArgs(poolId, user.address, admin.address);
+
+            await expect(pools.connect(user).delegate(poolId, admin.address)).reverted;
+
+            setTimeout(() => null, lockingPeriod * 1000);
+
+            const allocated = BigInt(200);
+            await pools.setDistributionForPool(poolId, allocated);
+
+            const discount = BigInt(5) * allocated / BigInt(100);
+
+            const expectedReward = allocated * (BigInt(100) - BigInt(efforceFee)) / BigInt(100)
+                + discount;
+
+
+            await expect(pools.connect(admin).unstake(poolId))
+                .emit(pools, "Unstaking")
+                .withArgs(admin.address, poolId, expectedReward);
+
+            await expect(pools.connect(admin).unstake(poolId)).reverted;
+
+            await expect(pools.connect(user).withdrawDelegationRewards(poolId))
+                .emit(pools, "WithdrawDiscount")
+                .withArgs(user.address, poolId, discount);
+
+            await expect(pools.connect(user).withdrawDelegationRewards(poolId)).reverted;
+        });
+
+        it("Delegates for pool and invest in pool", async () => {
+            await pools.createPool(lockingPeriod);
+            const poolId = nPools;
+            nPools++;
+
+            await token.mintTo(admin.address, 100);
+            await token.mintTo(user.address, 100);
+
+            await token.connect(admin).approve(poolsAddress, 100);
+            await token.connect(user).approve(poolsAddress, 100);
+
+            await pools.connect(admin).stake(poolId, 100);
+            await pools.connect(user).stake(poolId, 100);
+
+            await pools.startStakingPeriod(poolId);
+
+            await expect(pools.connect(user).delegate(poolId, admin.address))
+                .emit(pools, "DelegationAdded")
+                .withArgs(poolId, user.address, admin.address);
+
+            await expect(pools.connect(user).delegate(poolId, admin.address)).reverted;
+
+            setTimeout(() => null, lockingPeriod * 1000);
+
+            const allocated = BigInt(200);
+            const distribution = BigInt(100);
+
+            await pools.setDistributionForPool(poolId, allocated);
+
+            const discount = BigInt(5) * distribution / BigInt(100);
+
+            const expectedReward = distribution * (BigInt(100) - BigInt(efforceFee)) / BigInt(100);
+
+            await expect(pools.connect(admin).unstake(poolId))
+                .emit(pools, "Unstaking")
+                .withArgs(admin.address, poolId, expectedReward + discount);
+            await expect(pools.connect(admin).unstake(poolId)).reverted;
+
+            await expect(pools.connect(user).unstake(poolId))
+                .emit(pools, "Unstaking")
+                .withArgs(user.address, poolId, expectedReward);
+            await expect(pools.connect(user).unstake(poolId)).reverted;
+
+            await expect(pools.connect(user).withdrawDelegationRewards(poolId))
+                .emit(pools, "WithdrawDiscount")
+                .withArgs(user.address, poolId, discount);
+
+            await expect(pools.connect(user).withdrawDelegationRewards(poolId)).reverted;
+        });
+
     });
 
     describe("Upgrades", () => {

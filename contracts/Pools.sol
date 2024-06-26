@@ -214,8 +214,15 @@ contract Pools is BankWrapper, RolesModifier {
         @param id The id of the target pool.
         @param amount The amount to be staked in the pool.
     */
-    function stake(uint256 id, uint256 amount) external {
+    function stake(uint id, uint amount) external {
         IERC20(tokenAddress).transferFrom(msg.sender, bankContract, amount);
+        _stake(id, amount, msg.sender);
+    }
+
+    function stakeWithoutFunds(uint id, uint amount)
+        adminOrOwner(msg.sender)
+        external
+    {
         _stake(id, amount, msg.sender);
     }
 

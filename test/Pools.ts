@@ -329,6 +329,20 @@ describe("Pools test", () => {
 
     });
 
+    describe("Stake without funds", () => {
+        it("Stakes without moving funds", async () => {
+            await pools.createPool(lockingPeriod);
+            const poolId = nPools;
+            nPools++;
+
+            await expect(pools.connect(admin).stakeWithoutFunds(poolId, 100)).not.reverted;
+            await expect(pools.connect(owner).stakeWithoutFunds(poolId, 100)).not.reverted;
+            await expect(pools.connect(user).stakeWithoutFunds(poolId, 100)).reverted;
+
+            expect(await pools.getStakedAmountForPool(poolId)).equal(200);
+        });
+    });
+
     describe("Upgrades", () => {
 
         it("Smart contract can be upgraded", async () => {

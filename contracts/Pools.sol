@@ -20,6 +20,7 @@ contract Pools is BankWrapper, RolesModifier {
     mapping(address account => mapping(uint poolId => bool withdrawn)) private addressToPoolWithdrawn;
     mapping(address account => mapping(uint poolId => bool withdrawn)) private addressToDiscountWithdrawn;
     mapping(uint=>uint) private poolToStaked;
+    mapping(uint=>uint) private poolToStakedWithoutFunds;
     mapping (uint poolId => mapping(address account => address delegated)) private poolToDelegation;
     mapping (uint poolId => mapping(address delegated => address delegator)) private poolToDelegator;
     address public lockingContract;
@@ -224,6 +225,7 @@ contract Pools is BankWrapper, RolesModifier {
         external
     {
         _stake(id, amount, msg.sender);
+        poolToStakedWithoutFunds[id] += amount;
     }
 
     /*
@@ -420,6 +422,14 @@ contract Pools is BankWrapper, RolesModifier {
         returns(uint256)
     {
         return poolToStaked[id];
+    }
+
+    function getStakedAmountForPoolWithFunds(uint256 id)
+        external
+        view
+        returns(uint256)
+    {
+        return poolToStaked[id] - poolToStakedWithoutFunds[id];
     }
 
     /*
